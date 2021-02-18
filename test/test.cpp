@@ -68,6 +68,21 @@ int main() {
     }
 
     {
+        CRUST_ASSERT(make_tuple(1, 'a') == max_by_key(make_tuple(0, 'b'), make_tuple(1, 'a'),
+                                                      make_fn([](const Tuple<i32, char> &value) {
+                                                          return value.get<0>();
+                                                      })));
+
+        CRUST_ASSERT(make_tuple(0, 'b') == max_by_key(make_tuple(0, 'b'), make_tuple(1, 'a'),
+                                                      make_fn([](const Tuple<i32, char> &value) {
+                                                          return value.get<1>();
+                                                      })));
+    }
+
+    {
+        CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), PartialEq));
+        CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), Eq));
+
         auto tuple = make_tuple(0, 'a');
 
         CRUST_ASSERT(tuple.get<0>() == 0);
@@ -78,6 +93,8 @@ int main() {
 
         CRUST_ASSERT(std::get<0>(tuple) == 1);
         CRUST_ASSERT(std::get<1>(tuple) == 'b');
+
+        CRUST_ASSERT(make_tuple() == make_tuple());
 
         CRUST_ASSERT(make_tuple(true) != make_tuple(false));
         CRUST_ASSERT(make_tuple(1) > make_tuple(0));
@@ -195,13 +212,24 @@ int main() {
 
         Enum<A, B> a{};
 
+        CRUST_STATIC_ASSERT(!CRUST_DERIVE((Enum<A, B>), PartialEq));
+        CRUST_STATIC_ASSERT(!CRUST_DERIVE((Enum<A, B>), Eq));
+
         a = Enum<A, B>{A{}};
 
-        a.visit<A>(VisitA{});
+        a.visit<VisitA, A>();
 
         a = Enum<A, B>{B{}};
 
-        a.visit<B>(VisitB{});
+        a.visit<VisitB, B>();
+
+        a = A{};
+
+        a.visit<VisitA, A>();
+
+        a = B{};
+
+        a.visit<VisitB, B>();
     }
 
     printf("=====\n");
@@ -239,22 +267,20 @@ int main() {
             void operator()(const F &) { printf("visit F\n"); }
         };
 
-        using Enumerate = Enum<A, B, C, D, E, F>;
-        
-        Enumerate a{};
+        Enum<A, B, C, D, E, F> a{};
 
-        a = Enumerate{A{}};
-        a.visit<void>(Visit{});
-        a = Enumerate{B{}};
-        a.visit<void>(Visit{});
-        a = Enumerate{C{}};
-        a.visit<void>(Visit{});
-        a = Enumerate{D{}};
-        a.visit<void>(Visit{});
-        a = Enumerate{E{}};
-        a.visit<void>(Visit{});
-        a = Enumerate{F{}};
-        a.visit<void>(Visit{});
+        a = A{};
+        a.visit<Visit>();
+        a = B{};
+        a.visit<Visit>();
+        a = C{};
+        a.visit<Visit>();
+        a = D{};
+        a.visit<Visit>();
+        a = E{};
+        a.visit<Visit>();
+        a = F{};
+        a.visit<Visit>();
     }
 
     {

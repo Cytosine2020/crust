@@ -75,46 +75,15 @@ using u128 = unsigned __int128;
 using isize = ssize_t;
 using usize = size_t;
 
-template<class T>
-struct RemoveReference {
-    using Result = T;
-};
-
-template<class T>
-struct RemoveReference<T &> {
-    using Result = T;
-};
-
-template<class T>
-struct RemoveReference<T &&> {
-    using Result = T;
-};
-
-template<class T>
-struct IsLValueReference {
+template<class A, class B>
+struct IsSame {
     static constexpr bool result = false;
 };
 
-template<class T>
-struct IsLValueReference<T &> {
+template<class A>
+struct IsSame<A, A> {
     static constexpr bool result = true;
 };
-
-template<class T>
-constexpr typename RemoveReference<T>::Result &&move(T &&t) noexcept {
-    return static_cast<typename RemoveReference<T>::Result &&>(t);
-}
-
-template<class T>
-constexpr T &&forward(typename RemoveReference<T>::Result &t) noexcept {
-    return static_cast<T &&>(t);
-}
-
-template<class T>
-constexpr T &&forward(typename RemoveReference<T>::type &&t) noexcept {
-    CRUST_STATIC_ASSERT(!IsLValueReference<T>::result);
-    return static_cast<T &&>(t);
-}
 
 template<bool ...conditions>
 struct All;
@@ -129,61 +98,158 @@ struct All<> {
     static constexpr bool result = true;
 };
 
+template<class T>
+struct RemoveRef {
+    using Result = T;
+};
+
+template<class T>
+struct RemoveRef<T &> {
+    using Result = T;
+};
+
+template<class T>
+struct RemoveRef<T &&> {
+    using Result = T;
+};
+
+template<class T>
+struct RemoveConst {
+    using Result = T;
+};
+
+template<class T>
+struct RemoveConst<const T> {
+    using Result = T;
+};
+
+template<class T>
+struct RemoveConstRef {
+    using Result = typename RemoveRef<typename RemoveConst<T>::Result>::Result;
+};
+
+template<class T>
+struct IsLValueReference {
+    static constexpr bool result = false;
+};
+
+template<class T>
+struct IsLValueReference<T &> {
+    static constexpr bool result = true;
+};
+
+template<class T>
+constexpr typename RemoveRef<T>::Result &&move(T &&t) noexcept {
+    return static_cast<typename RemoveRef<T>::Result &&>(t);
+}
+
+template<class T>
+constexpr T &&forward(typename RemoveRef<T>::Result &t) noexcept {
+    return static_cast<T &&>(t);
+}
+
+template<class T>
+constexpr T &&forward(typename RemoveRef<T>::type &&t) noexcept {
+    CRUST_STATIC_ASSERT(!IsLValueReference<T>::result);
+    return static_cast<T &&>(t);
+}
+
+namespace __impl_impl {
 template<class T, bool condition>
-struct __Impl;
+struct Impl;
 
 template<class T>
-struct __Impl<T, true> : public T {
+struct Impl<T, true> : public T {
 };
 
 template<class T>
-struct __Impl<T, false> {
+struct Impl<T, false> {
 };
+}
+
 
 template<class T, bool ...conditions>
-using Impl = __Impl<T, All<conditions...>::result>;
+using Impl = __impl_impl::Impl<T, All<conditions...>::result>;
 
 template<class Struct, class Trait>
 struct Derive {
     static constexpr bool result = std::is_base_of<Trait, Struct>::value;
 };
 
+namespace __impl_type {
 template<class Fn>
-struct Function;
+struct ExtractType;
 
-template<class __Type>
-struct Function<void(__Type)> {
-    using Type = __Type;
+template<class Type>
+struct ExtractType<void(Type)> {
+    using Result = Type;
 };
+}
+
 
 #define CRUST_DERIVE(Struct, Trait, ...) \
-    ::crust::Derive<Struct, Trait<Struct, ##__VA_ARGS__>>::result
+    ::crust::Derive<typename ::crust::__impl_type::ExtractType<void(Struct)>::Result, Trait< \
+            typename ::crust::__impl_type::ExtractType<void(Struct)>::Result, ##__VA_ARGS__> \
+    >::result
 
 #define CRUST_DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...) \
     template<> struct Derive<PRIMITIVE, TRAIT<PRIMITIVE, ##__VA_ARGS__>> { \
         static constexpr bool result = true; \
     }
 
-#define CRUST_REQUIRE(Trait, ...) \
-static_assert(CRUST_DERIVE(Self, Trait, ##__VA_ARGS__), \
-"requires implementing trait `" #Trait "'!")
-
 #define CRUST_TRAIT_DECLARE(TRAIT, ...) \
     template<class Self, ##__VA_ARGS__> \
     class TRAIT
 
+#define CRUST_USE_SELF(TRAIT) \
+    const Self &self() const { \
+        CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
+        return *reinterpret_cast<const Self *>(this); \
+    } \
+    Self &self() { \
+        CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
+        return *reinterpret_cast<Self *>(this); \
+    }
+
 #define CRUST_TRAIT(TRAIT, ...) \
     CRUST_TRAIT_DECLARE(TRAIT, ##__VA_ARGS__) { \
     public: \
-        const Self &self() const { \
-            CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
-            return *reinterpret_cast<const Self *>(this); \
-        } \
-        Self &self() { \
-            CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
-            return *reinterpret_cast<Self *>(this); \
-        }; \
+        CRUST_USE_SELF(TRAIT); \
     private:
+
+#define CRUST_USE_BASE_EQ(SELF, BASE) \
+    void __detect_trait_partial_eq(const SELF &other) const { \
+        using Base = typename ::crust::__impl_type::ExtractType<void(BASE)>::Result; \
+        static_cast<const Base *>(this)->__detect_trait_partial_eq(other); \
+    } \
+    void __detect_trait_eq(const SELF &other) const { \
+        using Base = typename ::crust::__impl_type::ExtractType<void(BASE)>::Result; \
+        static_cast<const Base *>(this)->__detect_trait_eq(other); \
+    }
+
+#define CRUST_USE_BASE_CONSTRUCTOR(SELF, BASE) \
+    template<class ...Args> \
+    SELF(Args ...args) : ::crust::__impl_type::ExtractType<void(BASE)>::Result{ \
+            ::crust::forward<Args>(args)... \
+    } {}
+
+
+#define CRUST_ENUM_USE_BASE(SELF, BASE) \
+    CRUST_USE_BASE_CONSTRUCTOR(SELF, BASE) \
+    CRUST_USE_BASE_EQ(SELF, BASE)
+
+#define CRUST_USE_BASE_CONSTRUCTOR_EXPLICIT(SELF, BASE) \
+    template<class ...Args> \
+    explicit SELF(Args ...args) : ::crust::__impl_type::ExtractType<void(BASE)>::Result{ \
+            ::crust::forward<Args>(args)... \
+    } {}
+
+#define CRUST_ENUM_FIELD(NAME, ...) \
+    struct NAME : \
+            public Tuple<__VA_ARGS__> { \
+        CRUST_USE_BASE_CONSTRUCTOR_EXPLICIT(NAME, (Tuple<__VA_ARGS__>)); \
+        CRUST_USE_BASE_EQ(NAME, (Tuple<__VA_ARGS__>)) \
+    }
 }
 
 

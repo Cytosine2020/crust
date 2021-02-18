@@ -55,7 +55,7 @@ struct MemberFnClosureWrapper<Return(Self::*)(Args...), f> {
     ::crust::MemberFnClosureWrapper<decltype(PTR), PTR>
 
 
-namespace __impl {
+namespace __impl_raw_fn {
 template<class F, F *f>
 class RawFn;
 
@@ -145,8 +145,8 @@ template<class F, class T>
 FnMut<T, F> make_fn_mut(T &&f) { return FnMut<T, F>(forward<T>(f)); }
 
 template<class F, F *f>
-FnMut<__impl::RawFn<F, f>, F> make_fn_mut() {
-    return FnMut<__impl::RawFn<F, f>, F>(__impl::RawFn<F, f>{});
+FnMut<__impl_raw_fn::RawFn<F, f>, F> make_fn_mut() {
+    return FnMut<__impl_raw_fn::RawFn<F, f>, F>(__impl_raw_fn::RawFn<F, f>{});
 }
 
 #define CRUST_MAKE_FN_MUT(f) ::crust::make_fn_mut<decltype(f), f>()
@@ -192,8 +192,8 @@ template<class F, class T>
 Fn<T, F> make_fn(T &&f) { return Fn<T, F>(forward<T>(f)); }
 
 template<class F, F *f>
-Fn<__impl::RawFn<F, f>, F> make_fn() {
-    return Fn<__impl::RawFn<F, f>, F>(__impl::RawFn<F, f>{});
+Fn<__impl_raw_fn::RawFn<F, f>, F> make_fn() {
+    return Fn<__impl_raw_fn::RawFn<F, f>, F>(__impl_raw_fn::RawFn<F, f>{});
 }
 
 #define CRUST_MAKE_FN(f) ::crust::make_fn<decltype(f), f>()
@@ -204,10 +204,10 @@ class DynFnMut;
 template<class Result, class ...Args>
 class DynFnMut<Result(Args...)> {
 private:
-    using VTable = __impl::FnMutVTable<Result, Args...>;
+    using VTable = __impl_raw_fn::FnMutVTable<Result, Args...>;
 
     template<class Self>
-    using StaticVTable = __impl::StaticFnMutVTable<Self, Result, Args...>;
+    using StaticVTable = __impl_raw_fn::StaticFnMutVTable<Self, Result, Args...>;
 
     void *self;
     const VTable *vtable;
@@ -224,8 +224,8 @@ public:
             self{new Self{forward<Self>(self)}}, vtable{&StaticVTable<Self>::vtable} {}
 
     template<class F, F f>
-    explicit DynFnMut(__impl::RawFn<F, f>) :
-            self{nullptr}, vtable{&StaticVTable<__impl::RawFn<F, f>>::vtable} {}
+    explicit DynFnMut(__impl_raw_fn::RawFn<F, f>) :
+            self{nullptr}, vtable{&StaticVTable<__impl_raw_fn::RawFn<F, f>>::vtable} {}
 
     DynFnMut(DynFnMut &&other) noexcept {
         if (this != &other) {
@@ -262,7 +262,7 @@ template<class F, class T>
 DynFnMut<F> make_dyn_fn_mut(T &&f) { return DynFnMut<F>(forward<T>(f)); }
 
 template<class F, F *f>
-DynFnMut<F> make_dyn_fn_mut() { return DynFnMut<F>(__impl::RawFn<F, f>{}); }
+DynFnMut<F> make_dyn_fn_mut() { return DynFnMut<F>(__impl_raw_fn::RawFn<F, f>{}); }
 
 #define CRUST_MAKE_DYN_FN_MUT(f) ::crust::make_dyn_fn_mut<decltype(f), f>()
 
@@ -273,10 +273,10 @@ class DynFn;
 template<class Result, class ...Args>
 class DynFn<Result(Args...)> {
 private:
-    using VTable = __impl::FnVTable<Result, Args...>;
+    using VTable = __impl_raw_fn::FnVTable<Result, Args...>;
 
     template<class Self>
-    using StaticVTable = __impl::StaticFnVTable<Self, Result, Args...>;
+    using StaticVTable = __impl_raw_fn::StaticFnVTable<Self, Result, Args...>;
 
     void *self;
     const VTable *vtable;
@@ -293,8 +293,8 @@ public:
             self{new Self{forward<Self>(self)}}, vtable{&StaticVTable<Self>::vtable} {}
 
     template<class F, F f>
-    explicit DynFn(__impl::RawFn<F, f>) :
-            self{nullptr}, vtable{&StaticVTable<__impl::RawFn<F, f>>::vtable} {}
+    explicit DynFn(__impl_raw_fn::RawFn<F, f>) :
+            self{nullptr}, vtable{&StaticVTable<__impl_raw_fn::RawFn<F, f>>::vtable} {}
 
     DynFn(DynFn &&other) noexcept {
         if (this != &other) {
@@ -330,7 +330,7 @@ template<class F, class T>
 DynFn<F> make_dyn_fn(T &&f) { return DynFn<F>(forward<T>(f)); }
 
 template<class F, F *f>
-DynFn<F> make_dyn_fn() { return DynFn<F>(__impl::RawFn<F, f>{}); }
+DynFn<F> make_dyn_fn() { return DynFn<F>(__impl_raw_fn::RawFn<F, f>{}); }
 
 #define CRUST_MAKE_DYN_FN(f) ::crust::make_dyn_fn<decltype(f), f>()
 }
