@@ -38,8 +38,9 @@ inline constexpr Option<Ordering> TupleHolder<>::partial_cmp(const TupleHolder &
     return make_some(Ordering::equal());
 }
 
-inline constexpr Ordering
-TupleHolder<>::cmp(const TupleHolder &) const { return Ordering::equal(); }
+inline constexpr Ordering TupleHolder<>::cmp(const TupleHolder &) const {
+    return Ordering::equal();
+}
 }
 
 template<class ...Fields>

@@ -197,6 +197,8 @@ private:
 public:
     template<usize index> using __Result = typename __Getter<index>::Result;
 
+    static constexpr usize __size = sizeof...(Fields);
+
     constexpr Tuple() noexcept: holder{} {}
 
     template<class ...Ts>

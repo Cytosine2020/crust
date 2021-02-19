@@ -235,7 +235,7 @@ struct ExtractType<void(Type)> {
 
 
 #define CRUST_ENUM_USE_BASE(SELF, BASE) \
-    CRUST_USE_BASE_CONSTRUCTOR(SELF, BASE) \
+    CRUST_USE_BASE_CONSTRUCTOR(SELF, BASE); \
     CRUST_USE_BASE_EQ(SELF, BASE)
 
 #define CRUST_USE_BASE_CONSTRUCTOR_EXPLICIT(SELF, BASE) \
@@ -249,7 +249,7 @@ struct ExtractType<void(Type)> {
     struct NAME : \
             public Tuple<__VA_ARGS__> { \
         CRUST_USE_BASE_CONSTRUCTOR_EXPLICIT(NAME, (Tuple<__VA_ARGS__>)); \
-        CRUST_USE_BASE_EQ(NAME, (Tuple<__VA_ARGS__>)) \
+        CRUST_USE_BASE_EQ(NAME, (Tuple<__VA_ARGS__>)); \
     }
 }
 

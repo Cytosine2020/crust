@@ -68,15 +68,17 @@ int main() {
     }
 
     {
-        CRUST_ASSERT(make_tuple(1, 'a') == max_by_key(make_tuple(0, 'b'), make_tuple(1, 'a'),
-                                                      make_fn([](const Tuple<i32, char> &value) {
-                                                          return value.get<0>();
-                                                      })));
+        CRUST_ASSERT(make_tuple(1, 'a') == max_by_key(
+                make_tuple(0, 'b'), make_tuple(1, 'a'), make_fn([](const Tuple<i32, char> &value) {
+                    return value.get<0>();
+                }))
+        );
 
-        CRUST_ASSERT(make_tuple(0, 'b') == max_by_key(make_tuple(0, 'b'), make_tuple(1, 'a'),
-                                                      make_fn([](const Tuple<i32, char> &value) {
-                                                          return value.get<1>();
-                                                      })));
+        CRUST_ASSERT(make_tuple(0, 'b') == max_by_key(
+                make_tuple(0, 'b'), make_tuple(1, 'a'), make_fn([](const Tuple<i32, char> &value) {
+                    return value.get<1>();
+                }))
+        );
     }
 
     {

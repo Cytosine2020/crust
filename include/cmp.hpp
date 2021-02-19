@@ -67,15 +67,15 @@ private:
     struct __ThenWith {
         Fn<F, Ordering()> &&f;
 
-        Ordering operator()(const Equal &) { return f(); }
+        CRUST_CXX14_CONSTEXPR Ordering operator()(const Equal &) { return f(); }
 
         template<class T>
-        Ordering operator()(const T &) { return T{}; }
+        CRUST_CXX14_CONSTEXPR Ordering operator()(const T &) { return T{}; }
     };
 
 public:
     template<class F>
-    Ordering then_with(Fn<F, Ordering()> &&f) const {
+    CRUST_CXX14_CONSTEXPR Ordering then_with(Fn<F, Ordering()> &&f) const {
         return this->template visit<__ThenWith<F>, Ordering>({move(f)});
     }
 
@@ -88,16 +88,16 @@ private:
         constexpr u32 operator()(const Greater &) const { return 1; }
     };
 
-    u32 to_u32() const { return this->template visit<__ToU32, u32>(); }
+    CRUST_CXX14_CONSTEXPR u32 to_u32() const { return this->template visit<__ToU32, u32>(); }
 
 public:
     /// impl PartialOrd
 
-    Option<Ordering> partial_cmp(const Ordering &other) const;
+    CRUST_CXX14_CONSTEXPR Option<Ordering> partial_cmp(const Ordering &other) const;
 
     /// impl Ord
 
-    Ordering cmp(const Ordering &other) const;
+    CRUST_CXX14_CONSTEXPR Ordering cmp(const Ordering &other) const;
 };
 
 namespace __impl_cmp {
@@ -187,11 +187,11 @@ IMPL_OPERATOR_CMP(i64);
 
 #undef IMPL_OPERATOR_CMP
 
-Option<Ordering> Ordering::partial_cmp(const Ordering &other) const {
+CRUST_CXX14_CONSTEXPR Option<Ordering> Ordering::partial_cmp(const Ordering &other) const {
     return operator_partial_cmp(this->to_u32(), other.to_u32());
 }
 
-Ordering Ordering::cmp(const Ordering &other) const {
+CRUST_CXX14_CONSTEXPR Ordering Ordering::cmp(const Ordering &other) const {
     return operator_cmp(this->to_u32(), other.to_u32());
 }
 

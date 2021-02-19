@@ -28,9 +28,9 @@ private:
     };
 
 public:
-    bool is_some() const { return this->template visit<IsSome, bool>(); }
+    CRUST_CXX14_CONSTEXPR bool is_some() const { return this->template visit<IsSome, bool>(); }
 
-    bool is_none() const { return !is_some(); }
+    CRUST_CXX14_CONSTEXPR bool is_none() const { return !is_some(); }
 
 private:
     struct Contains {
@@ -44,7 +44,7 @@ private:
     };
 
 public:
-    constexpr bool contains(const T &other) const {
+    CRUST_CXX14_CONSTEXPR bool contains(const T &other) const {
         return this->template visit<Contains, bool>({other});
     }
 
@@ -52,7 +52,7 @@ private:
     struct AsPtr;
 
 public:
-    constexpr Option<const T *> as_ptr() const {
+    CRUST_CXX14_CONSTEXPR Option<const T *> as_ptr() const {
         return this->template visit<AsPtr, Option<const T *>>();
     }
 
@@ -60,13 +60,17 @@ private:
     struct AsMutPtr;
 
 public:
-    Option<T *> as_mut_ptr() { return this->template visit<AsMutPtr, Option<T *>>(); }
+    CRUST_CXX14_CONSTEXPR Option<T *> as_mut_ptr() {
+        return this->template visit<AsMutPtr, Option<T *>>();
+    }
 
 private:
     struct Unwrap {
-        T &&operator()(Some<T> &&value) { return move(value); }
+        constexpr T &&operator()(Some<T> &&value) const { return move(value); }
 
-        T &&operator()(None &&) { crust_panic("called `Option::unwrap()` on a `None` value"); }
+        CRUST_CXX14_CONSTEXPR T &&operator()(None &&) const {
+            crust_panic("called `Option::unwrap()` on a `None` value");
+        }
     };
 
 public:
@@ -76,13 +80,15 @@ private:
     struct UnwrapOr {
         T &&d;
 
-        T &&operator()(Some<T> &&value) { return move(value); }
+        CRUST_CXX14_CONSTEXPR T &&operator()(Some<T> &&value) { return move(value); }
 
-        T &&operator()(None &&) { return move(d); }
+        CRUST_CXX14_CONSTEXPR T &&operator()(None &&) { return move(d); }
     };
 
 public:
-    T &&unwrap_or(T &&d) { return this->template visit_move<UnwrapOr, T &&>({d}); }
+    CRUST_CXX14_CONSTEXPR T &&unwrap_or(T &&d) {
+        return this->template visit_move<UnwrapOr, T &&>({d});
+    }
 
 private:
     template<class F, class Arg, class U>
@@ -90,7 +96,7 @@ private:
 
 public:
     template<class F, class Arg, class U>
-    Option<U> map(Fn<F, U(Arg)> &&f) const {
+    CRUST_CXX14_CONSTEXPR Option<U> map(Fn<F, U(Arg)> &&f) const {
         return this->template visit<Map<F, Arg, U>, Option<U>>({move(f)});
     }
 
@@ -100,14 +106,16 @@ private:
         U &&d;
         Fn<F, U(Arg)> &&f;
 
-        U operator()(const Some<T> &value) { return f(value.template get<0>()); }
+        CRUST_CXX14_CONSTEXPR U operator()(const Some<T> &value) {
+            return f(value.template get<0>());
+        }
 
-        U operator()(const None &) { return forward<U>(d); }
+        CRUST_CXX14_CONSTEXPR U operator()(const None &) { return forward<U>(d); }
     };
 
 public:
     template<class F, class Arg, class U>
-    U map_or(U &&d, Fn<F, U(Arg)> &&f) const {
+    CRUST_CXX14_CONSTEXPR U map_or(U &&d, Fn<F, U(Arg)> &&f) const {
         return this->template visit<MapOr<F, Arg, U>, U>({d, move(f)});
     }
 };

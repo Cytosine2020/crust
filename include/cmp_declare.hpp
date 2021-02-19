@@ -102,7 +102,7 @@ CRUST_TRAIT(Ord)
 public:
     Ordering cmp(const Self &other) const;
 
-    Self &&max(Self &&other) {
+    CRUST_CXX14_CONSTEXPR Self &&max(Self &&other) {
         if (self() > other) {
             return move(self());
         } else {
@@ -110,7 +110,7 @@ public:
         }
     }
 
-    Self &&min(Self &&other) {
+    CRUST_CXX14_CONSTEXPR Self &&min(Self &&other) {
         if (self() > other) {
             return move(other);
         } else {
@@ -118,7 +118,7 @@ public:
         }
     }
 
-    Self &&clamp(Self &&min, Self &&max) {
+    CRUST_CXX14_CONSTEXPR Self &&clamp(Self &&min, Self &&max) {
         CRUST_ASSERT(min <= max);
         if (self() < min) {
             return move(min);

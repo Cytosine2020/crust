@@ -23,7 +23,7 @@ template<class Base, class Self, class Ret, class ...Args, Ret (Self::*f)(Args..
 struct MemberFnStaticWrapper<Base, Ret (Self::*)(Args...), f> {
     using Inner = Ret(Base *, Args...);
 
-    constexpr static Ret inner(Base *self, Args...args) {
+    static constexpr Ret inner(Base *self, Args...args) {
         return (reinterpret_cast<Self *>(self)->*f)(forward<Args>(args)...);
     }
 };
@@ -35,7 +35,9 @@ template<class Base, class Self>
 struct DestructorStaticWrapper {
     using Inner = void(Base *);
 
-    static void inner(Base *self) { reinterpret_cast<Self *>(self)->~Self(); }
+    static CRUST_CXX14_CONSTEXPR void inner(Base *self) {
+        reinterpret_cast<Self *>(self)->~Self();
+    }
 };
 
 template<class F, F f>
@@ -62,9 +64,9 @@ class RawFn;
 template<class Result, class ...Args, Result(*f)(Args...)>
 class RawFn<Result(Args...), f> {
 public:
-    Result operator()(Args ...args) { return f(args...); }
+    CRUST_CXX14_CONSTEXPR Result operator()(Args ...args) { return f(args...); }
 
-    Result operator()(Args ...args) const { return f(args...); }
+    constexpr Result operator()(Args ...args) const { return f(args...); }
 };
 
 
@@ -81,7 +83,7 @@ template<class Self, class Result, class ...Args>
 struct StaticFnMutVTable {
     const static FnMutVTable<Result, Args...> vtable;
 
-    static Result call_mut(void *self, Args ...args) {
+    static CRUST_CXX14_CONSTEXPR Result call_mut(void *self, Args ...args) {
         (*reinterpret_cast<Self *>(self))(forward<Args>(args)...);
     }
 };
@@ -100,14 +102,14 @@ struct FnVTable {
 
     usize size, align;
 
-    Result (*call_mut)(const void *, Args...);
+    Result (*call)(const void *, Args...);
 };
 
 template<class Self, class Result, class ...Args>
 struct StaticFnVTable {
     const static FnVTable<Result, Args...> vtable;
 
-    static Result call(const void *self, Args ...args) {
+    static CRUST_CXX14_CONSTEXPR Result call(const void *self, Args ...args) {
         (*reinterpret_cast<const Self *>(self))(forward<Args>(args)...);
     }
 };
@@ -244,7 +246,7 @@ public:
         }
     }
 
-    Result operator()(Args ...args) {
+    CRUST_CXX14_CONSTEXPR Result operator()(Args ...args) {
         return vtable->call_mut(self, forward<Args>(args)...);
     }
 
@@ -313,8 +315,8 @@ public:
         }
     }
 
-    Result operator()(Args ...args) const {
-        return vtable->call_mut(self, forward<Args>(args)...);
+    constexpr Result operator()(Args ...args) const {
+        return vtable->call(self, forward<Args>(args)...);
     }
 
     ~DynFn() { if (self != nullptr) { drop(); }}
