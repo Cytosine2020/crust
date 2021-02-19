@@ -57,7 +57,6 @@ void _assert(const char *file, int line, const char *msg, bool condition) {
     if (!condition) {
         _abort(file, line, msg);
     }
-
 }
 
 #define CRUST_ASSERT(...) ::crust::_assert(__FILE__, __LINE__, #__VA_ARGS__, __VA_ARGS__)
@@ -202,13 +201,13 @@ struct ExtractType<void(Type)> {
     class TRAIT
 
 #define CRUST_USE_SELF(TRAIT) \
-    const Self &self() const { \
+    constexpr const Self &self() const { \
         CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
-        return *reinterpret_cast<const Self *>(this); \
+        return *static_cast<const Self *>(this); \
     } \
-    Self &self() { \
+    CRUST_CXX14_CONSTEXPR Self &self() { \
         CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
-        return *reinterpret_cast<Self *>(this); \
+        return *static_cast<Self *>(this); \
     }
 
 #define CRUST_TRAIT(TRAIT, ...) \
@@ -229,8 +228,9 @@ struct ExtractType<void(Type)> {
 
 #define CRUST_USE_BASE_CONSTRUCTOR(SELF, BASE) \
     template<class ...Args> \
-    SELF(Args ...args) : ::crust::__impl_type::ExtractType<void(BASE)>::Result{ \
-            ::crust::forward<Args>(args)... \
+    constexpr SELF(Args ...args) :             \
+            ::crust::__impl_type::ExtractType<void(BASE)>::Result{ \
+                    ::crust::forward<Args>(args)... \
     } {}
 
 
@@ -240,8 +240,9 @@ struct ExtractType<void(Type)> {
 
 #define CRUST_USE_BASE_CONSTRUCTOR_EXPLICIT(SELF, BASE) \
     template<class ...Args> \
-    explicit SELF(Args ...args) : ::crust::__impl_type::ExtractType<void(BASE)>::Result{ \
-            ::crust::forward<Args>(args)... \
+    explicit constexpr SELF(Args ...args) :             \
+            ::crust::__impl_type::ExtractType<void(BASE)>::Result{ \
+                    ::crust::forward<Args>(args)... \
     } {}
 
 #define CRUST_ENUM_FIELD(NAME, ...) \

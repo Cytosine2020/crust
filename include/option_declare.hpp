@@ -22,9 +22,9 @@ public:
 
 private:
     struct IsSome {
-        bool operator()(const Some<T> &) { return true; }
+        constexpr bool operator()(const Some<T> &) const { return true; }
 
-        bool operator()(const None &) { return false; }
+        constexpr bool operator()(const None &) const { return false; }
     };
 
 public:
@@ -36,19 +36,25 @@ private:
     struct Contains {
         const T &other;
 
-        bool operator()(const Some<T> &value) { return value.template get<0>() == other; }
+        constexpr bool operator()(const Some<T> &value) const {
+            return value.template get<0>() == other;
+        }
 
-        bool operator()(const None &) { return false; }
+        constexpr bool operator()(const None &) const { return false; }
     };
 
 public:
-    bool contains(const T &other) const { return this->template visit<Contains, bool>({other}); }
+    constexpr bool contains(const T &other) const {
+        return this->template visit<Contains, bool>({other});
+    }
 
 private:
     struct AsPtr;
 
 public:
-    Option<const T *> as_ptr() const { return this->template visit<AsPtr, Option<const T *>>(); }
+    constexpr Option<const T *> as_ptr() const {
+        return this->template visit<AsPtr, Option<const T *>>();
+    }
 
 private:
     struct AsMutPtr;
@@ -84,15 +90,15 @@ private:
 
 public:
     template<class F, class Arg, class U>
-    Option<U> map(const Fn<F, U(Arg)> &f) const {
-        return this->template visit<Map<F, Arg, U>, Option<U>>({f});
+    Option<U> map(Fn<F, U(Arg)> &&f) const {
+        return this->template visit<Map<F, Arg, U>, Option<U>>({move(f)});
     }
 
 private:
     template<class F, class Arg, class U>
     struct MapOr {
         U &&d;
-        const Fn<F, U(Arg)> &f;
+        Fn<F, U(Arg)> &&f;
 
         U operator()(const Some<T> &value) { return f(value.template get<0>()); }
 
@@ -101,8 +107,8 @@ private:
 
 public:
     template<class F, class Arg, class U>
-    U map_or(U &&d, const Fn<F, U(Arg)> &f) const {
-        return this->template visit<MapOr<F, Arg, U>, U>({d, f});
+    U map_or(U &&d, Fn<F, U(Arg)> &&f) const {
+        return this->template visit<MapOr<F, Arg, U>, U>({d, move(f)});
     }
 };
 }

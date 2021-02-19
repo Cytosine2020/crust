@@ -45,53 +45,37 @@ struct TupleHolder<Field, Fields...> : public Impl<
 
     /// impl PartialEq
 
-    bool eq(const TupleHolder &other) const {
-        return this->field == other.field && this->remains == other.remains;
+    constexpr bool eq(const TupleHolder &other) const {
+        return field == other.field && remains == other.remains;
     }
 
-    bool ne(const TupleHolder &other) const {
-        return this->field != other.field || this->remains != other.remains;
+    constexpr bool ne(const TupleHolder &other) const {
+        return field != other.field || remains != other.remains;
     }
 
     /// impl PartialOrd
 
-    Option<Ordering> partial_cmp(const TupleHolder &other) const;
+constexpr Option<Ordering> partial_cmp(const TupleHolder &other) const;
 
-    bool lt(const TupleHolder &other) const {
-        if (this->field != other.field) {
-            return this->field < other.field;
-        } else {
-            return this->remains < other.remains;
-        }
+    constexpr bool lt(const TupleHolder &other) const {
+        return field != other.field ? field < other.field : remains < other.remains;
     }
 
-    bool le(const TupleHolder &other) const {
-        if (this->field != other.field) {
-            return this->field <= other.field;
-        } else {
-            return this->remains <= other.remains;
-        }
+    constexpr bool le(const TupleHolder &other) const {
+        return field != other.field ? field <= other.field : remains <= other.remains;
     }
 
-    bool gt(const TupleHolder &other) const {
-        if (this->field != other.field) {
-            return this->field > other.field;
-        } else {
-            return this->remains > other.remains;
-        }
+    constexpr bool gt(const TupleHolder &other) const {
+        return field != other.field ? field > other.field : remains > other.remains;
     }
 
-    bool ge(const TupleHolder &other) const {
-        if (this->field != other.field) {
-            return this->field >= other.field;
-        } else {
-            return this->remains >= other.remains;
-        }
+    constexpr bool ge(const TupleHolder &other) const {
+        return field != other.field ? field >= other.field : remains >= other.remains;
     }
 
     /// impl Ord
 
-    Ordering cmp(const TupleHolder &other) const;
+    constexpr Ordering cmp(const TupleHolder &other) const;
 };
 
 template<class Field>
@@ -109,25 +93,25 @@ struct TupleHolder<Field> :
 
     /// impl PartialEq
 
-    bool eq(const TupleHolder &other) const { return this->field == other.field; }
+    constexpr bool eq(const TupleHolder &other) const { return field == other.field; }
 
-    bool ne(const TupleHolder &other) const { return this->field != other.field; }
+    constexpr bool ne(const TupleHolder &other) const { return field != other.field; }
 
     /// impl PartialOrd
 
-    Option<Ordering> partial_cmp(const TupleHolder &other) const;
+    constexpr Option<Ordering> partial_cmp(const TupleHolder &other) const;
 
-    bool lt(const TupleHolder &other) const { return this->field < other.field; }
+    constexpr bool lt(const TupleHolder &other) const { return field < other.field; }
 
-    bool le(const TupleHolder &other) const { return this->field <= other.field; }
+    constexpr bool le(const TupleHolder &other) const { return field <= other.field; }
 
-    bool gt(const TupleHolder &other) const { return this->field > other.field; }
+    constexpr bool gt(const TupleHolder &other) const { return field > other.field; }
 
-    bool ge(const TupleHolder &other) const { return this->field >= other.field; }
+    constexpr bool ge(const TupleHolder &other) const { return field >= other.field; }
 
     /// impl Ord
 
-    Ordering cmp(const TupleHolder &other) const;
+    constexpr Ordering cmp(const TupleHolder &other) const;
 };
 
 template<>
@@ -136,15 +120,15 @@ struct TupleHolder<> :
         public PartialOrd<TupleHolder<>>, public Ord<TupleHolder<>> {
     /// impl PartialEq
 
-    bool eq(const TupleHolder &) const { return true; }
+    constexpr bool eq(const TupleHolder &) const { return true; }
 
     /// impl PartialOrd
 
-    Option<Ordering> partial_cmp(const TupleHolder &) const;
+    constexpr Option<Ordering> partial_cmp(const TupleHolder &) const;
 
     /// impl Ord
 
-    Ordering cmp(const TupleHolder &) const;
+    constexpr Ordering cmp(const TupleHolder &) const;
 };
 
 template<usize index, class ...Fields>
@@ -236,25 +220,25 @@ public:
 
     /// impl PartialEq
 
-    bool eq(const Tuple &other) const { return this->holder == other.holder; }
+    constexpr bool eq(const Tuple &other) const { return holder == other.holder; }
 
-    bool ne(const Tuple &other) const { return this->holder != other.holder; }
+    constexpr bool ne(const Tuple &other) const { return holder != other.holder; }
 
     /// impl PartialOrd
 
-    Option<Ordering> partial_cmp(const Tuple &other) const;
+    constexpr Option<Ordering> partial_cmp(const Tuple &other) const;
 
-    bool lt(const Tuple &other) const { return this->holder < other.holder; }
+    constexpr bool lt(const Tuple &other) const { return holder < other.holder; }
 
-    bool le(const Tuple &other) const { return this->holder <= other.holder; }
+    constexpr bool le(const Tuple &other) const { return holder <= other.holder; }
 
-    bool gt(const Tuple &other) const { return this->holder > other.holder; }
+    constexpr bool gt(const Tuple &other) const { return holder > other.holder; }
 
-    bool ge(const Tuple &other) const { return this->holder >= other.holder; }
+    constexpr bool ge(const Tuple &other) const { return holder >= other.holder; }
 
     /// impl Ord
 
-    Ordering cmp(const Tuple &other) const;
+    constexpr Ordering cmp(const Tuple &other) const;
 };
 
 template<class ...Fields>

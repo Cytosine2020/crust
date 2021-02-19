@@ -29,19 +29,19 @@ public:
 
     CRUST_ENUM_USE_BASE(Ordering, (Enum<Less, Equal, Greater>));
 
-    static Ordering less() { return Less{}; }
+    static constexpr Ordering less() { return Less{}; }
 
-    static Ordering equal() { return Equal{}; }
+    static constexpr Ordering equal() { return Equal{}; }
 
-    static Ordering greater() { return Greater{}; }
+    static constexpr Ordering greater() { return Greater{}; }
 
 private:
     struct __Reverse {
-        Ordering operator()(const Less &) { return Greater{}; }
+        constexpr Ordering operator()(const Less &) const { return Greater{}; }
 
-        Ordering operator()(const Equal &) { return Equal{}; }
+        constexpr Ordering operator()(const Equal &) const { return Equal{}; }
 
-        Ordering operator()(const Greater &) { return Less{}; }
+        constexpr Ordering operator()(const Greater &) const { return Less{}; }
     };
 
 public:
@@ -51,10 +51,10 @@ private:
     struct __Then {
         const Ordering &other;
 
-        Ordering operator()(const Equal &) { return other; }
+        constexpr Ordering operator()(const Equal &) const { return other; }
 
         template<class T>
-        Ordering operator()(const T &) { return T{}; }
+        constexpr Ordering operator()(const T &) const { return T{}; }
     };
 
 public:
@@ -65,7 +65,7 @@ public:
 private:
     template<class F>
     struct __ThenWith {
-        const Fn<F, Ordering()> &f;
+        Fn<F, Ordering()> &&f;
 
         Ordering operator()(const Equal &) { return f(); }
 
@@ -75,17 +75,17 @@ private:
 
 public:
     template<class F>
-    Ordering then_with(const Fn<F, Ordering()> &f) const {
-        return this->template visit<__ThenWith<F>, Ordering>({f});
+    Ordering then_with(Fn<F, Ordering()> &&f) const {
+        return this->template visit<__ThenWith<F>, Ordering>({move(f)});
     }
 
 private:
     struct __ToU32 {
-        u32 operator()(const Less &) { return -1; }
+        constexpr u32 operator()(const Less &) const { return -1; }
 
-        u32 operator()(const Equal &) { return 0; }
+        constexpr u32 operator()(const Equal &) const { return 0; }
 
-        u32 operator()(const Greater &) { return 1; }
+        constexpr u32 operator()(const Greater &) const { return 1; }
     };
 
     u32 to_u32() const { return this->template visit<__ToU32, u32>(); }
@@ -103,42 +103,42 @@ public:
 namespace __impl_cmp {
 template<class T, class U, bool = CRUST_DERIVE(T, Ord)>
 struct CmpHelper {
-    static Option<Ordering> inner(const T &v1, const U &v2) {
+    constexpr static Option<Ordering> inner(const T &v1, const U &v2) {
         return operator_partial_cmp(v1, v2);
     }
 };
 
 template<class T>
 struct CmpHelper<T, T, true> {
-    static Option<Ordering> inner(const T &v1, const T &v2) {
+    constexpr static Option<Ordering> inner(const T &v1, const T &v2) {
         return make_some(operator_cmp(v1, v2));
     }
 };
 }
 
 template<class Self, class Rhs>
-Option<Ordering> PartialOrd<Self, Rhs>::cmp_helper(const Rhs &other) const {
+constexpr Option<Ordering> PartialOrd<Self, Rhs>::cmp_helper(const Rhs &other) const {
     return __impl_cmp::CmpHelper<Self, Rhs>::inner(self(), other);
 }
 
 template<class Self, class Rhs>
-bool PartialOrd<Self, Rhs>::lt(const Rhs &other) const {
+constexpr bool PartialOrd<Self, Rhs>::lt(const Rhs &other) const {
     return self().cmp_helper(other) == make_some(Ordering::less());
 }
 
 template<class Self, class Rhs>
-bool PartialOrd<Self, Rhs>::le(const Rhs &other) const {
+constexpr bool PartialOrd<Self, Rhs>::le(const Rhs &other) const {
     return self().cmp_helper(other) == make_some(Ordering::less()) ||
            self().cmp_helper(other) == make_some(Ordering::equal());
 }
 
 template<class Self, class Rhs>
-bool PartialOrd<Self, Rhs>::gt(const Rhs &other) const {
+constexpr bool PartialOrd<Self, Rhs>::gt(const Rhs &other) const {
     return self().cmp_helper(other) == make_some(Ordering::greater());
 }
 
 template<class Self, class Rhs>
-bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
+constexpr bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
     return self().cmp_helper(other) == make_some(Ordering::greater()) ||
            self().cmp_helper(other) == make_some(Ordering::equal());
 }
@@ -148,18 +148,22 @@ bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
 /// available for c++20), following two functions are for invoking `partial_cmp' or `cmp'
 /// for both struct implemented `PartialOrd' or `Ord' trait and primitive types.
 template<class T, class U>
-Option<Ordering> operator_partial_cmp(const T &v1, const U &v2) { return v1.partial_cmp(v2); }
+constexpr Option<Ordering> operator_partial_cmp(const T &v1, const U &v2) {
+    return v1.partial_cmp(v2);
+}
 
 template<class T, class U>
-Ordering operator_cmp(const T &v1, const U &v2) { return v1.cmp(v2); }
+constexpr Ordering operator_cmp(const T &v1, const U &v2) {
+    return v1.cmp(v2);
+}
 
 #define IMPL_OPERATOR_CMP(type) \
-template<> inline Ordering operator_cmp(const type &v1, const type &v2) { \
-    if (v1 < v2) { return Ordering::less(); } \
-    else if (v1 > v2) { return Ordering::greater(); } \
-    else { return Ordering::equal(); } \
+template<> \
+inline constexpr Ordering operator_cmp(const type &v1, const type &v2) { \
+    return v1 < v2 ? Ordering::less() : v1 > v2 ? Ordering::greater() : Ordering::equal(); \
 }\
-template<> inline Option<Ordering> operator_partial_cmp(const type &v1, const type &v2) { \
+template<> \
+inline constexpr Option<Ordering> operator_partial_cmp(const type &v1, const type &v2) { \
     return make_some(operator_cmp(v1, v2)); \
 }
 
@@ -192,48 +196,40 @@ Ordering Ordering::cmp(const Ordering &other) const {
 }
 
 template<class T>
-T min(T &&v1, T &&v2) {
-    CRUST_STATIC_ASSERT(!IsLValueReference<T>::result && CRUST_DERIVE(T, Ord));
+constexpr T min(T &&v1, T &&v2) {
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
     return v1.min(v2);
 }
 
 template<class T, class F>
-T min_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
-    CRUST_STATIC_ASSERT(!IsLValueReference<T>::result && CRUST_DERIVE(T, Ord));
-    if (compare(v1, v2) == Ordering::greater()) {
-        return forward<T>(v2);
-    } else {
-        return forward<T>(v1);
-    }
+constexpr T min_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
+    return compare(v1, v2) == Ordering::greater() ? forward<T>(v2) : forward<T>(v1);
 }
 
 template<class T, class F, class K>
-T min_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
-    CRUST_STATIC_ASSERT(!IsLValueReference<T>::result && CRUST_DERIVE(T, Ord));
+constexpr T min_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
     return min_by(forward<T>(v1), forward<T>(v2), make_fn([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
     }));
 }
 
 template<class T>
-T &&max(T &&v1, T &&v2) {
-    CRUST_STATIC_ASSERT(!IsLValueReference<T>::result && CRUST_DERIVE(T, Ord));
+constexpr T &&max(T &&v1, T &&v2) {
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
     return v1.max(v2);
 }
 
 template<class T, class F>
-T &&max_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
-    CRUST_STATIC_ASSERT(!IsLValueReference<T>::result && CRUST_DERIVE(T, Ord));
-    if (compare(v1, v2) == Ordering::greater()) {
-        return forward<T>(v1);
-    } else {
-        return forward<T>(v2);
-    }
+constexpr T &&max_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
+    return compare(v1, v2) == Ordering::greater() ? forward<T>(v1) : forward<T>(v2);
 }
 
 template<class T, class F, class K>
-T &&max_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
-    CRUST_STATIC_ASSERT(!IsLValueReference<T>::result && CRUST_DERIVE(T, Ord));
+constexpr T &&max_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
     return max_by(forward<T>(v1), forward<T>(v2), make_fn([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
     }));
@@ -250,25 +246,27 @@ public:
 
     /// impl PartialEq
 
-    bool eq(const Reverse &other) const { return inner == other.inner; }
+    constexpr bool eq(const Reverse &other) const { return inner == other.inner; }
 
     /// impl PartialOrd
 
-    Option<Ordering> partial_cmp(const Reverse &other) const {
+    constexpr Option<Ordering> partial_cmp(const Reverse &other) const {
         return operator_partial_cmp(other.inner, this->inner);
     }
 
-    bool lt(const Reverse &other) const { return other.inner < this->inner; }
+    constexpr bool lt(const Reverse &other) const { return other.inner < this->inner; }
 
-    bool le(const Reverse &other) const { return other.inner <= this->inner; }
+    constexpr bool le(const Reverse &other) const { return other.inner <= this->inner; }
 
-    bool gt(const Reverse &other) const { return other.inner > this->inner; }
+    constexpr bool gt(const Reverse &other) const { return other.inner > this->inner; }
 
-    bool ge(const Reverse &other) const { return other.inner >= this->inner; }
+    constexpr bool ge(const Reverse &other) const { return other.inner >= this->inner; }
 
     /// impl Ord
 
-    Ordering cmp(const Reverse &other) const { return operator_cmp(other.inner, this->inner); }
+    constexpr Ordering cmp(const Reverse &other) const {
+        return operator_cmp(other.inner, this->inner);
+    }
 };
 
 #define IMPL_PRIMITIVE(Trait) \

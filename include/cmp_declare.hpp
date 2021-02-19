@@ -17,11 +17,11 @@ public:
 
     bool eq(const Rhs &other) const;
 
-    bool ne(const Rhs &other) const { return !self().eq(other); }
+    constexpr bool ne(const Rhs &other) const { return !self().eq(other); }
 
-    bool operator==(const Rhs &other) const { return self().eq(other); }
+    constexpr bool operator==(const Rhs &other) const { return self().eq(other); }
 
-    bool operator!=(const Rhs &other) const { return self().ne(other); }
+    constexpr bool operator!=(const Rhs &other) const { return self().ne(other); }
 };
 
 CRUST_TRAIT(Eq)
@@ -76,26 +76,26 @@ class Ordering;
 CRUST_TRAIT(PartialOrd, class Rhs = Self)
 private:
     /// this function will choose `cmp' over `partial_cmp'
-    Option<Ordering> cmp_helper(const Rhs &other) const;
+    constexpr Option<Ordering> cmp_helper(const Rhs &other) const;
 
 public:
     Option<Ordering> partial_cmp(const Rhs &other) const;
 
-    bool lt(const Rhs &other) const;
+    constexpr bool lt(const Rhs &other) const;
 
-    bool le(const Rhs &other) const;
+    constexpr bool le(const Rhs &other) const;
 
-    bool gt(const Rhs &other) const;
+    constexpr bool gt(const Rhs &other) const;
 
-    bool ge(const Rhs &other) const;
+    constexpr bool ge(const Rhs &other) const;
 
-    bool operator<(const Rhs &other) const { return self().lt(other); }
+    constexpr bool operator<(const Rhs &other) const { return self().lt(other); }
 
-    bool operator<=(const Rhs &other) const { return self().le(other); }
+    constexpr bool operator<=(const Rhs &other) const { return self().le(other); }
 
-    bool operator>(const Rhs &other) const { return self().gt(other); }
+    constexpr bool operator>(const Rhs &other) const { return self().gt(other); }
 
-    bool operator>=(const Rhs &other) const { return self().ge(other); }
+    constexpr bool operator>=(const Rhs &other) const { return self().ge(other); }
 };
 
 CRUST_TRAIT(Ord)

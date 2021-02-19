@@ -83,6 +83,8 @@ int main() {
         CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), PartialEq));
         CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), Eq));
 
+        CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<>>::value);
+
         auto tuple = make_tuple(0, 'a');
 
         CRUST_ASSERT(tuple.get<0>() == 0);
@@ -94,7 +96,7 @@ int main() {
         CRUST_ASSERT(std::get<0>(tuple) == 1);
         CRUST_ASSERT(std::get<1>(tuple) == 'b');
 
-        CRUST_ASSERT(make_tuple() == make_tuple());
+        CRUST_STATIC_ASSERT(make_tuple() == make_tuple());
 
         CRUST_ASSERT(make_tuple(true) != make_tuple(false));
         CRUST_ASSERT(make_tuple(1) > make_tuple(0));
@@ -199,37 +201,38 @@ int main() {
 
     {
         struct VisitA {
-            A operator()(A &value) { return value; }
+            void operator()(A &) {}
 
-            A operator()(B &) { crust_panic(""); }
+            void operator()(B &) { crust_panic(""); }
         };
 
         struct VisitB {
-            B operator()(A &) { crust_panic(""); }
+            void operator()(A &) { crust_panic(""); }
 
-            B operator()(B &value) { return value; }
+            void operator()(B &) {}
         };
 
         Enum<A, B> a{};
 
         CRUST_STATIC_ASSERT(!CRUST_DERIVE((Enum<A, B>), PartialEq));
         CRUST_STATIC_ASSERT(!CRUST_DERIVE((Enum<A, B>), Eq));
+        CRUST_STATIC_ASSERT(!std::is_trivially_copyable<Enum<A, B>>::value);
 
         a = Enum<A, B>{A{}};
 
-        a.visit<VisitA, A>();
+        a.visit<VisitA>();
 
         a = Enum<A, B>{B{}};
 
-        a.visit<VisitB, B>();
+        a.visit<VisitB>();
 
         a = A{};
 
-        a.visit<VisitA, A>();
+        a.visit<VisitA>();
 
         a = B{};
 
-        a.visit<VisitB, B>();
+        a.visit<VisitB>();
     }
 
     printf("=====\n");
@@ -268,6 +271,9 @@ int main() {
         };
 
         Enum<A, B, C, D, E, F> a{};
+
+        CRUST_STATIC_ASSERT(std::is_trivially_copyable<Enum<A, B, C, D, E, F>>::value);
+        CRUST_STATIC_ASSERT(std::is_literal_type<Enum<A, B, C, D, E, F>>::value);
 
         a = A{};
         a.visit<Visit>();
