@@ -98,9 +98,9 @@ int main() {
 
         CRUST_STATIC_ASSERT(make_tuple() == make_tuple());
 
-        CRUST_ASSERT(make_tuple(true) != make_tuple(false));
-        CRUST_ASSERT(make_tuple(1) > make_tuple(0));
-        CRUST_ASSERT(make_tuple(0, 'b') > make_tuple(0, 'a'));
+        CRUST_STATIC_ASSERT(make_tuple(true) != make_tuple(false));
+        CRUST_STATIC_ASSERT(make_tuple(1) > make_tuple(0));
+        CRUST_STATIC_ASSERT(make_tuple(0, 'b') > make_tuple(0, 'a'));
 
         CRUST_ASSERT(make_tuple(0, 1).cmp(make_tuple(0, 0)) == Ordering::greater());
     }
@@ -212,13 +212,12 @@ int main() {
             void operator()(B &) {}
         };
 
-        Enum<A, B> a{};
-
         CRUST_STATIC_ASSERT(!CRUST_DERIVE((Enum<A, B>), PartialEq));
         CRUST_STATIC_ASSERT(!CRUST_DERIVE((Enum<A, B>), Eq));
         CRUST_STATIC_ASSERT(!std::is_trivially_copyable<Enum<A, B>>::value);
+        CRUST_STATIC_ASSERT(!std::is_literal_type<Enum<A, B>>::value);
 
-        a = Enum<A, B>{A{}};
+        Enum<A, B> a{A{}};
 
         a.visit<VisitA>();
 
@@ -270,10 +269,10 @@ int main() {
             void operator()(const F &) { printf("visit F\n"); }
         };
 
-        Enum<A, B, C, D, E, F> a{};
-
         CRUST_STATIC_ASSERT(std::is_trivially_copyable<Enum<A, B, C, D, E, F>>::value);
         CRUST_STATIC_ASSERT(std::is_literal_type<Enum<A, B, C, D, E, F>>::value);
+
+        Enum<A, B, C, D, E, F> a{A{}};
 
         a = A{};
         a.visit<Visit>();

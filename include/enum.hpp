@@ -45,8 +45,6 @@ union EnumHolder<true, Field, Fields...> {
 
     static constexpr bool dup = EnumInclude<Field, Fields...>::result || Remains::dup;
 
-    constexpr EnumHolder() noexcept: remains{} {}
-
     constexpr explicit EnumHolder(Field &&field) noexcept: field{move(field)} {}
 
     constexpr explicit EnumHolder(const Field &field) noexcept: field{field} {}
@@ -136,57 +134,40 @@ private:
 
     static constexpr usize cut = size / 2;
 
+    using LowerGetter = EnumVisitor<trivial, offset, cut, Fields...>;
+    using UpperGetter = EnumVisitor<trivial, offset + cut, size - cut, Fields...>;
+
 public:
     template<class R, class V>
-    static R inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) {
-        CRUST_ASSERT(index >= offset && index < offset + size);
-
-        if (index < cut) {
-            using Getter = EnumVisitor<trivial, offset, cut, Fields...>;
-            return Getter::template inner<R, V>(self, forward<V>(impl), index);
-        } else {
-            using Getter = EnumVisitor<trivial, offset + cut, size - cut, Fields...>;
-            return Getter::template inner<R, V>(self, forward<V>(impl), index);
-        }
+    static CRUST_CXX14_CONSTEXPR R
+    inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) {
+        return index < cut
+               ? LowerGetter::template inner<R, V>(self, forward<V>(impl), index)
+               : UpperGetter::template inner<R, V>(self, forward<V>(impl), index);
     }
 
     template<class R, class V>
-    static R inner(EnumHolder<trivial, Fields...> &self, V &&impl, usize index) {
-        CRUST_ASSERT(index >= offset && index < offset + size);
-
-        if (index < cut) {
-            using Getter = EnumVisitor<trivial, offset, cut, Fields...>;
-            return Getter::template inner<R, V>(self, forward<V>(impl), index);
-        } else {
-            using Getter = EnumVisitor<trivial, offset + cut, size - cut, Fields...>;
-            return Getter::template inner<R, V>(self, forward<V>(impl), index);
-        }
+    static CRUST_CXX14_CONSTEXPR R
+    inner(EnumHolder<trivial, Fields...> &self, V &&impl, usize index) {
+        return index < cut
+               ? LowerGetter::template inner<R, V>(self, forward<V>(impl), index)
+               : UpperGetter::template inner<R, V>(self, forward<V>(impl), index);
     }
 
     template<class R, class V>
-    static R inner_move(const EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) {
-        CRUST_ASSERT(index >= offset && index < offset + size);
-
-        if (index < cut) {
-            using Getter = EnumVisitor<trivial, offset, cut, Fields...>;
-            return Getter::template inner_move<R, V>(move(self), forward<V>(impl), index);
-        } else {
-            using Getter = EnumVisitor<trivial, offset + cut, size - cut, Fields...>;
-            return Getter::template inner_move<R, V>(move(self), forward<V>(impl), index);
-        }
+    static CRUST_CXX14_CONSTEXPR R
+    inner_move(const EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) {
+        return index < cut
+               ? LowerGetter::template inner<R, V>(move(self), forward<V>(impl), index)
+               : UpperGetter::template inner<R, V>(move(self), forward<V>(impl), index);
     }
 
     template<class R, class V>
-    static R inner_move(EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) {
-        CRUST_ASSERT(index >= offset && index < offset + size);
-
-        if (index < cut) {
-            using Getter = EnumVisitor<trivial, offset, cut, Fields...>;
-            return Getter::template inner_move<R, V>(move(self), forward<V>(impl), index);
-        } else {
-            using Getter = EnumVisitor<trivial, offset + cut, size - cut, Fields...>;
-            return Getter::template inner_move<R, V>(move(self), forward<V>(impl), index);
-        }
+    static CRUST_CXX14_CONSTEXPR R
+    inner_move(EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) {
+        return index < cut
+               ? LowerGetter::template inner<R, V>(move(self), forward<V>(impl), index)
+               : UpperGetter::template inner<R, V>(move(self), forward<V>(impl), index);
     }
 };
 
@@ -239,28 +220,32 @@ public:
     struct EnumVisitor<trivial, offset, len, Fields...> { \
         CRUST_STATIC_ASSERT(offset + len <= sizeof...(Fields)); \
         template<class R, class V> \
-        static R inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
+        static CRUST_CXX14_CONSTEXPR R \
+        inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
                 VISITOR_BRANCH_IMPL_##len; \
             } \
         } \
         template<class R, class V> \
-        static R inner(EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
+        static CRUST_CXX14_CONSTEXPR R \
+        inner(EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
                 VISITOR_BRANCH_IMPL_##len; \
             } \
         } \
         template<class R, class V> \
-        static R inner_move(const EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) { \
+        static CRUST_CXX14_CONSTEXPR R \
+        inner_move(const EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) { \
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
                 VISITOR_BRANCH_IMPL_MOVE_##len; \
             } \
         } \
         template<class R, class V> \
-        static R inner_move(EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) { \
+        static CRUST_CXX14_CONSTEXPR R \
+        inner_move(EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) { \
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
                 VISITOR_BRANCH_IMPL_MOVE_##len; \
@@ -364,23 +349,20 @@ protected:
     CRUST_USE_SELF(EnumTrivial);
 
     void drop() {
-        if (self().index != 0) {
-            self().template visit<typename Self::__Drop>();
-            self().index = 0;
-        }
+        self().template visit<typename Self::__Drop>();
     };
 
 public:
     constexpr EnumTrivial() noexcept = default;
 
     EnumTrivial(const EnumTrivial &other) noexcept {
-        if (this != &other && other.self().index != 0) {
+        if (this != &other) {
             other.self().template visit<typename Self::__Copy>({&self().holder});
         }
     }
 
     EnumTrivial(EnumTrivial &&other) noexcept {
-        if (this != &other && other.self().index != 0) {
+        if (this != &other) {
             other.self().template visit_move<typename Self::__Emplace>({&self().holder});
         }
     }
@@ -388,10 +370,7 @@ public:
     EnumTrivial &operator=(const EnumTrivial &other) noexcept {
         if (this != &other) {
             drop();
-
-            if (other.self().index != 0) {
-                other.self().template visit<typename Self::__Copy>({&self().holder});
-            }
+            other.self().template visit<typename Self::__Copy>({&self().holder});
         }
 
         return *this;
@@ -400,10 +379,7 @@ public:
     EnumTrivial &operator=(EnumTrivial &&other) noexcept {
         if (this != &other) {
             drop();
-
-            if (other.self().index != 0) {
-                other.self().template visit_move<typename Self::__Emplace>({&self().holder});
-            }
+            other.self().template visit_move<typename Self::__Emplace>({&self().holder});
         }
 
         return *this;
@@ -435,49 +411,29 @@ private:
     u32 index;
 
 public:
-    constexpr Enum() noexcept: holder{}, index{0} {}
-
     template<class T>
     constexpr Enum(T &&value) noexcept:
             holder{forward<T>(value)},
-            index{__IndexGetter<typename RemoveRef<T>::Result>::result + 1} {}
+            index{__IndexGetter<typename RemoveRef<T>::Result>::result} {}
 
     template<class V, class R = void>
     R visit(V &&visitor = V{}) const {
-        if (index == 0) {
-            crust_panic("Visiting an uninitialized, moved or destructed enum!");
-        } else {
-            return __Getter::template inner<R, V>(holder, forward<V>(visitor), index - 1);
-        }
+        return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
     }
 
     template<class V, class R = void>
     R visit(V &&visitor = V{}) {
-        if (index == 0) {
-            crust_panic("Visiting an uninitialized, moved or destructed enum!");
-        } else {
-            return __Getter::template inner<R, V>(holder, forward<V>(visitor), index - 1);
-        }
+        return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
     }
 
     template<class V, class R = void>
     R visit_move(V &&visitor = V{}) const {
-        if (index == 0) {
-            crust_panic("Visiting an uninitialized, moved or destructed enum!");
-        } else {
-            return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor),
-                                                       index - 1);
-        }
+        return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
     }
 
     template<class V, class R = void>
     R visit_move(V &&visitor = V{}) {
-        if (index == 0) {
-            crust_panic("Visiting an uninitialized, moved or destructed enum!");
-        } else {
-            return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor),
-                                                       index - 1);
-        }
+        return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
     }
 
 private:
@@ -508,7 +464,7 @@ public:
         this->drop();
 
         ::new(&holder) __Holder{forward<T>(value)};
-        index = __IndexGetter<typename RemoveRef<T>::Result>::result + 1;
+        index = __IndexGetter<typename RemoveRef<T>::Result>::result;
 
         return *this;
     }
@@ -529,11 +485,7 @@ private:
 
 public:
     bool eq(const Enum &other) const {
-        if (this->index == 0 || other.index == 0) {
-            crust_panic("Visiting an uninitialized, moved or destructed enum!");
-        } else {
-            return this->index == other.index && visit<__Equal, bool>({&other.holder});
-        }
+        return this->index == other.index && visit<__Equal, bool>({&other.holder});
     }
 
 private:
@@ -549,11 +501,7 @@ private:
 
 public:
     bool ne(const Enum &other) const {
-        if (this->index == 0 || other.index == 0) {
-            crust_panic("Visiting an uninitialized, moved or destructed enum!");
-        } else {
-            return this->index != other.index || visit<__NotEqual, bool>({&other.holder});
-        }
+        return this->index != other.index || visit<__NotEqual, bool>({&other.holder});
     }
 };
 }
