@@ -6,55 +6,55 @@ using namespace crust;
 
 class A {
 public:
-    A() noexcept { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    A() noexcept { printf("%p %s\n", this, CRUST_FUNCTION); }
 
-    A(const A &) { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    A(const A &) { printf("%p %s\n", this, CRUST_FUNCTION); }
 
-    A(A &&) noexcept { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    A(A &&) noexcept { printf("%p %s\n", this, CRUST_FUNCTION); }
 
     A &operator=(const A &) {
-        printf("%p %s\n", this, __PRETTY_FUNCTION__);
+        printf("%p %s\n", this, CRUST_FUNCTION);
         return *this;
     }
 
     A &operator=(A &&) noexcept {
-        printf("%p %s\n", this, __PRETTY_FUNCTION__);
+        printf("%p %s\n", this, CRUST_FUNCTION);
         return *this;
     }
 
-    void operator()() { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    void operator()() { printf("%p %s\n", this, CRUST_FUNCTION); }
 
-    void operator()() const { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    void operator()() const { printf("%p %s\n", this, CRUST_FUNCTION); }
 
-    ~A() { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    ~A() { printf("%p %s\n", this, CRUST_FUNCTION); }
 };
 
 class B {
 public:
-    B() noexcept { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    B() noexcept { printf("%p %s\n", this, CRUST_FUNCTION); }
 
-    B(const B &) { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    B(const B &) { printf("%p %s\n", this, CRUST_FUNCTION); }
 
-    B(B &&) noexcept { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    B(B &&) noexcept { printf("%p %s\n", this, CRUST_FUNCTION); }
 
     B &operator=(const B &) {
-        printf("%p %s\n", this, __PRETTY_FUNCTION__);
+        printf("%p %s\n", this, CRUST_FUNCTION);
         return *this;
     }
 
     B &operator=(B &&) noexcept {
-        printf("%p %s\n", this, __PRETTY_FUNCTION__);
+        printf("%p %s\n", this, CRUST_FUNCTION);
         return *this;
     }
 
-    void operator()() { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    void operator()() { printf("%p %s\n", this, CRUST_FUNCTION); }
 
-    void operator()() const { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    void operator()() const { printf("%p %s\n", this, CRUST_FUNCTION); }
 
-    ~B() { printf("%p %s\n", this, __PRETTY_FUNCTION__); }
+    ~B() { printf("%p %s\n", this, CRUST_FUNCTION); }
 };
 
-void fn_c() { printf("%s\n", __PRETTY_FUNCTION__); }
+void fn_c() { printf("%s\n", CRUST_FUNCTION); }
 
 int main() {
     {
@@ -82,8 +82,8 @@ int main() {
     }
 
     {
-        CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), PartialEq));
-        CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), Eq));
+        CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Tuple<A, B>), PartialEq));
+        CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Tuple<A, B>), Eq));
 
         CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<>>::value);
 
@@ -124,7 +124,7 @@ int main() {
     printf("=====\n");
 
     {
-        auto lambda = make_fn_mut([]() mutable { printf("%s\n", __PRETTY_FUNCTION__); });
+        auto lambda = make_fn_mut([]() mutable { printf("%s\n", CRUST_FUNCTION); });
         lambda();
     }
 
@@ -146,7 +146,7 @@ int main() {
 
     {
         DynFnMut<void()> lambda = make_dyn_fn_mut([]() mutable {
-            printf("%s\n", __PRETTY_FUNCTION__);
+            printf("%s\n", CRUST_FUNCTION);
         });
         lambda();
     }
@@ -168,7 +168,7 @@ int main() {
     printf("=====\n");
 
     {
-        auto lambda = make_fn([]() { printf("%s\n", __PRETTY_FUNCTION__); });
+        auto lambda = make_fn([]() { printf("%s\n", CRUST_FUNCTION); });
         lambda();
     }
 
@@ -189,7 +189,7 @@ int main() {
     printf("=====\n");
 
     {
-        DynFn<void()> lambda = make_dyn_fn([]() { printf("%s\n", __PRETTY_FUNCTION__); });
+        DynFn<void()> lambda = make_dyn_fn([]() { printf("%s\n", CRUST_FUNCTION); });
         lambda();
     }
 
@@ -214,8 +214,8 @@ int main() {
             void operator()(B &) {}
         };
 
-        CRUST_STATIC_ASSERT(!CRUST_DERIVE((Enum<A, B>), PartialEq));
-        CRUST_STATIC_ASSERT(!CRUST_DERIVE((Enum<A, B>), Eq));
+        CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Enum<A, B>), PartialEq));
+        CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Enum<A, B>), Eq));
         CRUST_STATIC_ASSERT(!std::is_trivially_copyable<Enum<A, B>>::value);
         CRUST_STATIC_ASSERT(!std::is_literal_type<Enum<A, B>>::value);
 

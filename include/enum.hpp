@@ -419,21 +419,25 @@ public:
 
     template<class V, class R = void>
     CRUST_CXX14_CONSTEXPR R visit(V &&visitor = V{}) const {
+        CRUST_ASSERT(index < sizeof...(Fields));
         return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
     }
 
     template<class V, class R = void>
     CRUST_CXX14_CONSTEXPR R visit(V &&visitor = V{}) {
+        CRUST_ASSERT(index < sizeof...(Fields));
         return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
     }
 
     template<class V, class R = void>
     CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor = V{}) const {
+        CRUST_ASSERT(index < sizeof...(Fields));
         return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
     }
 
     template<class V, class R = void>
     CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor = V{}) {
+        CRUST_ASSERT(index < sizeof...(Fields));
         return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
     }
 

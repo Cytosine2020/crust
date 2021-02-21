@@ -147,12 +147,12 @@ struct TupleGetter<index, Field, Fields...> {
         return TupleGetter<index - 1, Fields...>::inner(self.remains);
     }
 
-    static constexpr const Result &&inner_move(const Self &&self) {
-        return TupleGetter<index - 1, Fields...>::inner_move(move(self.remains));
+    static constexpr const Result &&inner_move(const Self &self) {
+        return TupleGetter<index - 1, Fields...>::inner_move(self.remains);
     }
 
-    static constexpr Result &&inner_move(Self &&self) {
-        return TupleGetter<index - 1, Fields...>::inner_move(move(self.remains));
+    static constexpr Result &&inner_move(Self &self) {
+        return TupleGetter<index - 1, Fields...>::inner_move(self.remains);
     }
 };
 
@@ -165,9 +165,9 @@ struct TupleGetter<0, Field, Fields...> {
 
     static constexpr Result &inner(Self &self) { return self.field; }
 
-    static constexpr const Result &&inner_move(const Self &&self) { return move(self.field); }
+    static constexpr const Result &&inner_move(const Self &self) { return move(self.field); }
 
-    static constexpr Result &&inner_move(Self &&self) { return move(self.field); }
+    static constexpr Result &&inner_move(Self &self) { return move(self.field); }
 };
 }
 
@@ -211,14 +211,10 @@ public:
     CRUST_CXX14_CONSTEXPR __Result<index> &get() { return __Getter<index>::inner(holder); }
 
     template<usize index>
-    constexpr const __Result<index> &&move() const {
-        return __Getter<index>::inner_move(move(holder));
-    }
+    constexpr const __Result<index> &&move() const { return __Getter<index>::inner_move(holder); }
 
     template<usize index>
-    CRUST_CXX14_CONSTEXPR __Result<index> &&move() {
-        return __Getter<index>::inner_move(move(holder));
-    }
+    CRUST_CXX14_CONSTEXPR __Result<index> &&move() { return __Getter<index>::inner_move(holder); }
 
     /// impl PartialEq
 
@@ -255,7 +251,8 @@ namespace std {
 /// c++ std bindings
 
 template<class ...Fields>
-struct tuple_size<crust::Tuple<Fields...>> : integral_constant<crust::usize, sizeof...(Fields)> {
+struct tuple_size<crust::Tuple<Fields...>> :
+        public integral_constant<crust::usize, crust::Tuple<Fields...>::__size> {
 };
 
 template<crust::usize index, class ...Fields>
@@ -264,7 +261,7 @@ struct tuple_element<index, crust::Tuple<Fields...>> {
 };
 
 template<crust::usize index, class ...Fields>
-constexpr const class tuple_element<index, crust::Tuple<Fields...>>::type &
+constexpr const typename tuple_element<index, crust::Tuple<Fields...>>::type &
 get(const crust::Tuple<Fields...> &object) noexcept {
     return object.template get<index>();
 }
@@ -276,7 +273,7 @@ get(crust::Tuple<Fields...> &object) noexcept {
 }
 
 template<crust::usize index, class ...Fields>
-constexpr const class tuple_element<index, crust::Tuple<Fields...>>::type &&
+constexpr const typename tuple_element<index, crust::Tuple<Fields...>>::type &&
 get(const crust::Tuple<Fields...> &&object) noexcept {
     return object.template move<index>();
 }

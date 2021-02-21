@@ -12,11 +12,11 @@
 
 namespace crust {
 namespace ordering {
-CRUST_ENUM_FIELD(Less);
+CRUST_ENUM_VARIANTS(Less);
 
-CRUST_ENUM_FIELD(Equal);
+CRUST_ENUM_VARIANTS(Equal);
 
-CRUST_ENUM_FIELD(Greater);
+CRUST_ENUM_VARIANTS(Greater);
 }
 
 class Ordering :
@@ -27,7 +27,7 @@ public:
     using Equal = ordering::Equal;
     using Greater = ordering::Greater;
 
-    CRUST_ENUM_USE_BASE(Ordering, (Enum<Less, Equal, Greater>));
+    CRUST_ENUM_USE_BASE(Ordering, Less, Equal, Greater);
 
     static constexpr Ordering less() { return Less{}; }
 
@@ -80,15 +80,15 @@ public:
     }
 
 private:
-    struct __ToU32 {
-        constexpr u32 operator()(const Less &) const { return -1; }
+    struct __ToI32 {
+        constexpr i32 operator()(const Less &) const { return -1; }
 
-        constexpr u32 operator()(const Equal &) const { return 0; }
+        constexpr i32 operator()(const Equal &) const { return 0; }
 
-        constexpr u32 operator()(const Greater &) const { return 1; }
+        constexpr i32 operator()(const Greater &) const { return 1; }
     };
 
-    CRUST_CXX14_CONSTEXPR u32 to_u32() const { return this->template visit<__ToU32, u32>(); }
+    CRUST_CXX14_CONSTEXPR i32 to_i32() const { return this->template visit<__ToI32, i32>(); }
 
 public:
     /// impl PartialOrd
@@ -188,11 +188,11 @@ IMPL_OPERATOR_CMP(i64);
 #undef IMPL_OPERATOR_CMP
 
 CRUST_CXX14_CONSTEXPR Option<Ordering> Ordering::partial_cmp(const Ordering &other) const {
-    return operator_partial_cmp(this->to_u32(), other.to_u32());
+    return operator_partial_cmp(this->to_i32(), other.to_i32());
 }
 
 CRUST_CXX14_CONSTEXPR Ordering Ordering::cmp(const Ordering &other) const {
-    return operator_cmp(this->to_u32(), other.to_u32());
+    return operator_cmp(this->to_i32(), other.to_i32());
 }
 
 template<class T>
@@ -278,9 +278,7 @@ public:
     CRUST_DERIVE_PRIMITIVE(u32, Trait); \
     CRUST_DERIVE_PRIMITIVE(i32, Trait); \
     CRUST_DERIVE_PRIMITIVE(u64, Trait); \
-    CRUST_DERIVE_PRIMITIVE(i64, Trait); \
-    CRUST_DERIVE_PRIMITIVE(u128, Trait); \
-    CRUST_DERIVE_PRIMITIVE(i128, Trait)
+    CRUST_DERIVE_PRIMITIVE(i64, Trait)
 
 CRUST_DERIVE_PRIMITIVE(bool, PartialEq);
 

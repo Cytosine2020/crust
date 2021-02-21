@@ -18,7 +18,7 @@ struct None;
 template<class T>
 class Option : public Enum<Some<T>, None> {
 public:
-    CRUST_ENUM_USE_BASE(Option, (Enum<Some<T>, None>));
+    CRUST_ENUM_USE_BASE(Option, Some<T>, None);
 
 private:
     struct IsSome {

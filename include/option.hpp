@@ -9,9 +9,9 @@
 
 namespace crust {
 template<class T>
-CRUST_ENUM_FIELD(Some, T);
+CRUST_ENUM_VARIANTS(Some, T);
 
-CRUST_ENUM_FIELD(None);
+CRUST_ENUM_VARIANTS(None);
 
 template<class T>
 constexpr Option<T> make_some(T &&value) { return Some<T>{forward<T>(value)}; }
