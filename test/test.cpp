@@ -98,11 +98,11 @@ int main() {
         CRUST_ASSERT(std::get<0>(tuple) == 1);
         CRUST_ASSERT(std::get<1>(tuple) == 'b');
 
-        CRUST_STATIC_ASSERT(make_tuple() == make_tuple());
+        CRUST_ASSERT(make_tuple() == make_tuple());
 
-        CRUST_STATIC_ASSERT(make_tuple(true) != make_tuple(false));
-        CRUST_STATIC_ASSERT(make_tuple(1) > make_tuple(0));
-        CRUST_STATIC_ASSERT(make_tuple(0, 'b') > make_tuple(0, 'a'));
+        CRUST_ASSERT(make_tuple(true) != make_tuple(false));
+        CRUST_ASSERT(make_tuple(1) > make_tuple(0));
+        CRUST_ASSERT(make_tuple(0, 'b') > make_tuple(0, 'a'));
 
         CRUST_ASSERT(make_tuple(0, 1).cmp(make_tuple(0, 0)) == Ordering::greater());
     }

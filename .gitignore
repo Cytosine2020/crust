@@ -33,5 +33,10 @@
 
 .idea/
 .vscode/
+.vs/
+
 build/
 cmake-build-*/
+out/
+
+CMakeSettings.json

@@ -28,7 +28,7 @@ namespace crust {
 #if defined(__GNUC__) || defined(__clang__)
 #define CRUST_FUNCTION __PRETTY_FUNCTION__
 #elif defined(_MSC_VER)
-#define CRUST_FUNCTION default: __FUNCSIG__
+#define CRUST_FUNCTION __FUNCSIG__
 #else
 #define CRUST_FUNCTION __FUNCTION__
 #endif
@@ -65,7 +65,14 @@ using i32 = int32_t;
 using u32 = uint32_t;
 using i64 = int64_t;
 using u64 = uint64_t;
+#if defined(__GNUC__) || defined(__clang__)
 using isize = ssize_t;
+#elif defined(_MSC_VER)
+#include <BaseTsd.h>
+using isize = SSIZE_T;
+#else
+using isize = ssize_t;
+#endif
 using usize = size_t;
 
 template<class A, class B>
