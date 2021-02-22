@@ -64,7 +64,7 @@ jobs:
 
     defaults:
       run:
-        shell: bash
+        shell: cmd
 
     steps:
       - uses: actions/checkout@v2
