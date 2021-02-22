@@ -70,19 +70,19 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: configure cmake
-        run: cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S $GITHUB_WORKSPACE -B ${{runner.workspace}}\build -DCMAKE_BUILD_TYPE=Release
 
       - name: build
-        working-directory: ${{runner.workspace}}/build
+        working-directory: ${{runner.workspace}}\build
         run: cmake --build .
 
       - name: test
-        working-directory: ${{runner.workspace}}/build
-        run: GTEST_OUTPUT=xml:test-results/ GTEST_COLOR=1 ./Debug/test.exe -V
+        working-directory: ${{runner.workspace}}\build
+        run: GTEST_OUTPUT=xml:test-results\ GTEST_COLOR=1 .\Debug\test.exe -V
 
       - name: upload test results
         uses: actions/upload-artifact@v2
         if: failure()
         with:
           name: windows_test_results
-          path: ${{runner.workspace}}/build/test-results/**/*.xml
+          path: ${{runner.workspace}}\build\test-results\**\*.xml
