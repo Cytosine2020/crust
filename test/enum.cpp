@@ -9,12 +9,12 @@
 using namespace crust;
 
 
-struct ClassA : test::RAIIChecker {
-    CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(ClassA, test::RAIIChecker);
+struct ClassA : test::RAIIChecker<ClassA> {
+    CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(ClassA, test::RAIIChecker<ClassA>);
 };
 
-struct ClassB : test::RAIIChecker {
-    CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(ClassB, test::RAIIChecker);
+struct ClassB : test::RAIIChecker<ClassA> {
+    CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(ClassB, test::RAIIChecker<ClassA>);
 };
 
 
@@ -32,8 +32,8 @@ GTEST_TEST(enum_, enum_) {
 
     CRUST_STATIC_ASSERT(!CRUST_DERIVE(Enumerate, PartialEq));
     CRUST_STATIC_ASSERT(!CRUST_DERIVE(Enumerate, Eq));
-    CRUST_STATIC_ASSERT(!std::is_trivially_copyable<Enum<ClassA, ClassB>>::value);
-    CRUST_STATIC_ASSERT(!std::is_literal_type<Enum<ClassA, ClassB>>::value);
+    CRUST_STATIC_ASSERT(!std::is_trivially_copyable<Enumerate>::value);
+    CRUST_STATIC_ASSERT(!std::is_literal_type<Enumerate>::value);
 
     auto recorder = std::make_shared<test::RAIIRecorder>(test::RAIIRecorder{});
 
@@ -70,12 +70,10 @@ struct F {
 GTEST_TEST(enum_, raii) {
     using Enumerate = Enum<A, B, C, D, E, F>;
 
-    CRUST_STATIC_ASSERT(std::is_trivially_copyable<Enum<A, B, C, D, E, F>>::value);
-    CRUST_STATIC_ASSERT(std::is_literal_type<Enum<A, B, C, D, E, F>>::value);
+    CRUST_STATIC_ASSERT(std::is_trivially_copyable<Enumerate>::value);
+    CRUST_STATIC_ASSERT(std::is_literal_type<Enumerate>::value);
 
     Enumerate a{A{}};
-
-    a = A{};
     EXPECT_TRUE((a.visit<VisitType<A>, bool>()));
     a = B{};
     EXPECT_TRUE((a.visit<VisitType<B>, bool>()));
