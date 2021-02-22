@@ -4,8 +4,6 @@
 
 #include "option_declare.hpp"
 
-#include "tuple.hpp"
-
 
 namespace crust {
 template<class T>

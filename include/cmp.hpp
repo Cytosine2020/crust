@@ -7,7 +7,8 @@
 #include "utility.hpp"
 #include "option.hpp"
 #include "function.hpp"
-#include "tuple.hpp"
+#include "tuple_declare.hpp"
+#include "enum.hpp"
 
 
 namespace crust {
@@ -27,7 +28,7 @@ public:
     using Equal = ordering::Equal;
     using Greater = ordering::Greater;
 
-    CRUST_ENUM_USE_BASE(Ordering, Less, Equal, Greater);
+    CRUST_ENUM_USE_BASE(Ordering, Enum<Less, Equal, Greater>);
 
     static constexpr Ordering less() { return Less{}; }
 
@@ -187,11 +188,11 @@ IMPL_OPERATOR_CMP(i64);
 
 #undef IMPL_OPERATOR_CMP
 
-CRUST_CXX14_CONSTEXPR Option<Ordering> Ordering::partial_cmp(const Ordering &other) const {
+inline CRUST_CXX14_CONSTEXPR Option<Ordering> Ordering::partial_cmp(const Ordering &other) const {
     return operator_partial_cmp(this->to_i32(), other.to_i32());
 }
 
-CRUST_CXX14_CONSTEXPR Ordering Ordering::cmp(const Ordering &other) const {
+inline CRUST_CXX14_CONSTEXPR Ordering Ordering::cmp(const Ordering &other) const {
     return operator_cmp(this->to_i32(), other.to_i32());
 }
 

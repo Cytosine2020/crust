@@ -18,7 +18,7 @@ struct None;
 template<class T>
 class Option : public Enum<Some<T>, None> {
 public:
-    CRUST_ENUM_USE_BASE(Option, Some<T>, None);
+    CRUST_ENUM_USE_BASE(Option, Enum<Some<T>, None>);
 
 private:
     struct IsSome {
@@ -69,7 +69,7 @@ private:
         constexpr T &&operator()(Some<T> &&value) const { return move(value); }
 
         CRUST_CXX14_CONSTEXPR T &&operator()(None &&) const {
-            crust_panic("called `Option::unwrap()` on a `None` value");
+            CRUST_PANIC("called `Option::unwrap()` on a `None` value");
         }
     };
 

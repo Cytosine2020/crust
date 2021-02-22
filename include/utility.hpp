@@ -33,25 +33,17 @@ namespace crust {
 #define CRUST_FUNCTION __FUNCTION__
 #endif
 
-#define crust_static_inline static inline
-
-crust_static_inline void _warn(const char *file, int line, const char *msg) {
-    fprintf(stderr, "Warn at file %s, line %d: %s\n", file, line, msg);
-}
-
-#define crust_warn(msg) ::crust::_warn(__FILE__, __LINE__, msg)
-
-[[noreturn]] crust_static_inline void _abort(const char *file, int line, const char *msg) {
+[[noreturn]] static inline void __panic(const char *file, int line, const char *msg) {
     fprintf(stderr, "Abort at file %s, line %d: %s\n", file, line, msg);
 
     abort();
 }
 
-#define crust_panic(msg) ::crust::_abort(__FILE__, __LINE__, msg)
+#define CRUST_PANIC(msg) ::crust::__panic(__FILE__, __LINE__, msg)
 
-void _assert(const char *file, int line, const char *msg, bool condition) {
+static inline void _assert(const char *file, int line, const char *msg, bool condition) {
     if (!condition) {
-        _abort(file, line, msg);
+        __panic(file, line, msg);
     }
 }
 
@@ -218,28 +210,30 @@ struct ExtractType<void(Type)> {
         CRUST_USE_SELF(TRAIT); \
     private:
 
-#define CRUST_ENUM_USE_BASE(NAME, ...) \
-    template<class ...Args>     \
-    constexpr NAME(Args ...args) : Enum<__VA_ARGS__>{::crust::forward<Args>(args)...} {} \
+#define CRUST_USE_BASE_CONSTRUCTORS(NAME, ...) \
+    template<class ...Args> \
+    constexpr NAME(Args ...args) : __VA_ARGS__{::crust::forward<Args>(args)...} {}
+
+#define CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(NAME, ...) \
+    template<class ...Args> \
+    explicit constexpr NAME(Args ...args) : __VA_ARGS__{::crust::forward<Args>(args)...} {}
+
+#define CRUST_USE_BASE_TRAIT_EQ(NAME, ...) \
     void __detect_trait_partial_eq(const NAME &other) const { \
-        static_cast<const Enum<__VA_ARGS__> *>(this)->__detect_trait_partial_eq(other); \
+        static_cast<const __VA_ARGS__ *>(this)->__detect_trait_partial_eq(other); \
     } \
     void __detect_trait_eq(const NAME &other) const { \
-        static_cast<const Enum<__VA_ARGS__> *>(this)->__detect_trait_eq(other); \
+        static_cast<const __VA_ARGS__ *>(this)->__detect_trait_eq(other); \
     }
 
+#define CRUST_ENUM_USE_BASE(NAME, ...) \
+    CRUST_USE_BASE_CONSTRUCTORS(NAME, __VA_ARGS__) \
+    CRUST_USE_BASE_TRAIT_EQ(NAME, __VA_ARGS__)
+
 #define CRUST_ENUM_VARIANTS(NAME, ...) \
-    struct NAME : \
-    public Tuple<__VA_ARGS__> { \
-        template<class ...Args> \
-        explicit constexpr NAME(Args ...args) : \
-                Tuple<__VA_ARGS__>{::crust::forward<Args>(args)...} {} \
-        void __detect_trait_partial_eq(const NAME &other) const { \
-            static_cast<const Tuple<__VA_ARGS__> *>(this)->__detect_trait_partial_eq(other); \
-        } \
-        void __detect_trait_eq(const NAME &other) const { \
-            static_cast<const Tuple<__VA_ARGS__> *>(this)->__detect_trait_eq(other); \
-        } \
+    struct NAME : public Tuple<__VA_ARGS__> { \
+        CRUST_USE_BASE_CONSTRUCTORS(NAME, Tuple<__VA_ARGS__>) \
+        CRUST_USE_BASE_TRAIT_EQ(NAME, Tuple<__VA_ARGS__>) \
     }
 }
 

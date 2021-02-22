@@ -31,12 +31,12 @@ public:
     T *as_ptr() { return inner; }
 
     const T &index(usize index) const {
-        if (index >= len()) { crust_panic("index out of boundary!"); }
+        if (index >= len()) { CRUST_PANIC("index out of boundary!"); }
         return as_ptr()[index];
     }
 
     T &index_mut(usize index) {
-        if (index >= len()) { crust_panic("index_mut out of boundary!"); }
+        if (index >= len()) { CRUST_PANIC("index_mut out of boundary!"); }
         return as_ptr()[index];
     }
 };
