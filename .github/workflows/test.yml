@@ -64,7 +64,7 @@ jobs:
 
     defaults:
       run:
-        shell: powershell
+        shell: cmd
 
     steps:
       - uses: actions/checkout@v2
@@ -78,7 +78,7 @@ jobs:
 
       - name: test
         working-directory: ${{runner.workspace}}\build
-        run: set GTEST_OUTPUT=xml:test-results\ GTEST_COLOR=1; .\Debug\test.exe -V
+        run: set GTEST_OUTPUT=xml:test-results\ GTEST_COLOR=1 && .\Debug\test.exe -V
 
       - name: upload test results
         uses: actions/upload-artifact@v2
