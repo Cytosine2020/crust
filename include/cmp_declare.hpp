@@ -41,10 +41,8 @@ namespace __impl_derive_eq {
 template<typename T, class Rhs>
 struct DerivePartialEq {
     template<typename U>
-    using Type = void (U::*)(const Rhs &) const;
-
-    template<typename U>
-    static u32 check(decltype(static_cast<Type<U>>(&U::template __detect_trait_partial_eq<>)));
+    static u32 check(decltype(static_cast<void (U::*)(const Rhs &) const>(
+            &U::template __detect_trait_partial_eq<>)));
 
     template<typename>
     static void check(...);
@@ -55,10 +53,8 @@ struct DerivePartialEq {
 template<typename T>
 struct DeriveEq {
     template<typename U>
-    using Type = void (U::*)(const U &) const;
-
-    template<typename U>
-    static u32 check(decltype(static_cast<Type<U>>(&U::template __detect_trait_eq<>)));
+    static u32 check(decltype(static_cast<void (U::*)(const U &) const>(
+            &U::template __detect_trait_eq<>)));
 
     template<typename>
     static void check(...);

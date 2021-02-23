@@ -404,8 +404,7 @@ struct EnumIsTagOnly : public All<IsMonoState<Fields>::result...> {
 template<class ...Fields>
 struct EnumTagUnion :
         public EnumTrivial<EnumTagUnion<Fields...>, EnumIsTrivial<Fields...>::result>,
-        public Impl<PartialEq<EnumTagUnion<Fields...>>, CRUST_DERIVE(Fields, PartialEq)...>,
-        public Impl<Eq<EnumTagUnion<Fields...>>, CRUST_DERIVE(Fields, Eq)...> {
+        public PartialEq<EnumTagUnion<Fields...>>, public Eq<EnumTagUnion<Fields...>> {
 private:
     CRUST_STATIC_ASSERT(sizeof...(Fields) <= std::numeric_limits<u32>::max() &&
                         sizeof...(Fields) > 0 && !__impl_enum::EnumDuplicate<Fields...>::result);
@@ -524,7 +523,6 @@ public:
 template<class ...Fields>
 struct __EnumSelect : public EnumTagUnion<Fields...> {
     CRUST_USE_BASE_CONSTRUCTORS(__EnumSelect, EnumTagUnion<Fields...>);
-    CRUST_USE_BASE_TRAIT_EQ(__EnumSelect, EnumTagUnion<Fields...>);
 };
 
 template<class ...Fields>
@@ -533,11 +531,9 @@ using EnumSelect = __EnumSelect<Fields...>;
 
 
 template<class ...Fields>
-class Enum : public Impl<
-        PartialEq<Enum<Fields...>>, CRUST_DERIVE(__impl_enum::EnumSelect<Fields...>, PartialEq)
->, public Impl<
-        Eq<Enum<Fields...>>, CRUST_DERIVE(__impl_enum::EnumSelect<Fields...>, Eq)
-> {
+class Enum :
+        public Impl<PartialEq<Enum<Fields...>>, CRUST_DERIVE(Fields, PartialEq)...>,
+        public Impl<Eq<Enum<Fields...>>, CRUST_DERIVE(Fields, Eq)...> {
 private:
     using Inner = __impl_enum::EnumSelect<Fields...>;
 

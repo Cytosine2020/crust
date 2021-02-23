@@ -21,8 +21,8 @@ GTEST_TEST(tuple, empty) {
 }
 
 GTEST_TEST(tuple, tuple) {
-    CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), PartialEq));
-    CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), Eq));
+    CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Tuple<A, B>), PartialEq));
+    CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Tuple<A, B>), Eq));
 
     CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<>>::value);
 

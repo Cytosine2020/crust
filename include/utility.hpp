@@ -178,20 +178,10 @@ struct IsMonoState {
     static constexpr bool result = std::is_base_of<MonoStateTag, T>::value;
 };
 
-namespace __impl_type {
-template<class Fn>
-struct ExtractType;
-
-template<class Type>
-struct ExtractType<void(Type)> {
-    using Result = Type;
-};
-}
+#define CRUST_ECHO(...) __VA_ARGS__
 
 #define CRUST_DERIVE(Struct, Trait, ...) \
-    ::crust::Derive<typename ::crust::__impl_type::ExtractType<void(Struct)>::Result, Trait< \
-            typename ::crust::__impl_type::ExtractType<void(Struct)>::Result, ##__VA_ARGS__> \
-    >::result
+    ::crust::Derive<Struct, Trait<Struct, ##__VA_ARGS__>>::result
 
 #define CRUST_DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...) \
     template<> struct Derive<PRIMITIVE, TRAIT<PRIMITIVE, ##__VA_ARGS__>> { \
@@ -230,15 +220,11 @@ struct ExtractType<void(Type)> {
     template<class __T = __VA_ARGS__> \
     decltype(static_cast<const __T *>(nullptr)->template \
     __detect_trait_partial_eq<>(*static_cast<const __T *>(nullptr))) \
-    __detect_trait_partial_eq(const NAME &other) const { \
-        static_cast<const __T *>(this)->template __detect_trait_partial_eq<>(other); \
-    } \
+    __detect_trait_partial_eq(const NAME &) const {} \
     template<class __T = __VA_ARGS__> \
     decltype(static_cast<const __T *>(nullptr)->template \
     __detect_trait_eq<>(*static_cast<const __T *>(nullptr))) \
-    __detect_trait_eq(const NAME &other) const { \
-        static_cast<const __T *>(this)->template __detect_trait_eq<>(other); \
-    }
+    __detect_trait_eq(const NAME &) const {}
 
 #define CRUST_ENUM_USE_BASE(NAME, ...) \
     CRUST_USE_BASE_CONSTRUCTORS(NAME, __VA_ARGS__) \
