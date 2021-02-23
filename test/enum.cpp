@@ -65,14 +65,18 @@ struct E {
 struct F {
 };
 
+#if !defined(_MSC_VER)
+GTEST_TEST(enum_, tag_only) {
+    CRUST_STATIC_ASSERT(sizeof(Enum<A, B>) == sizeof(u32));
+    CRUST_STATIC_ASSERT(sizeof(Enum<A, B, C, D, E, F>) > sizeof(u32));
+}
+#endif
 
 GTEST_TEST(enum_, raii) {
     using Enumerate = Enum<A, B, C, D, E, F>;
 
     CRUST_STATIC_ASSERT(std::is_trivially_copyable<Enumerate>::value);
     CRUST_STATIC_ASSERT(std::is_literal_type<Enumerate>::value);
-    CRUST_STATIC_ASSERT(sizeof(Enum<A, B>) == sizeof(u32));
-    CRUST_STATIC_ASSERT(sizeof(Enumerate) > sizeof(u32));
 
     Enumerate a{A{}};
     EXPECT_TRUE((a.visit<VisitType<A>, bool>()));
