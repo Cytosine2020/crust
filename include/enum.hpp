@@ -29,6 +29,21 @@ struct EnumInclude<T> {
     static constexpr bool result = false;
 };
 
+template<class ...Fields>
+struct EnumDuplicate;
+
+template<class Field, class ...Fields>
+struct EnumDuplicate<Field, Fields...> {
+    static constexpr bool result = EnumInclude<Field, Fields...>::result ||
+                                   EnumDuplicate<Fields...>::result;
+};
+
+template<>
+struct EnumDuplicate<> {
+    static constexpr bool result = false;
+};
+
+
 template<bool trivial, class ...Fields>
 union EnumHolder;
 
@@ -38,8 +53,6 @@ union EnumHolder<true, Field, Fields...> {
 
     Field field;
     Remains remains;
-
-    static constexpr bool duplicate = EnumInclude<Field, Fields...>::result || Remains::duplicate;
 
     constexpr explicit EnumHolder(Field &&field) noexcept: field{move(field)} {}
 
@@ -57,8 +70,6 @@ union EnumHolder<false, Field, Fields...> {
 
     Field field;
     Remains remains;
-
-    static constexpr bool duplicate = EnumInclude<Field, Fields...>::result || Remains::duplicate;
 
     constexpr EnumHolder() noexcept: remains{} {}
 
@@ -84,7 +95,6 @@ union EnumHolder<false, Field, Fields...> {
 
 template<bool trivial>
 union EnumHolder<trivial> {
-    static constexpr bool duplicate = false;
 };
 
 template<usize index, bool trivial, class ...Fields>
@@ -344,29 +354,27 @@ struct EnumTrivial<Self, false> {
 protected:
     CRUST_USE_SELF(EnumTrivial);
 
-    void drop() {
-        self().template visit<typename Self::__Drop>();
-    };
+    void drop() { self().template visit<typename Self::__Drop, void>({}); };
 
 public:
     constexpr EnumTrivial() noexcept = default;
 
     EnumTrivial(const EnumTrivial &other) noexcept {
         if (this != &other) {
-            other.self().template visit<typename Self::__Copy>({&self().holder});
+            other.self().template visit<typename Self::__Copy, void>({&self().holder});
         }
     }
 
     EnumTrivial(EnumTrivial &&other) noexcept {
         if (this != &other) {
-            other.self().template visit_move<typename Self::__Emplace>({&self().holder});
+            other.self().template visit_move<typename Self::__Emplace, void>({&self().holder});
         }
     }
 
     EnumTrivial &operator=(const EnumTrivial &other) noexcept {
         if (this != &other) {
             drop();
-            other.self().template visit<typename Self::__Copy>({&self().holder});
+            other.self().template visit<typename Self::__Copy, void>({&self().holder});
         }
 
         return *this;
@@ -375,7 +383,7 @@ public:
     EnumTrivial &operator=(EnumTrivial &&other) noexcept {
         if (this != &other) {
             drop();
-            other.self().template visit_move<typename Self::__Emplace>({&self().holder});
+            other.self().template visit_move<typename Self::__Emplace, void>({&self().holder});
         }
 
         return *this;
@@ -387,56 +395,58 @@ public:
 template<class ...Fields>
 struct EnumIsTrivial : public All<std::is_trivially_copyable<Fields>::value...> {
 };
-}
+
+template<class ...Fields>
+struct EnumIsTagOnly : public All<IsMonoState<Fields>::result...> {
+};
 
 
 template<class ...Fields>
-struct Enum :
-        public __impl_enum::EnumTrivial<Enum<Fields...>,
-                __impl_enum::EnumIsTrivial<Fields...>::result>,
-        public Impl<PartialEq<Enum<Fields...>>, CRUST_DERIVE(Fields, PartialEq)...>,
-        public Impl<Eq<Enum<Fields...>>, CRUST_DERIVE(Fields, Eq)...> {
+struct EnumTagUnion :
+        public EnumTrivial<EnumTagUnion<Fields...>, EnumIsTrivial<Fields...>::result>,
+        public Impl<PartialEq<EnumTagUnion<Fields...>>, CRUST_DERIVE(Fields, PartialEq)...>,
+        public Impl<Eq<EnumTagUnion<Fields...>>, CRUST_DERIVE(Fields, Eq)...> {
 private:
-    static constexpr bool __trivial = __impl_enum::EnumIsTrivial<Fields...>::result;
-
-    friend __impl_enum::EnumTrivial<Enum, __trivial>;
-
-    using __Holder = __impl_enum::EnumHolder<__trivial, typename RemoveRef<Fields>::Result...>;
-    template<class T> using __IndexGetter = __impl_enum::EnumTypeToIndex<T, Fields...>;
-    using __Getter = __impl_enum::EnumVisitor<0, sizeof...(Fields), __trivial, Fields...>;
-
     CRUST_STATIC_ASSERT(sizeof...(Fields) <= std::numeric_limits<u32>::max() &&
-                        sizeof...(Fields) > 0 && !__Holder::duplicate);
+                        sizeof...(Fields) > 0 && !__impl_enum::EnumDuplicate<Fields...>::result);
+
+    static constexpr bool __trivial = EnumIsTrivial<Fields...>::result;
+
+    friend EnumTrivial<EnumTagUnion, __trivial>;
+
+    using __Holder = EnumHolder<__trivial, typename RemoveRef<Fields>::Result...>;
+    template<class T> using __IndexGetter = EnumTypeToIndex<T, Fields...>;
+    using __Getter = EnumVisitor<0, sizeof...(Fields), __trivial, Fields...>;
 
     __Holder holder;
     u32 index;
 
 public:
     template<class T>
-    constexpr Enum(T &&value) noexcept:
+    constexpr EnumTagUnion(T &&value) noexcept:
             holder{forward<T>(value)},
             index{__IndexGetter<typename RemoveRef<T>::Result>::result} {}
 
-    template<class V, class R = void>
-    CRUST_CXX14_CONSTEXPR R visit(V &&visitor = V{}) const {
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit(V &&visitor) const {
         CRUST_ASSERT(index < sizeof...(Fields));
         return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
     }
 
-    template<class V, class R = void>
-    CRUST_CXX14_CONSTEXPR R visit(V &&visitor = V{}) {
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit(V &&visitor) {
         CRUST_ASSERT(index < sizeof...(Fields));
         return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
     }
 
-    template<class V, class R = void>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor = V{}) const {
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) const {
         CRUST_ASSERT(index < sizeof...(Fields));
         return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
     }
 
-    template<class V, class R = void>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor = V{}) {
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) {
         CRUST_ASSERT(index < sizeof...(Fields));
         return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
     }
@@ -463,8 +473,8 @@ private:
 
 public:
     template<class T>
-    Enum &operator=(T &&value) noexcept {
-        CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, Enum>::result);
+    EnumTagUnion &operator=(T &&value) noexcept {
+        CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagUnion>::result);
 
         this->drop();
 
@@ -484,12 +494,12 @@ private:
         template<class T>
         CRUST_CXX14_CONSTEXPR bool operator()(const T &value) const {
             constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
-            return value == __impl_enum::EnumGetter<i, __trivial, Fields...>::inner(*other);
+            return value == EnumGetter<i, __trivial, Fields...>::inner(*other);
         };
     };
 
 public:
-    CRUST_CXX14_CONSTEXPR bool eq(const Enum &other) const {
+    CRUST_CXX14_CONSTEXPR bool eq(const EnumTagUnion &other) const {
         return this->index == other.index && visit<__Equal, bool>({&other.holder});
     }
 
@@ -500,14 +510,72 @@ private:
         template<class T>
         CRUST_CXX14_CONSTEXPR bool operator()(const T &value) const {
             constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
-            return value != __impl_enum::EnumGetter<i, __trivial, Fields...>::inner(*other);
+            return value != EnumGetter<i, __trivial, Fields...>::inner(*other);
         };
     };
 
 public:
-    CRUST_CXX14_CONSTEXPR bool ne(const Enum &other) const {
+    CRUST_CXX14_CONSTEXPR bool ne(const EnumTagUnion &other) const {
         return this->index != other.index || visit<__NotEqual, bool>({&other.holder});
     }
+};
+
+
+template<class ...Fields>
+struct __EnumSelect : public EnumTagUnion<Fields...> {
+    CRUST_USE_BASE_CONSTRUCTORS(__EnumSelect, EnumTagUnion<Fields...>);
+    CRUST_USE_BASE_TRAIT_EQ(__EnumSelect, EnumTagUnion<Fields...>);
+};
+
+template<class ...Fields>
+using EnumSelect = __EnumSelect<Fields...>;
+}
+
+
+template<class ...Fields>
+class Enum : public Impl<
+        PartialEq<Enum<Fields...>>, CRUST_DERIVE(__impl_enum::EnumSelect<Fields...>, PartialEq)
+>, public Impl<
+        Eq<Enum<Fields...>>, CRUST_DERIVE(__impl_enum::EnumSelect<Fields...>, Eq)
+> {
+private:
+    using Inner = __impl_enum::EnumSelect<Fields...>;
+
+    Inner inner;
+
+public:
+    template<class T>
+    constexpr Enum(T &&value) noexcept: inner{forward<T>(value)} {}
+
+    template<class T>
+    Enum &operator=(T &&value) noexcept {
+        inner = forward<T>(value);
+        return *this;
+    }
+
+    template<class V, class R = void>
+    CRUST_CXX14_CONSTEXPR R visit(V &&visitor = V{}) const {
+        return inner.template visit<V, R>(forward<V>(visitor));
+    }
+
+    template<class V, class R = void>
+    CRUST_CXX14_CONSTEXPR R visit(V &&visitor = V{}) {
+        return inner.template visit<V, R>(forward<V>(visitor));
+    }
+
+    template<class V, class R = void>
+    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor = V{}) const {
+        return inner.template visit_move<V, R>(forward<V>(visitor));
+    }
+
+    template<class V, class R = void>
+    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor = V{}) {
+        return inner.template visit_move<V, R>(forward<V>(visitor));
+    }
+
+    CRUST_CXX14_CONSTEXPR bool eq(const Enum &other) const { return inner == other.inner; }
+
+    CRUST_CXX14_CONSTEXPR bool ne(const Enum &other) const { return inner != other.inner; }
 };
 }
 

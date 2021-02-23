@@ -26,7 +26,6 @@ struct VisitType {
     bool operator()(const U &) { return false; }
 };
 
-
 GTEST_TEST(enum_, enum_) {
     using Enumerate = Enum<ClassA, ClassB>;
 

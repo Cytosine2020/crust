@@ -13,9 +13,16 @@ class A {
 class B {
 };
 
+GTEST_TEST(tuple, empty) {
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(Tuple<>, PartialEq));
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(Tuple<>, Eq));
+
+    EXPECT_TRUE(make_tuple() == make_tuple());
+}
+
 GTEST_TEST(tuple, tuple) {
-    CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Tuple<A, B>), PartialEq));
-    CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Tuple<A, B>), Eq));
+    CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), PartialEq));
+    CRUST_STATIC_ASSERT(!CRUST_DERIVE((Tuple<A, B>), Eq));
 
     CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<>>::value);
 
@@ -30,7 +37,7 @@ GTEST_TEST(tuple, tuple) {
     EXPECT_TRUE(std::get<0>(tuple) == 1);
     EXPECT_TRUE(std::get<1>(tuple) == 'b');
 
-    EXPECT_TRUE(make_tuple() == make_tuple());
+
 
     EXPECT_TRUE(make_tuple(true) != make_tuple(false));
     EXPECT_TRUE(make_tuple(1) > make_tuple(0));

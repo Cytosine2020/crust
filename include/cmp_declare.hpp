@@ -13,6 +13,7 @@ CRUST_TRAIT(PartialEq, class Rhs = Self)
 public:
     /// Used for detecting `PartialEq', part of the workaround below.
     /// Should never be implemented by hand.
+    template<class = void>
     void __detect_trait_partial_eq(const Self &) const {}
 
     bool eq(const Rhs &other) const;
@@ -28,6 +29,7 @@ CRUST_TRAIT(Eq)
 public:
     /// Used for detecting `Eq', part of the workaround below.
     /// Should never be implemented by hand.
+    template<class = void>
     void __detect_trait_eq(const Self &) const {}
 };
 
@@ -39,8 +41,10 @@ namespace __impl_derive_eq {
 template<typename T, class Rhs>
 struct DerivePartialEq {
     template<typename U>
-    static u32
-    check(decltype(static_cast<void (U::*)(const Rhs &) const>(&U::__detect_trait_partial_eq)));
+    using Type = void (U::*)(const Rhs &) const;
+
+    template<typename U>
+    static u32 check(decltype(static_cast<Type<U>>(&U::template __detect_trait_partial_eq<>)));
 
     template<typename>
     static void check(...);
@@ -51,7 +55,10 @@ struct DerivePartialEq {
 template<typename T>
 struct DeriveEq {
     template<typename U>
-    static u32 check(decltype(static_cast<void (U::*)(const U &) const>(&U::__detect_trait_eq)));
+    using Type = void (U::*)(const U &) const;
+
+    template<typename U>
+    static u32 check(decltype(static_cast<Type<U>>(&U::template __detect_trait_eq<>)));
 
     template<typename>
     static void check(...);

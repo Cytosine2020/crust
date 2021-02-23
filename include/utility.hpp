@@ -25,13 +25,14 @@ namespace crust {
 #define CRUST_DEFAULT_UNREACHABLE
 #endif
 
-#if defined(__GNUC__) || defined(__clang__)
-#define CRUST_FUNCTION __PRETTY_FUNCTION__
-#elif defined(_MSC_VER)
-#define CRUST_FUNCTION __FUNCSIG__
+#if INTPTR_MAX == INT32_MAX
+#define CRUST_BIT_WIDTH 32
+#elif INTPTR_MAX == INT64_MAX
+#define CRUST_BIT_WIDTH 64
 #else
-#define CRUST_FUNCTION __FUNCTION__
+#error "Unsupported bit width."
 #endif
+
 
 [[noreturn]] static inline void __panic(const char *file, int line, const char *msg) {
     fprintf(stderr, "Abort at file %s, line %d: %s\n", file, line, msg);
@@ -57,15 +58,16 @@ using i32 = int32_t;
 using u32 = uint32_t;
 using i64 = int64_t;
 using u64 = uint64_t;
-#if defined(__GNUC__) || defined(__clang__)
-using isize = ssize_t;
-#elif defined(_MSC_VER)
-#include <BaseTsd.h>
-using isize = SSIZE_T;
+#if CRUST_BIT_WIDTH == 32
+using isize = i32;
+using usize = u32;
+#elif CRUST_BIT_WIDTH == 64
+using isize = i64;
+using usize = u64;
 #else
-using isize = ssize_t;
+#error "Unsupported bit width."
 #endif
-using usize = size_t;
+
 
 template<class A, class B>
 struct IsSame {
@@ -168,6 +170,14 @@ struct Derive {
     static constexpr bool result = std::is_base_of<Trait, Struct>::value;
 };
 
+struct MonoStateTag {
+};
+
+template<class T>
+struct IsMonoState {
+    static constexpr bool result = std::is_base_of<MonoStateTag, T>::value;
+};
+
 namespace __impl_type {
 template<class Fn>
 struct ExtractType;
@@ -177,8 +187,6 @@ struct ExtractType<void(Type)> {
     using Result = Type;
 };
 }
-
-#define CRUST_ECHO(...) __VA_ARGS__
 
 #define CRUST_DERIVE(Struct, Trait, ...) \
     ::crust::Derive<typename ::crust::__impl_type::ExtractType<void(Struct)>::Result, Trait< \
@@ -212,18 +220,24 @@ struct ExtractType<void(Type)> {
 
 #define CRUST_USE_BASE_CONSTRUCTORS(NAME, ...) \
     template<class ...Args> \
-    constexpr NAME(Args ...args) : __VA_ARGS__{::crust::forward<Args>(args)...} {}
+    constexpr NAME(Args &&...args) : __VA_ARGS__{::crust::forward<Args>(args)...} {}
 
 #define CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(NAME, ...) \
     template<class ...Args> \
-    explicit constexpr NAME(Args ...args) : __VA_ARGS__{::crust::forward<Args>(args)...} {}
+    explicit constexpr NAME(Args &&...args) : __VA_ARGS__{::crust::forward<Args>(args)...} {}
 
 #define CRUST_USE_BASE_TRAIT_EQ(NAME, ...) \
-    void __detect_trait_partial_eq(const NAME &other) const { \
-        static_cast<const __VA_ARGS__ *>(this)->__detect_trait_partial_eq(other); \
+    template<class __T = __VA_ARGS__> \
+    decltype(static_cast<const __T *>(nullptr)->template \
+    __detect_trait_partial_eq<>(*static_cast<const __T *>(nullptr))) \
+    __detect_trait_partial_eq(const NAME &other) const { \
+        static_cast<const __T *>(this)->template __detect_trait_partial_eq<>(other); \
     } \
-    void __detect_trait_eq(const NAME &other) const { \
-        static_cast<const __VA_ARGS__ *>(this)->__detect_trait_eq(other); \
+    template<class __T = __VA_ARGS__> \
+    decltype(static_cast<const __T *>(nullptr)->template \
+    __detect_trait_eq<>(*static_cast<const __T *>(nullptr))) \
+    __detect_trait_eq(const NAME &other) const { \
+        static_cast<const __T *>(this)->template __detect_trait_eq<>(other); \
     }
 
 #define CRUST_ENUM_USE_BASE(NAME, ...) \
@@ -231,7 +245,7 @@ struct ExtractType<void(Type)> {
     CRUST_USE_BASE_TRAIT_EQ(NAME, __VA_ARGS__)
 
 #define CRUST_ENUM_VARIANTS(NAME, ...) \
-    struct NAME : public Tuple<__VA_ARGS__> { \
+    struct NAME final : public Tuple<__VA_ARGS__> { \
         CRUST_USE_BASE_CONSTRUCTORS(NAME, Tuple<__VA_ARGS__>) \
         CRUST_USE_BASE_TRAIT_EQ(NAME, Tuple<__VA_ARGS__>) \
     }
