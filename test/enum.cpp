@@ -47,10 +47,10 @@ GTEST_TEST(enum_, enum_) {
 }
 
 
-struct A {
+struct A : public MonoStateTag {
 };
 
-struct B {
+struct B : public MonoStateTag {
 };
 
 struct C {
@@ -71,6 +71,8 @@ GTEST_TEST(enum_, raii) {
 
     CRUST_STATIC_ASSERT(std::is_trivially_copyable<Enumerate>::value);
     CRUST_STATIC_ASSERT(std::is_literal_type<Enumerate>::value);
+    CRUST_STATIC_ASSERT(sizeof(Enum<A, B>) == sizeof(u32));
+    CRUST_STATIC_ASSERT(sizeof(Enumerate) > sizeof(u32));
 
     Enumerate a{A{}};
     EXPECT_TRUE((a.visit<VisitType<A>, bool>()));

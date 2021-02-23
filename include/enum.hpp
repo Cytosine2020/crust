@@ -97,6 +97,19 @@ template<bool trivial>
 union EnumHolder<trivial> {
 };
 
+template<usize index, class ...Fields>
+struct EnumType;
+
+template<usize index, class Field, class ...Fields>
+struct EnumType<index, Field, Fields...> {
+    using Result = typename EnumType<index - 1, Fields...>::Result;
+};
+
+template<class Field, class ...Fields>
+struct EnumType<0, Field, Fields...> {
+    using Result = Field;
+};
+
 template<usize index, bool trivial, class ...Fields>
 struct EnumGetter;
 
@@ -177,51 +190,17 @@ public:
     }
 };
 
-#define VISITOR_BRANCH(index) \
+#define ENUM_VISITOR_BRANCH(index) \
     case offset + index: \
         return forward<V>(impl)(EnumGetter<offset + index, trivial, Fields...>::inner(self))
 
-#define VISITOR_BRANCH_IMPL_1 VISITOR_BRANCH(0)
-#define VISITOR_BRANCH_IMPL_2 VISITOR_BRANCH_IMPL_1; VISITOR_BRANCH(1)
-#define VISITOR_BRANCH_IMPL_3 VISITOR_BRANCH_IMPL_2; VISITOR_BRANCH(2)
-#define VISITOR_BRANCH_IMPL_4 VISITOR_BRANCH_IMPL_3; VISITOR_BRANCH(3)
-#define VISITOR_BRANCH_IMPL_5 VISITOR_BRANCH_IMPL_4; VISITOR_BRANCH(4)
-#define VISITOR_BRANCH_IMPL_6 VISITOR_BRANCH_IMPL_5; VISITOR_BRANCH(5)
-#define VISITOR_BRANCH_IMPL_7 VISITOR_BRANCH_IMPL_6; VISITOR_BRANCH(6)
-#define VISITOR_BRANCH_IMPL_8 VISITOR_BRANCH_IMPL_7; VISITOR_BRANCH(7)
-#define VISITOR_BRANCH_IMPL_9 VISITOR_BRANCH_IMPL_8; VISITOR_BRANCH(8)
-#define VISITOR_BRANCH_IMPL_10 VISITOR_BRANCH_IMPL_9; VISITOR_BRANCH(9)
-#define VISITOR_BRANCH_IMPL_11 VISITOR_BRANCH_IMPL_10; VISITOR_BRANCH(10)
-#define VISITOR_BRANCH_IMPL_12 VISITOR_BRANCH_IMPL_11; VISITOR_BRANCH(11)
-#define VISITOR_BRANCH_IMPL_13 VISITOR_BRANCH_IMPL_12; VISITOR_BRANCH(12)
-#define VISITOR_BRANCH_IMPL_14 VISITOR_BRANCH_IMPL_13; VISITOR_BRANCH(13)
-#define VISITOR_BRANCH_IMPL_15 VISITOR_BRANCH_IMPL_14; VISITOR_BRANCH(14)
-#define VISITOR_BRANCH_IMPL_16 VISITOR_BRANCH_IMPL_15; VISITOR_BRANCH(15)
-
-#define VISITOR_MOVE_BRANCH(index) \
+#define ENUM_VISITOR_MOVE_BRANCH(index) \
     case offset + index: \
         return forward<V>(impl)( \
                 EnumGetter<offset + index, trivial, Fields...>::inner_move(move(self)) \
         )
 
-#define VISITOR_BRANCH_IMPL_MOVE_1 VISITOR_MOVE_BRANCH(0)
-#define VISITOR_BRANCH_IMPL_MOVE_2 VISITOR_BRANCH_IMPL_MOVE_1; VISITOR_MOVE_BRANCH(1)
-#define VISITOR_BRANCH_IMPL_MOVE_3 VISITOR_BRANCH_IMPL_MOVE_2; VISITOR_MOVE_BRANCH(2)
-#define VISITOR_BRANCH_IMPL_MOVE_4 VISITOR_BRANCH_IMPL_MOVE_3; VISITOR_MOVE_BRANCH(3)
-#define VISITOR_BRANCH_IMPL_MOVE_5 VISITOR_BRANCH_IMPL_MOVE_4; VISITOR_MOVE_BRANCH(4)
-#define VISITOR_BRANCH_IMPL_MOVE_6 VISITOR_BRANCH_IMPL_MOVE_5; VISITOR_MOVE_BRANCH(5)
-#define VISITOR_BRANCH_IMPL_MOVE_7 VISITOR_BRANCH_IMPL_MOVE_6; VISITOR_MOVE_BRANCH(6)
-#define VISITOR_BRANCH_IMPL_MOVE_8 VISITOR_BRANCH_IMPL_MOVE_7; VISITOR_MOVE_BRANCH(7)
-#define VISITOR_BRANCH_IMPL_MOVE_9 VISITOR_BRANCH_IMPL_MOVE_8; VISITOR_MOVE_BRANCH(8)
-#define VISITOR_BRANCH_IMPL_MOVE_10 VISITOR_BRANCH_IMPL_MOVE_9; VISITOR_MOVE_BRANCH(9)
-#define VISITOR_BRANCH_IMPL_MOVE_11 VISITOR_BRANCH_IMPL_MOVE_10; VISITOR_MOVE_BRANCH(10)
-#define VISITOR_BRANCH_IMPL_MOVE_12 VISITOR_BRANCH_IMPL_MOVE_11; VISITOR_MOVE_BRANCH(11)
-#define VISITOR_BRANCH_IMPL_MOVE_13 VISITOR_BRANCH_IMPL_MOVE_12; VISITOR_MOVE_BRANCH(12)
-#define VISITOR_BRANCH_IMPL_MOVE_14 VISITOR_BRANCH_IMPL_MOVE_13; VISITOR_MOVE_BRANCH(13)
-#define VISITOR_BRANCH_IMPL_MOVE_15 VISITOR_BRANCH_IMPL_MOVE_14; VISITOR_MOVE_BRANCH(14)
-#define VISITOR_BRANCH_IMPL_MOVE_16 VISITOR_BRANCH_IMPL_MOVE_15; VISITOR_MOVE_BRANCH(15)
-
-#define VISITOR_IMPL(len) \
+#define ENUM_VISITOR_IMPL(len) \
     template<usize offset, bool trivial, class ...Fields> \
     struct EnumVisitor<offset, len, trivial, Fields...> { \
         CRUST_STATIC_ASSERT(offset + len <= sizeof...(Fields)); \
@@ -230,7 +209,7 @@ public:
         inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
-                VISITOR_BRANCH_IMPL_##len; \
+                CRUST_MACRO_REPEAT(len, ENUM_VISITOR_BRANCH); \
             } \
         } \
         template<class R, class V> \
@@ -238,7 +217,7 @@ public:
         inner(EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
-                VISITOR_BRANCH_IMPL_##len; \
+                CRUST_MACRO_REPEAT(len, ENUM_VISITOR_BRANCH); \
             } \
         } \
         template<class R, class V> \
@@ -246,7 +225,7 @@ public:
         inner_move(const EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) { \
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
-                VISITOR_BRANCH_IMPL_MOVE_##len; \
+                CRUST_MACRO_REPEAT(len, ENUM_VISITOR_MOVE_BRANCH); \
             } \
         } \
         template<class R, class V> \
@@ -254,90 +233,150 @@ public:
         inner_move(EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) { \
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
-                VISITOR_BRANCH_IMPL_MOVE_##len; \
+                CRUST_MACRO_REPEAT(len, ENUM_VISITOR_MOVE_BRANCH); \
             } \
         } \
     }
 
-VISITOR_IMPL(16);
+ENUM_VISITOR_IMPL(16);
 
-VISITOR_IMPL(15);
+ENUM_VISITOR_IMPL(15);
 
-VISITOR_IMPL(14);
+ENUM_VISITOR_IMPL(14);
 
-VISITOR_IMPL(13);
+ENUM_VISITOR_IMPL(13);
 
-VISITOR_IMPL(12);
+ENUM_VISITOR_IMPL(12);
 
-VISITOR_IMPL(11);
+ENUM_VISITOR_IMPL(11);
 
-VISITOR_IMPL(10);
+ENUM_VISITOR_IMPL(10);
 
-VISITOR_IMPL(9);
+ENUM_VISITOR_IMPL(9);
 
-VISITOR_IMPL(8);
+ENUM_VISITOR_IMPL(8);
 
-VISITOR_IMPL(7);
+ENUM_VISITOR_IMPL(7);
 
-VISITOR_IMPL(6);
+ENUM_VISITOR_IMPL(6);
 
-VISITOR_IMPL(5);
+ENUM_VISITOR_IMPL(5);
 
-VISITOR_IMPL(4);
+ENUM_VISITOR_IMPL(4);
 
-VISITOR_IMPL(3);
+ENUM_VISITOR_IMPL(3);
 
-VISITOR_IMPL(2);
+ENUM_VISITOR_IMPL(2);
 
-VISITOR_IMPL(1);
+ENUM_VISITOR_IMPL(1);
 
-#undef VISITOR_IMPL
-#undef VISITOR_BRANCH_IMPL_MOVE_16
-#undef VISITOR_BRANCH_IMPL_MOVE_15
-#undef VISITOR_BRANCH_IMPL_MOVE_14
-#undef VISITOR_BRANCH_IMPL_MOVE_13
-#undef VISITOR_BRANCH_IMPL_MOVE_12
-#undef VISITOR_BRANCH_IMPL_MOVE_11
-#undef VISITOR_BRANCH_IMPL_MOVE_10
-#undef VISITOR_BRANCH_IMPL_MOVE_9
-#undef VISITOR_BRANCH_IMPL_MOVE_8
-#undef VISITOR_BRANCH_IMPL_MOVE_7
-#undef VISITOR_BRANCH_IMPL_MOVE_6
-#undef VISITOR_BRANCH_IMPL_MOVE_5
-#undef VISITOR_BRANCH_IMPL_MOVE_4
-#undef VISITOR_BRANCH_IMPL_MOVE_3
-#undef VISITOR_BRANCH_IMPL_MOVE_2
-#undef VISITOR_BRANCH_IMPL_MOVE_1
-#undef VISITOR_MOVE_BRANCH
-#undef VISITOR_BRANCH_IMPL_16
-#undef VISITOR_BRANCH_IMPL_15
-#undef VISITOR_BRANCH_IMPL_14
-#undef VISITOR_BRANCH_IMPL_13
-#undef VISITOR_BRANCH_IMPL_12
-#undef VISITOR_BRANCH_IMPL_11
-#undef VISITOR_BRANCH_IMPL_10
-#undef VISITOR_BRANCH_IMPL_9
-#undef VISITOR_BRANCH_IMPL_8
-#undef VISITOR_BRANCH_IMPL_7
-#undef VISITOR_BRANCH_IMPL_6
-#undef VISITOR_BRANCH_IMPL_5
-#undef VISITOR_BRANCH_IMPL_4
-#undef VISITOR_BRANCH_IMPL_3
-#undef VISITOR_BRANCH_IMPL_2
-#undef VISITOR_BRANCH_IMPL_1
-#undef VISITOR_BRANCH
+#undef ENUM_VISITOR_IMPL
+#undef ENUM_VISITOR_MOVE_BRANCH
+#undef ENUM_VISITOR_BRANCH
+
+
+template<usize offset, usize size, class ...Fields>
+struct TagVisitor {
+private:
+    CRUST_STATIC_ASSERT(offset + size <= sizeof...(Fields));
+
+    static constexpr usize cut = size / 2;
+
+    using LowerGetter = TagVisitor<offset, cut, Fields...>;
+    using UpperGetter = TagVisitor<offset + cut, size - cut, Fields...>;
+
+public:
+    template<class R, class V>
+    static CRUST_CXX14_CONSTEXPR R inner(V &&impl, usize index) {
+        return index < cut ? LowerGetter::template inner<R, V>(forward<V>(impl), index)
+                           : UpperGetter::template inner<R, V>(forward<V>(impl), index);
+    }
+
+    template<class R, class V>
+    static CRUST_CXX14_CONSTEXPR R inner_move(V &&impl, usize index) {
+        return index < cut ? LowerGetter::template inner<R, V>(forward<V>(impl), index)
+                           : UpperGetter::template inner<R, V>(forward<V>(impl), index);
+    }
+};
+
+#define TAG_VISITOR_BRANCH(index) \
+    case offset + index: { \
+        auto tmp = typename EnumType<offset + index, Fields...>::Result{}; \
+        return forward<V>(impl)(tmp); \
+    }
+
+#define TAG_VISITOR_MOVE_BRANCH(index) \
+    case offset + index: \
+        return forward<V>(impl)(typename EnumType<offset + index, Fields...>::Result{})
+
+#define TAG_VISITOR_IMPL(len) \
+    template<usize offset, class ...Fields> \
+    struct TagVisitor<offset, len, Fields...> { \
+        CRUST_STATIC_ASSERT(offset + len <= sizeof...(Fields)); \
+        template<class R, class V> \
+        static CRUST_CXX14_CONSTEXPR R inner(V &&impl, usize index) { \
+            switch (index) { \
+                CRUST_DEFAULT_UNREACHABLE; \
+                CRUST_MACRO_REPEAT(len, TAG_VISITOR_BRANCH); \
+            } \
+        } \
+        template<class R, class V> \
+        static CRUST_CXX14_CONSTEXPR R inner_move(V &&impl, usize index) { \
+            switch (index) { \
+                CRUST_DEFAULT_UNREACHABLE; \
+                CRUST_MACRO_REPEAT(len, TAG_VISITOR_MOVE_BRANCH); \
+            } \
+        } \
+    }
+
+TAG_VISITOR_IMPL(16);
+
+TAG_VISITOR_IMPL(15);
+
+TAG_VISITOR_IMPL(14);
+
+TAG_VISITOR_IMPL(13);
+
+TAG_VISITOR_IMPL(12);
+
+TAG_VISITOR_IMPL(11);
+
+TAG_VISITOR_IMPL(10);
+
+TAG_VISITOR_IMPL(9);
+
+TAG_VISITOR_IMPL(8);
+
+TAG_VISITOR_IMPL(7);
+
+TAG_VISITOR_IMPL(6);
+
+TAG_VISITOR_IMPL(5);
+
+TAG_VISITOR_IMPL(4);
+
+TAG_VISITOR_IMPL(3);
+
+TAG_VISITOR_IMPL(2);
+
+TAG_VISITOR_IMPL(1);
+
+#undef TAG_VISITOR_IMPL
+#undef TAG_VISITOR_MOVE_BRANCH
+#undef TAG_VISITOR_BRANCH
+
 
 template<class T, class ...Fields>
 struct EnumTypeToIndex;
 
 template<class T, class Field, class ...Fields>
 struct EnumTypeToIndex<T, Field, Fields...> {
-    static constexpr usize result = EnumTypeToIndex<T, Fields...>::result + 1;
+    static constexpr u32 result = EnumTypeToIndex<T, Fields...>::result + 1;
 };
 
 template<class T, class ...Fields>
 struct EnumTypeToIndex<T, T, Fields...> {
-    static constexpr usize result = 0;
+    static constexpr u32 result = 0;
 };
 
 template<class Self, bool flag>
@@ -424,30 +463,8 @@ public:
     template<class T>
     constexpr EnumTagUnion(T &&value) noexcept:
             holder{forward<T>(value)},
-            index{__IndexGetter<typename RemoveRef<T>::Result>::result} {}
-
-    template<class V, class R>
-    CRUST_CXX14_CONSTEXPR R visit(V &&visitor) const {
-        CRUST_ASSERT(index < sizeof...(Fields));
-        return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
-    }
-
-    template<class V, class R>
-    CRUST_CXX14_CONSTEXPR R visit(V &&visitor) {
-        CRUST_ASSERT(index < sizeof...(Fields));
-        return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
-    }
-
-    template<class V, class R>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) const {
-        CRUST_ASSERT(index < sizeof...(Fields));
-        return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
-    }
-
-    template<class V, class R>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) {
-        CRUST_ASSERT(index < sizeof...(Fields));
-        return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
+            index{__IndexGetter<typename RemoveRef<T>::Result>::result} {
+        CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagUnion>::result);
     }
 
 private:
@@ -481,6 +498,30 @@ public:
         index = __IndexGetter<typename RemoveRef<T>::Result>::result;
 
         return *this;
+    }
+
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit(V &&visitor) const {
+        CRUST_ASSERT(index < sizeof...(Fields));
+        return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
+    }
+
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit(V &&visitor) {
+        CRUST_ASSERT(index < sizeof...(Fields));
+        return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
+    }
+
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) const {
+        CRUST_ASSERT(index < sizeof...(Fields));
+        return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
+    }
+
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) {
+        CRUST_ASSERT(index < sizeof...(Fields));
+        return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
     }
 
 private:
@@ -521,12 +562,75 @@ public:
 
 
 template<class ...Fields>
-struct __EnumSelect : public EnumTagUnion<Fields...> {
+class EnumTagOnly : public PartialEq<EnumTagOnly<Fields...>>, public Eq<EnumTagOnly<Fields...>> {
+private:
+    template<class T> using __IndexGetter = EnumTypeToIndex<T, Fields...>;
+    using __Getter = TagVisitor<0, sizeof...(Fields), Fields...>;
+
+    u32 index;
+
+public:
+    template<class T>
+    constexpr EnumTagOnly(T &&) noexcept:
+            index{__IndexGetter<typename RemoveRef<T>::Result>::result} {
+        CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagOnly>::result);
+    }
+
+    template<class T>
+    EnumTagOnly &operator=(T &&) noexcept {
+        CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagOnly>::result);
+
+        index = __IndexGetter<typename RemoveRef<T>::Result>::result;
+
+        return *this;
+    }
+
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit(V &&visitor) const {
+        CRUST_ASSERT(index < sizeof...(Fields));
+        return __Getter::template inner<R, V>(forward<V>(visitor), index);
+    }
+
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit(V &&visitor) {
+        CRUST_ASSERT(index < sizeof...(Fields));
+        return __Getter::template inner<R, V>(forward<V>(visitor), index);
+    }
+
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) const {
+        CRUST_ASSERT(index < sizeof...(Fields));
+        return __Getter::template inner_move<R, V>(forward<V>(visitor), index);
+    }
+
+    template<class V, class R>
+    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) {
+        CRUST_ASSERT(index < sizeof...(Fields));
+        return __Getter::template inner_move<R, V>(forward<V>(visitor), index);
+    }
+
+public:
+    CRUST_CXX14_CONSTEXPR bool eq(const EnumTagOnly &other) const {
+        return this->index == other.index;
+    }
+};
+
+
+template<bool is_tag_only, class ...Fields>
+struct __EnumSelect;
+
+template<class ...Fields>
+struct __EnumSelect<false, Fields...> : public EnumTagUnion<Fields...> {
     CRUST_USE_BASE_CONSTRUCTORS(__EnumSelect, EnumTagUnion<Fields...>);
 };
 
 template<class ...Fields>
-using EnumSelect = __EnumSelect<Fields...>;
+struct __EnumSelect<true, Fields...> : public EnumTagOnly<Fields...> {
+    CRUST_USE_BASE_CONSTRUCTORS(__EnumSelect, EnumTagOnly<Fields...>);
+};
+
+template<class ...Fields>
+using EnumSelect = __EnumSelect<EnumIsTagOnly<Fields...>::result, Fields...>;
 }
 
 
@@ -541,10 +645,14 @@ private:
 
 public:
     template<class T>
-    constexpr Enum(T &&value) noexcept: inner{forward<T>(value)} {}
+    constexpr Enum(T &&value) noexcept: inner{forward<T>(value)} {
+        CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, Enum>::result);
+    }
 
     template<class T>
     Enum &operator=(T &&value) noexcept {
+        CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, Enum>::result);
+
         inner = forward<T>(value);
         return *this;
     }
