@@ -35,13 +35,44 @@ GTEST_TEST(cmp, derive) {
 
 
 GTEST_TEST(cmp, ordering) {
-    auto a = Ordering::equal();
+    EXPECT_TRUE(Ordering::less() == Ordering::less());
+    EXPECT_TRUE(Ordering::equal() == Ordering::equal());
+    EXPECT_TRUE(Ordering::greater() == Ordering::greater());
+    EXPECT_TRUE(Ordering::less() < Ordering::equal());
+    EXPECT_TRUE(Ordering::less() < Ordering::greater());
+    EXPECT_TRUE(Ordering::equal() < Ordering::greater());
 
-    EXPECT_EQ(a.then_with(make_fn([]() { return Ordering::less(); })), Ordering::less());
+    EXPECT_EQ(Ordering::equal().then(Ordering::less()), Ordering::less());
+    EXPECT_EQ(Ordering::less().then(Ordering::equal()), Ordering::less());
+    EXPECT_EQ(Ordering::greater().then(Ordering::equal()), Ordering::greater());
+    EXPECT_EQ(Ordering::equal().then_with(make_fn([]() {
+        return Ordering::less();
+    })), Ordering::less());
+    EXPECT_EQ(Ordering::less().then_with(make_fn([]() {
+        return Ordering::equal();
+    })), Ordering::less());
+    EXPECT_EQ(Ordering::greater().then_with(make_fn([]() {
+        return Ordering::equal();
+    })), Ordering::greater());
 }
 
 
-GTEST_TEST(cmp, max_by_key) {
+GTEST_TEST(cmp, min_max) {
+    EXPECT_EQ(make_tuple(0, 'b'), min(make_tuple(0, 'b'), make_tuple(1, 'a')));
+    EXPECT_EQ(make_tuple(1, 'a'), max(make_tuple(0, 'b'), make_tuple(1, 'a')));
+
+    EXPECT_EQ(make_tuple(0, 'b'), min_by_key(
+            make_tuple(0, 'b'), make_tuple(1, 'a'), make_fn([](const Tuple<i32, char> &value) {
+                return value.get<0>();
+            }))
+    );
+
+    EXPECT_EQ(make_tuple(1, 'a'), min_by_key(
+            make_tuple(0, 'b'), make_tuple(1, 'a'), make_fn([](const Tuple<i32, char> &value) {
+                return value.get<1>();
+            }))
+    );
+
     EXPECT_EQ(make_tuple(1, 'a'), max_by_key(
             make_tuple(0, 'b'), make_tuple(1, 'a'), make_fn([](const Tuple<i32, char> &value) {
                 return value.get<0>();

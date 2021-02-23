@@ -39,6 +39,6 @@ endif ()
 
 include_directories(include)
 
-add_executable(test test/raii_checker.hpp test/test.cpp test/tuple.cpp test/slice.cpp test/cmp.cpp test/function.cpp test/enum.cpp)
+add_executable(test test/raii_checker.hpp test/test.cpp test/tuple.cpp test/slice.cpp test/cmp.cpp test/function.cpp test/enum.cpp test/option.cpp)
 target_link_libraries(test gtest_main)
 add_test(NAME test COMMAND test)

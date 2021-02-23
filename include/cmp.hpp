@@ -199,7 +199,7 @@ inline CRUST_CXX14_CONSTEXPR Ordering Ordering::cmp(const Ordering &other) const
 template<class T>
 constexpr T min(T &&v1, T &&v2) {
     CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
-    return v1.min(v2);
+    return v1.min(std::forward<T>(v2));
 }
 
 template<class T, class F>
@@ -219,7 +219,7 @@ constexpr T min_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
 template<class T>
 constexpr T &&max(T &&v1, T &&v2) {
     CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
-    return v1.max(v2);
+    return v1.max(std::forward<T>(v2));
 }
 
 template<class T, class F>

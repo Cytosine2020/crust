@@ -187,7 +187,7 @@ struct Tuple : public Impl<
 >, public Impl<
         Ord<Tuple<Fields...>>,
         CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, Ord)
-> {
+>, public Impl<MonoStateTag, sizeof...(Fields) == 0> {
 private:
     using __Holder = __impl_tuple::TupleHolder<typename RemoveRef<Fields>::Result...>;
     template<usize index> using __Getter = __impl_tuple::TupleGetter<index, Fields...>;
@@ -237,6 +237,11 @@ public:
     /// impl Ord
 
     constexpr Ordering cmp(const Tuple &other) const;
+};
+
+template<>
+struct IsMonoState<Tuple<>> {
+    static constexpr bool result = true;
 };
 
 template<class ...Fields>

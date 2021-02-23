@@ -231,7 +231,7 @@ struct IsMonoState {
     CRUST_USE_BASE_TRAIT_EQ(NAME, __VA_ARGS__)
 
 #define CRUST_ENUM_VARIANTS(NAME, ...) \
-    struct NAME final : public Tuple<__VA_ARGS__>, public MonoStateTag { \
+    struct NAME final : public Tuple<__VA_ARGS__> { \
         CRUST_USE_BASE_CONSTRUCTORS(NAME, Tuple<__VA_ARGS__>) \
         CRUST_USE_BASE_TRAIT_EQ(NAME, Tuple<__VA_ARGS__>) \
     }

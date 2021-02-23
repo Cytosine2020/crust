@@ -7,24 +7,74 @@
 
 using namespace crust;
 
+
 class A {
 };
 
 class B {
 };
 
-GTEST_TEST(tuple, empty) {
+
+GTEST_TEST(tuple, size_zero) {
+    CRUST_STATIC_ASSERT(IsMonoState<Tuple<>>::result);
+
     CRUST_STATIC_ASSERT(CRUST_DERIVE(Tuple<>, PartialEq));
     CRUST_STATIC_ASSERT(CRUST_DERIVE(Tuple<>, Eq));
 
+    CRUST_STATIC_ASSERT(std::is_trivially_copyable<Tuple<>>::value);
+    CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<>>::value);
+
     EXPECT_TRUE(make_tuple() == make_tuple());
+    EXPECT_FALSE(make_tuple() != make_tuple());
+    EXPECT_FALSE(make_tuple() < make_tuple());
+    EXPECT_TRUE(make_tuple() <= make_tuple());
+    EXPECT_FALSE(make_tuple() > make_tuple());
+    EXPECT_TRUE(make_tuple() >= make_tuple());
+    EXPECT_EQ(operator_partial_cmp(make_tuple(), make_tuple()), make_some(Ordering::equal()));
+    EXPECT_EQ(operator_cmp(make_tuple(), make_tuple()), Ordering::equal());
 }
 
-GTEST_TEST(tuple, tuple) {
+GTEST_TEST(tuple, size_one) {
+    CRUST_STATIC_ASSERT(!IsMonoState<Tuple<A>>::result);
+
+    CRUST_STATIC_ASSERT(!CRUST_DERIVE(Tuple<A>, PartialEq));
+    CRUST_STATIC_ASSERT(!CRUST_DERIVE(Tuple<A>, Eq));
+
+    CRUST_STATIC_ASSERT(std::is_trivially_copyable<Tuple<A>>::value);
+    CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<A>>::value);
+
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(Tuple<i32>, PartialEq));
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(Tuple<i32>, Eq));
+
+    EXPECT_TRUE(make_tuple(0) == make_tuple(0));
+    EXPECT_FALSE(make_tuple(0) != make_tuple(0));
+    EXPECT_FALSE(make_tuple(0) < make_tuple(0));
+    EXPECT_TRUE(make_tuple(0) <= make_tuple(0));
+    EXPECT_FALSE(make_tuple(0) > make_tuple(0));
+    EXPECT_TRUE(make_tuple(0) >= make_tuple(0));
+    EXPECT_EQ(operator_partial_cmp(make_tuple(0), make_tuple(0)), make_some(Ordering::equal()));
+    EXPECT_EQ(operator_cmp(make_tuple(0), make_tuple(0)), Ordering::equal());
+
+    auto tuple = make_tuple(0);
+
+    EXPECT_EQ(tuple.get<0>(), 0);
+
+    ++tuple.get<0>();
+
+    EXPECT_EQ(tuple.get<0>(), 1);
+}
+
+GTEST_TEST(tuple, size_two) {
+    CRUST_STATIC_ASSERT(!IsMonoState<Tuple<A, B>>::result);
+
     CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Tuple<A, B>), PartialEq));
     CRUST_STATIC_ASSERT(!CRUST_DERIVE(CRUST_ECHO(Tuple<A, B>), Eq));
 
-    CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<>>::value);
+    CRUST_STATIC_ASSERT(std::is_trivially_copyable<Tuple<A, B>>::value);
+    CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<A, B>>::value);
+
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(CRUST_ECHO(Tuple<i32, char>), PartialEq));
+    CRUST_STATIC_ASSERT(CRUST_DERIVE(CRUST_ECHO(Tuple<i32, char>), Eq));
 
     auto tuple = make_tuple(0, 'a');
 
@@ -36,8 +86,6 @@ GTEST_TEST(tuple, tuple) {
 
     EXPECT_TRUE(std::get<0>(tuple) == 1);
     EXPECT_TRUE(std::get<1>(tuple) == 'b');
-
-
 
     EXPECT_TRUE(make_tuple(true) != make_tuple(false));
     EXPECT_TRUE(make_tuple(1) > make_tuple(0));
