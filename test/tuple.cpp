@@ -8,11 +8,13 @@
 using namespace crust;
 
 
+namespace {
 class A {
 };
 
 class B {
 };
+}
 
 
 GTEST_TEST(tuple, size_zero) {

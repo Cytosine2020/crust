@@ -18,6 +18,7 @@ struct ClassB : test::RAIIChecker<ClassA> {
 };
 
 
+namespace {
 template<class T>
 struct VisitType {
     bool operator()(const T &) { return true; }
@@ -25,6 +26,8 @@ struct VisitType {
     template<class U>
     bool operator()(const U &) { return false; }
 };
+}
+
 
 GTEST_TEST(enum_, enum_) {
     using Enumerate = Enum<ClassA, ClassB>;
@@ -47,6 +50,7 @@ GTEST_TEST(enum_, enum_) {
 }
 
 
+namespace {
 struct A : public MonoStateTag {
 };
 
@@ -64,6 +68,8 @@ struct E {
 
 struct F {
 };
+}
+
 
 GTEST_TEST(enum_, tag_only) {
     CRUST_STATIC_ASSERT(sizeof(Enum<A, B>) == sizeof(u32));

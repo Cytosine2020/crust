@@ -8,8 +8,9 @@
 
 using namespace crust;
 
-
+namespace {
 void fn_c() {}
+}
 
 struct A : test::RAIIChecker<A> {
     CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(A, test::RAIIChecker<A>);
