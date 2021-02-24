@@ -17,7 +17,7 @@ template<class ...Fields>
 struct TupleHolder;
 
 template<class Field, class ...Fields>
-struct TupleHolder<Field, Fields...> : public Impl<
+struct CRUST_EBCO TupleHolder<Field, Fields...> : public Impl<
         PartialEq<TupleHolder<Field, Fields...>>,
         CRUST_DERIVE(Field, PartialEq),
         CRUST_DERIVE(TupleHolder<Fields...>, PartialEq)
@@ -79,7 +79,7 @@ constexpr Option<Ordering> partial_cmp(const TupleHolder &other) const;
 };
 
 template<class Field>
-struct TupleHolder<Field> :
+struct CRUST_EBCO TupleHolder<Field> :
         public Impl<PartialEq<TupleHolder<Field>>, CRUST_DERIVE(Field, PartialEq)>,
         public Impl<Eq<TupleHolder<Field>>, CRUST_DERIVE(Field, Eq)>,
         public Impl<PartialOrd<TupleHolder<Field>>, CRUST_DERIVE(Field, PartialOrd)>,
@@ -115,7 +115,7 @@ struct TupleHolder<Field> :
 };
 
 template<>
-struct TupleHolder<> :
+struct CRUST_EBCO TupleHolder<> :
         public PartialEq<TupleHolder<>>, public Eq<TupleHolder<>>,
         public PartialOrd<TupleHolder<>>, public Ord<TupleHolder<>> {
     /// impl PartialEq
@@ -175,7 +175,7 @@ template<class T>
 class Option;
 
 template<class ...Fields>
-struct Tuple : public Impl<
+class CRUST_EBCO Tuple : public Impl<
         PartialEq<Tuple<Fields...>>,
         CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, PartialEq)
 >, public Impl<

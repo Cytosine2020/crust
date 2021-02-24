@@ -441,7 +441,7 @@ struct EnumIsTagOnly : public All<IsMonoState<Fields>::result...> {
 
 
 template<class ...Fields>
-struct EnumTagUnion :
+struct CRUST_EBCO EnumTagUnion :
         public EnumTrivial<EnumTagUnion<Fields...>, EnumIsTrivial<Fields...>::result>,
         public PartialEq<EnumTagUnion<Fields...>>, public Eq<EnumTagUnion<Fields...>> {
 private:
@@ -562,7 +562,9 @@ public:
 
 
 template<class ...Fields>
-class EnumTagOnly : public PartialEq<EnumTagOnly<Fields...>>, public Eq<EnumTagOnly<Fields...>> {
+class CRUST_EBCO EnumTagOnly :
+        public PartialEq<EnumTagOnly<Fields...>>,
+        public Eq<EnumTagOnly<Fields...>> {
 private:
     template<class T> using __IndexGetter = EnumTypeToIndex<T, Fields...>;
     using __Getter = TagVisitor<0, sizeof...(Fields), Fields...>;
@@ -610,7 +612,7 @@ public:
     }
 
 public:
-    CRUST_CXX14_CONSTEXPR bool eq(const EnumTagOnly &other) const {
+    constexpr bool eq(const EnumTagOnly &other) const {
         return this->index == other.index;
     }
 };
@@ -635,7 +637,7 @@ using EnumSelect = __EnumSelect<EnumIsTagOnly<Fields...>::result, Fields...>;
 
 
 template<class ...Fields>
-class Enum :
+class CRUST_EBCO Enum :
         public Impl<PartialEq<Enum<Fields...>>, CRUST_DERIVE(Fields, PartialEq)...>,
         public Impl<Eq<Enum<Fields...>>, CRUST_DERIVE(Fields, Eq)...> {
 private:

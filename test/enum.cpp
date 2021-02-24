@@ -65,12 +65,10 @@ struct E {
 struct F {
 };
 
-#if !defined(_MSC_VER)
 GTEST_TEST(enum_, tag_only) {
     CRUST_STATIC_ASSERT(sizeof(Enum<A, B>) == sizeof(u32));
     CRUST_STATIC_ASSERT(sizeof(Enum<A, B, C, D, E, F>) > sizeof(u32));
 }
-#endif
 
 GTEST_TEST(enum_, raii) {
     using Enumerate = Enum<A, B, C, D, E, F>;

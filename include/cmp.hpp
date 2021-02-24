@@ -20,7 +20,7 @@ CRUST_ENUM_VARIANTS(Equal);
 CRUST_ENUM_VARIANTS(Greater);
 }
 
-class Ordering :
+class CRUST_EBCO Ordering :
         public Enum<ordering::Less, ordering::Equal, ordering::Greater>,
         public PartialOrd<Ordering>, public Ord<Ordering> {
 public:

@@ -25,6 +25,12 @@ namespace crust {
 #define CRUST_DEFAULT_UNREACHABLE
 #endif
 
+#if defined(_MSC_VER)
+#define CRUST_EBCO __declspec(empty_bases)
+#else
+#define CRUST_EBCO
+#endif
+
 #if INTPTR_MAX == INT32_MAX
 #define CRUST_BIT_WIDTH 32
 #elif INTPTR_MAX == INT64_MAX
@@ -42,7 +48,8 @@ namespace crust {
 
 #define CRUST_PANIC(msg) ::crust::__panic(__FILE__, __LINE__, msg)
 
-static inline void _assert(const char *file, int line, const char *msg, bool condition) {
+static inline CRUST_CXX14_CONSTEXPR void
+_assert(const char *file, int line, const char *msg, bool condition) {
     if (!condition) {
         __panic(file, line, msg);
     }
