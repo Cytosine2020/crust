@@ -177,6 +177,8 @@ struct Derive {
     static constexpr bool result = std::is_base_of<Trait, Struct>::value;
 };
 
+/// this tag is used for enum optimization
+
 struct MonoStateTag {
 };
 
@@ -184,6 +186,17 @@ template<class T>
 struct IsMonoState {
     static constexpr bool result = std::is_base_of<MonoStateTag, T>::value;
 };
+
+/// this tag is used for enum optimization
+
+struct TransparentTag {
+};
+
+template<class T>
+struct IsTransparent {
+    static constexpr bool result = std::is_base_of<TransparentTag, T>::value;
+};
+
 
 #define CRUST_ECHO(...) __VA_ARGS__
 
@@ -239,6 +252,7 @@ struct IsMonoState {
 
 #define CRUST_ENUM_VARIANTS(NAME, ...) \
     struct NAME final : public Tuple<__VA_ARGS__> { \
+        using Inner = Tuple<__VA_ARGS__>; \
         CRUST_USE_BASE_CONSTRUCTORS(NAME, Tuple<__VA_ARGS__>) \
         CRUST_USE_BASE_TRAIT_EQ(NAME, Tuple<__VA_ARGS__>) \
     }

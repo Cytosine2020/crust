@@ -55,7 +55,7 @@ struct CRUST_EBCO TupleHolder<Field, Fields...> : public Impl<
 
     /// impl PartialOrd
 
-constexpr Option<Ordering> partial_cmp(const TupleHolder &other) const;
+    constexpr Option<Ordering> partial_cmp(const TupleHolder &other) const;
 
     constexpr bool lt(const TupleHolder &other) const {
         return field != other.field ? field < other.field : remains < other.remains;
@@ -146,14 +146,6 @@ struct TupleGetter<index, Field, Fields...> {
     static constexpr Result &inner(Self &self) {
         return TupleGetter<index - 1, Fields...>::inner(self.remains);
     }
-
-    static constexpr const Result &&inner_move(const Self &self) {
-        return TupleGetter<index - 1, Fields...>::inner_move(self.remains);
-    }
-
-    static constexpr Result &&inner_move(Self &self) {
-        return TupleGetter<index - 1, Fields...>::inner_move(self.remains);
-    }
 };
 
 template<class Field, class ...Fields>
@@ -164,10 +156,6 @@ struct TupleGetter<0, Field, Fields...> {
     static constexpr const Result &inner(const Self &self) { return self.field; }
 
     static constexpr Result &inner(Self &self) { return self.field; }
-
-    static constexpr const Result &&inner_move(const Self &self) { return move(self.field); }
-
-    static constexpr Result &&inner_move(Self &self) { return move(self.field); }
 };
 }
 
@@ -210,12 +198,6 @@ public:
     template<usize index>
     CRUST_CXX14_CONSTEXPR __Result<index> &get() { return __Getter<index>::inner(holder); }
 
-    template<usize index>
-    constexpr const __Result<index> &&move() const { return __Getter<index>::inner_move(holder); }
-
-    template<usize index>
-    CRUST_CXX14_CONSTEXPR __Result<index> &&move() { return __Getter<index>::inner_move(holder); }
-
     /// impl PartialEq
 
     constexpr bool eq(const Tuple &other) const { return holder == other.holder; }
@@ -248,6 +230,42 @@ template<class ...Fields>
 constexpr Tuple<Fields...> make_tuple(Fields &&...fields) {
     return Tuple<Fields...>{forward<Fields>(fields)...};
 }
+
+
+namespace __impl_tuple {
+template<usize index, class ...Fields>
+struct LetTupleHelper {
+    static CRUST_CXX14_CONSTEXPR void
+    inner(TupleHolder<Fields &...> &ref, Tuple<Fields...> &tuple) {
+        TupleGetter<index - 1, Fields &...>::inner(ref) = move(tuple.template get<index - 1>());
+        LetTupleHelper<index - 1, Fields...>::inner(ref, tuple);
+    }
+};
+
+template<class ...Fields>
+struct LetTupleHelper<0, Fields...> {
+    static CRUST_CXX14_CONSTEXPR void inner(TupleHolder<Fields &...> &, Tuple<Fields...> &) {}
+};
+
+
+template<class ...Fields>
+struct LetTuple {
+    TupleHolder<Fields &...> ref;
+
+    explicit constexpr LetTuple(const TupleHolder<Fields &...> &ref) : ref{ref} {}
+
+    explicit constexpr LetTuple(Fields &...fields) : ref{fields...} {}
+
+    CRUST_CXX14_CONSTEXPR void operator=(Tuple<Fields...> &&tuple) {
+        LetTupleHelper<sizeof...(Fields), Fields...>::inner(ref, tuple);
+    }
+};
+}
+
+template<class ...Fields>
+CRUST_CXX14_CONSTEXPR __impl_tuple::LetTuple<Fields...> let_tuple(Fields &...fields) {
+    return __impl_tuple::LetTuple<Fields...>{fields...};
+}
 }
 
 
@@ -275,18 +293,6 @@ template<crust::usize index, class ...Fields>
 constexpr typename tuple_element<index, crust::Tuple<Fields...>>::type &
 get(crust::Tuple<Fields...> &object) noexcept {
     return object.template get<index>();
-}
-
-template<crust::usize index, class ...Fields>
-constexpr const typename tuple_element<index, crust::Tuple<Fields...>>::type &&
-get(const crust::Tuple<Fields...> &&object) noexcept {
-    return object.template move<index>();
-}
-
-template<crust::usize index, class ...Fields>
-constexpr typename tuple_element<index, crust::Tuple<Fields...>>::type &&
-get(crust::Tuple<Fields...> &&object) noexcept {
-    return object.template move<index>();
 }
 }
 

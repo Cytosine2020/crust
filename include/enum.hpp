@@ -7,6 +7,7 @@
 
 #include "utility.hpp"
 #include "cmp_declare.hpp"
+#include "tuple_declare.hpp"
 
 
 namespace crust {
@@ -122,14 +123,6 @@ struct EnumGetter<index, trivial, Field, Fields...> {
     static constexpr const Result &inner(const Self &self) { return Remain::inner(self.remains); }
 
     static constexpr Result &inner(Self &self) { return Remain::inner(self.remains); }
-
-    static constexpr const Result &&inner_move(const Self &&self) {
-        return Remain::inner_move(move(self.remains));
-    }
-
-    static constexpr Result &&inner_move(Self &&self) {
-        return Remain::inner_move(move(self.remains));
-    }
 };
 
 template<bool trivial, class Field, class ...Fields>
@@ -194,12 +187,6 @@ public:
     case offset + index: \
         return forward<V>(impl)(EnumGetter<offset + index, trivial, Fields...>::inner(self))
 
-#define ENUM_VISITOR_MOVE_BRANCH(index) \
-    case offset + index: \
-        return forward<V>(impl)( \
-                EnumGetter<offset + index, trivial, Fields...>::inner_move(move(self)) \
-        )
-
 #define ENUM_VISITOR_IMPL(len) \
     template<usize offset, bool trivial, class ...Fields> \
     struct EnumVisitor<offset, len, trivial, Fields...> { \
@@ -218,22 +205,6 @@ public:
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
                 CRUST_MACRO_REPEAT(len, ENUM_VISITOR_BRANCH); \
-            } \
-        } \
-        template<class R, class V> \
-        static CRUST_CXX14_CONSTEXPR R \
-        inner_move(const EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) { \
-            switch (index) { \
-                CRUST_DEFAULT_UNREACHABLE; \
-                CRUST_MACRO_REPEAT(len, ENUM_VISITOR_MOVE_BRANCH); \
-            } \
-        } \
-        template<class R, class V> \
-        static CRUST_CXX14_CONSTEXPR R \
-        inner_move(EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) { \
-            switch (index) { \
-                CRUST_DEFAULT_UNREACHABLE; \
-                CRUST_MACRO_REPEAT(len, ENUM_VISITOR_MOVE_BRANCH); \
             } \
         } \
     }
@@ -305,10 +276,6 @@ public:
         return forward<V>(impl)(tmp); \
     }
 
-#define TAG_VISITOR_MOVE_BRANCH(index) \
-    case offset + index: \
-        return forward<V>(impl)(typename EnumType<offset + index, Fields...>::Result{})
-
 #define TAG_VISITOR_IMPL(len) \
     template<usize offset, class ...Fields> \
     struct TagVisitor<offset, len, Fields...> { \
@@ -318,13 +285,6 @@ public:
             switch (index) { \
                 CRUST_DEFAULT_UNREACHABLE; \
                 CRUST_MACRO_REPEAT(len, TAG_VISITOR_BRANCH); \
-            } \
-        } \
-        template<class R, class V> \
-        static CRUST_CXX14_CONSTEXPR R inner_move(V &&impl, usize index) { \
-            switch (index) { \
-                CRUST_DEFAULT_UNREACHABLE; \
-                CRUST_MACRO_REPEAT(len, TAG_VISITOR_MOVE_BRANCH); \
             } \
         } \
     }
@@ -406,7 +366,7 @@ public:
 
     EnumTrivial(EnumTrivial &&other) noexcept {
         if (this != &other) {
-            other.self().template visit_move<typename Self::__Emplace, void>({&self().holder});
+            other.self().template visit<typename Self::__Emplace, void>({&self().holder});
         }
     }
 
@@ -422,7 +382,7 @@ public:
     EnumTrivial &operator=(EnumTrivial &&other) noexcept {
         if (this != &other) {
             drop();
-            other.self().template visit_move<typename Self::__Emplace, void>({&self().holder});
+            other.self().template visit<typename Self::__Emplace, void>({&self().holder});
         }
 
         return *this;
@@ -484,7 +444,7 @@ private:
         __Holder *holder;
 
         template<class T>
-        void operator()(T &&value) { ::new(holder) __Holder{forward<T>(value)}; }
+        void operator()(T &value) { ::new(holder) __Holder{move(value)}; }
     };
 
 public:
@@ -512,16 +472,16 @@ public:
         return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
     }
 
-    template<class V, class R>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) const {
-        CRUST_ASSERT(index < sizeof...(Fields));
-        return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
-    }
+    template<class T>
+    CRUST_CXX14_CONSTEXPR bool let(T &ref) {
+        constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
 
-    template<class V, class R>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) {
-        CRUST_ASSERT(index < sizeof...(Fields));
-        return __Getter::template inner_move<R, V>(move(holder), forward<V>(visitor), index);
+        if (index == i) {
+            ref = EnumGetter<i, __trivial, Fields...>::inner(holder);
+            return true;
+        } else {
+            return false;
+        }
     }
 
 private:
@@ -599,16 +559,16 @@ public:
         return __Getter::template inner<R, V>(forward<V>(visitor), index);
     }
 
-    template<class V, class R>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) const {
-        CRUST_ASSERT(index < sizeof...(Fields));
-        return __Getter::template inner_move<R, V>(forward<V>(visitor), index);
-    }
+    template<class T>
+    CRUST_CXX14_CONSTEXPR bool let(T &ref) {
+        constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
 
-    template<class V, class R>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor) {
-        CRUST_ASSERT(index < sizeof...(Fields));
-        return __Getter::template inner_move<R, V>(forward<V>(visitor), index);
+        if (index == i) {
+            ref = T{};
+            return true;
+        } else {
+            return false;
+        }
     }
 
 public:
@@ -669,20 +629,40 @@ public:
         return inner.template visit<V, R>(forward<V>(visitor));
     }
 
-    template<class V, class R = void>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor = V{}) const {
-        return inner.template visit_move<V, R>(forward<V>(visitor));
-    }
-
-    template<class V, class R = void>
-    CRUST_CXX14_CONSTEXPR R visit_move(V &&visitor = V{}) {
-        return inner.template visit_move<V, R>(forward<V>(visitor));
-    }
+    template<class T>
+    CRUST_CXX14_CONSTEXPR bool let(T &ref) { return inner.let(ref); }
 
     CRUST_CXX14_CONSTEXPR bool eq(const Enum &other) const { return inner == other.inner; }
 
     CRUST_CXX14_CONSTEXPR bool ne(const Enum &other) const { return inner != other.inner; }
 };
+
+
+namespace __impl_enum {
+template<class T, class ...Fields>
+struct LetEnum {
+    __impl_tuple::TupleHolder<Fields &...> ref;
+
+    explicit constexpr LetEnum(Fields &...ref) : ref{ref...} {}
+
+    template<class ...Vs>
+    CRUST_CXX14_CONSTEXPR bool operator=(Enum<Vs...> &&enum_) {
+        T tmp;
+        if (enum_.template let<T>(tmp)) {
+            __impl_tuple::LetTuple<Fields...>{ref} = move(tmp);
+            return true;
+        } else {
+            return false;
+        }
+    }
+};
+}
+
+
+template<class T, class ...Fields>
+CRUST_CXX14_CONSTEXPR __impl_enum::LetEnum<T, Fields...> let_enum(Fields &...fields) {
+    return __impl_enum::LetEnum<T, Fields...>{fields...};
+}
 }
 
 

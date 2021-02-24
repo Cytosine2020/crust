@@ -12,7 +12,12 @@ CRUST_ENUM_VARIANTS(Some, T);
 CRUST_ENUM_VARIANTS(None);
 
 template<class T>
-constexpr Option<T> make_some(T &&value) { return Some<T>{forward<T>(value)}; }
+constexpr Option<T> make_some(T &&value) {
+    return Some<typename RemoveRef<T>::Result>{forward<T>(value)};
+}
+
+template<class T>
+constexpr Option<T> make_none() { return None{}; }
 
 template<class T>
 struct AsPtr {

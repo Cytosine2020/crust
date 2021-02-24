@@ -66,28 +66,28 @@ public:
 
 private:
     struct Unwrap {
-        constexpr T &&operator()(Some<T> &&value) const { return move(value); }
+        constexpr T &&operator()(Some<T> &value) const { return move(value); }
 
-        CRUST_CXX14_CONSTEXPR T &&operator()(None &&) const {
+        CRUST_CXX14_CONSTEXPR T &&operator()(None &) const {
             CRUST_PANIC("called `Option::unwrap()` on a `None` value");
         }
     };
 
 public:
-    T &&unwrap() { return this->template visit_move<Unwrap, T &&>(); }
+    T &&unwrap() { return this->template visit<Unwrap, T &&>(); }
 
 private:
     struct UnwrapOr {
         T &&d;
 
-        CRUST_CXX14_CONSTEXPR T &&operator()(Some<T> &&value) { return move(value); }
+        CRUST_CXX14_CONSTEXPR T &&operator()(Some<T> &value) { return move(value); }
 
-        CRUST_CXX14_CONSTEXPR T &&operator()(None &&) { return move(d); }
+        CRUST_CXX14_CONSTEXPR T &&operator()(None &) { return move(d); }
     };
 
 public:
     CRUST_CXX14_CONSTEXPR T &&unwrap_or(T &&d) {
-        return this->template visit_move<UnwrapOr, T &&>({d});
+        return this->template visit<UnwrapOr, T &&>({d});
     }
 
 private:

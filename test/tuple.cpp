@@ -87,6 +87,14 @@ GTEST_TEST(tuple, size_two) {
     EXPECT_TRUE(std::get<0>(tuple) == 1);
     EXPECT_TRUE(std::get<1>(tuple) == 'b');
 
+    i32 a;
+    char b;
+
+    let_tuple(a, b) = move(tuple);
+
+    EXPECT_EQ(a, 1);
+    EXPECT_EQ(b, 'b');
+
     EXPECT_TRUE(make_tuple(true) != make_tuple(false));
     EXPECT_TRUE(make_tuple(1) > make_tuple(0));
     EXPECT_TRUE(make_tuple(0, 'b') > make_tuple(0, 'a'));
