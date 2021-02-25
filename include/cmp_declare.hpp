@@ -9,6 +9,7 @@ namespace crust {
 template<class T>
 class Option;
 
+namespace cmp {
 CRUST_TRAIT(PartialEq, class Rhs = Self)
 public:
     /// Used for detecting `PartialEq', part of the workaround below.
@@ -31,47 +32,6 @@ public:
     /// Should never be implemented by hand.
     template<class = void>
     void __detect_trait_eq(const Self &) const {}
-};
-
-///
-/// Ugly workaround for detecting `PartialEq' and `Eq' for classes inherits `Tuple' and `Enum'.
-///
-
-namespace __impl_derive_eq {
-template<typename T, class Rhs>
-struct DerivePartialEq {
-    template<typename U>
-    static u32 check(decltype(static_cast<void (U::*)(const Rhs &) const>(
-            &U::template __detect_trait_partial_eq<>)));
-
-    template<typename>
-    static void check(...);
-
-    static constexpr bool result = IsSame<decltype(check<T>(0)), u32>::result;
-};
-
-template<typename T>
-struct DeriveEq {
-    template<typename U>
-    static u32 check(decltype(static_cast<void (U::*)(const U &) const>(
-            &U::template __detect_trait_eq<>)));
-
-    template<typename>
-    static void check(...);
-
-    static constexpr bool result = IsSame<decltype(check<T>(0)), u32>::result;
-};
-}
-
-
-template<class Self, class Rhs>
-struct Derive<Self, PartialEq<Self, Rhs>> {
-    static constexpr bool result = __impl_derive_eq::DerivePartialEq<Self, Rhs>::result;
-};
-
-template<class Self>
-struct Derive<Self, Eq<Self>> {
-    static constexpr bool result = __impl_derive_eq::DeriveEq<Self>::result;
 };
 
 class Ordering;
@@ -131,6 +91,47 @@ public:
             return move(self());
         }
     }
+};
+}
+
+namespace __impl_derive_eq {
+///
+/// Ugly workaround for detecting `PartialEq' and `Eq' for classes inherits `Tuple' and `Enum'.
+///
+template<typename T, class Rhs>
+struct DerivePartialEq {
+    template<typename U>
+    static u32 check(decltype(static_cast<void (U::*)(const Rhs &) const>(
+            &U::template __detect_trait_partial_eq<>)));
+
+    template<typename>
+    static void check(...);
+
+    static constexpr bool result = IsSame<decltype(check<T>(0)), u32>::result;
+};
+
+template<typename T>
+struct DeriveEq {
+    template<typename U>
+    static u32 check(decltype(static_cast<void (U::*)(const U &) const>(
+            &U::template __detect_trait_eq<>)));
+
+    template<typename>
+    static void check(...);
+
+    static constexpr bool result = IsSame<decltype(check<T>(0)), u32>::result;
+};
+}
+
+
+template<class Self, class Rhs>
+struct Derive<Self, cmp::PartialEq<Self, Rhs>> {
+static constexpr bool result =__impl_derive_eq::DerivePartialEq<Self, Rhs>::result;
+};
+
+template<class Self>
+struct Derive<Self, cmp::Eq<Self>> {
+static constexpr bool result = __impl_derive_eq::DeriveEq<Self>::result;
 };
 }
 

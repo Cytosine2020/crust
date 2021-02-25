@@ -9,11 +9,12 @@
 
 
 namespace crust {
+namespace iter {
 CRUST_TRAIT(Iterator, class Item)
 public:
     Option<Item> next();
 
-    Tuple<usize, Option<usize>> size_hint() const {
+    constexpr Tuple<usize, Option<usize>> size_hint() const {
         return make_tuple<usize, Option<usize>>(0, None{});
     }
 
@@ -29,6 +30,7 @@ public:
         return accum;
     }
 };
+}
 }
 
 

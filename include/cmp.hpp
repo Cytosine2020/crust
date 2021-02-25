@@ -12,29 +12,18 @@
 
 
 namespace crust {
-namespace ordering {
+namespace cmp {
 CRUST_ENUM_VARIANTS(Less);
 
 CRUST_ENUM_VARIANTS(Equal);
 
 CRUST_ENUM_VARIANTS(Greater);
-}
 
 class CRUST_EBCO Ordering :
-        public Enum<ordering::Less, ordering::Equal, ordering::Greater>,
+        public Enum<Less, Equal, Greater>,
         public PartialOrd<Ordering>, public Ord<Ordering> {
 public:
-    using Less = ordering::Less;
-    using Equal = ordering::Equal;
-    using Greater = ordering::Greater;
-
     CRUST_ENUM_USE_BASE(Ordering, Enum<Less, Equal, Greater>);
-
-    static constexpr Ordering less() { return Less{}; }
-
-    static constexpr Ordering equal() { return Equal{}; }
-
-    static constexpr Ordering greater() { return Greater{}; }
 
 private:
     struct __Reverse {
@@ -101,6 +90,12 @@ public:
     CRUST_CXX14_CONSTEXPR Ordering cmp(const Ordering &other) const;
 };
 
+constexpr Ordering make_less() { return Less{}; }
+
+constexpr Ordering make_equal() { return Equal{}; }
+
+constexpr Ordering make_greater() { return Greater{}; }
+
 namespace __impl_cmp {
 template<class T, class U, bool = CRUST_DERIVE(T, Ord)>
 struct CmpHelper {
@@ -124,24 +119,24 @@ constexpr Option<Ordering> PartialOrd<Self, Rhs>::cmp_helper(const Rhs &other) c
 
 template<class Self, class Rhs>
 constexpr bool PartialOrd<Self, Rhs>::lt(const Rhs &other) const {
-    return self().cmp_helper(other) == make_some(Ordering::less());
+    return self().cmp_helper(other) == make_some(make_less());
 }
 
 template<class Self, class Rhs>
 constexpr bool PartialOrd<Self, Rhs>::le(const Rhs &other) const {
-    return self().cmp_helper(other) == make_some(Ordering::less()) ||
-           self().cmp_helper(other) == make_some(Ordering::equal());
+    return self().cmp_helper(other) == make_some(make_less()) ||
+           self().cmp_helper(other) == make_some(make_equal());
 }
 
 template<class Self, class Rhs>
 constexpr bool PartialOrd<Self, Rhs>::gt(const Rhs &other) const {
-    return self().cmp_helper(other) == make_some(Ordering::greater());
+    return self().cmp_helper(other) == make_some(make_greater());
 }
 
 template<class Self, class Rhs>
 constexpr bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
-    return self().cmp_helper(other) == make_some(Ordering::greater()) ||
-           self().cmp_helper(other) == make_some(Ordering::equal());
+    return self().cmp_helper(other) == make_some(make_greater()) ||
+           self().cmp_helper(other) == make_some(make_equal());
 }
 
 
@@ -161,7 +156,7 @@ constexpr Ordering operator_cmp(const T &v1, const U &v2) {
 #define IMPL_OPERATOR_CMP(type) \
 template<> \
 inline constexpr Ordering operator_cmp(const type &v1, const type &v2) { \
-    return v1 < v2 ? Ordering::less() : v1 > v2 ? Ordering::greater() : Ordering::equal(); \
+    return v1 < v2 ? make_less() : v1 > v2 ? make_greater() : make_equal(); \
 }\
 template<> \
 inline constexpr Option<Ordering> operator_partial_cmp(const type &v1, const type &v2) { \
@@ -205,7 +200,7 @@ constexpr T min(T &&v1, T &&v2) {
 template<class T, class F>
 constexpr T min_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
     CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
-    return compare(v1, v2) == Ordering::greater() ? forward<T>(v2) : forward<T>(v1);
+    return compare(v1, v2) == make_greater() ? forward<T>(v2) : forward<T>(v1);
 }
 
 template<class T, class F, class K>
@@ -225,7 +220,7 @@ constexpr T &&max(T &&v1, T &&v2) {
 template<class T, class F>
 constexpr T &&max_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
     CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
-    return compare(v1, v2) == Ordering::greater() ? forward<T>(v1) : forward<T>(v2);
+    return compare(v1, v2) == make_greater() ? forward<T>(v1) : forward<T>(v2);
 }
 
 template<class T, class F, class K>
@@ -269,6 +264,7 @@ public:
         return operator_cmp(other.inner, this->inner);
     }
 };
+}
 
 #define IMPL_PRIMITIVE(Trait) \
     CRUST_DERIVE_PRIMITIVE(char, Trait); \
@@ -281,17 +277,17 @@ public:
     CRUST_DERIVE_PRIMITIVE(u64, Trait); \
     CRUST_DERIVE_PRIMITIVE(i64, Trait)
 
-CRUST_DERIVE_PRIMITIVE(bool, PartialEq);
+CRUST_DERIVE_PRIMITIVE(bool, cmp::PartialEq);
 
-IMPL_PRIMITIVE(PartialEq);
+IMPL_PRIMITIVE(cmp::PartialEq);
 
-CRUST_DERIVE_PRIMITIVE(bool, Eq);
+CRUST_DERIVE_PRIMITIVE(bool, cmp::Eq);
 
-IMPL_PRIMITIVE(Eq);
+IMPL_PRIMITIVE(cmp::Eq);
 
-IMPL_PRIMITIVE(PartialOrd);
+IMPL_PRIMITIVE(cmp::PartialOrd);
 
-IMPL_PRIMITIVE(Ord);
+IMPL_PRIMITIVE(cmp::Ord);
 
 #undef IMPL_PRIMATIVE
 

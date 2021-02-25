@@ -6,6 +6,7 @@
 
 
 using namespace crust;
+using namespace cmp;
 
 
 namespace {
@@ -32,8 +33,8 @@ GTEST_TEST(tuple, size_zero) {
     EXPECT_TRUE(make_tuple() <= make_tuple());
     EXPECT_FALSE(make_tuple() > make_tuple());
     EXPECT_TRUE(make_tuple() >= make_tuple());
-    EXPECT_EQ(operator_partial_cmp(make_tuple(), make_tuple()), make_some(Ordering::equal()));
-    EXPECT_EQ(operator_cmp(make_tuple(), make_tuple()), Ordering::equal());
+    EXPECT_EQ(operator_partial_cmp(make_tuple(), make_tuple()), make_some(make_equal()));
+    EXPECT_EQ(operator_cmp(make_tuple(), make_tuple()), make_equal());
 }
 
 GTEST_TEST(tuple, size_one) {
@@ -54,8 +55,8 @@ GTEST_TEST(tuple, size_one) {
     EXPECT_TRUE(make_tuple(0) <= make_tuple(0));
     EXPECT_FALSE(make_tuple(0) > make_tuple(0));
     EXPECT_TRUE(make_tuple(0) >= make_tuple(0));
-    EXPECT_EQ(operator_partial_cmp(make_tuple(0), make_tuple(0)), make_some(Ordering::equal()));
-    EXPECT_EQ(operator_cmp(make_tuple(0), make_tuple(0)), Ordering::equal());
+    EXPECT_EQ(operator_partial_cmp(make_tuple(0), make_tuple(0)), make_some(make_equal()));
+    EXPECT_EQ(operator_cmp(make_tuple(0), make_tuple(0)), make_equal());
 
     auto tuple = make_tuple(0);
 
@@ -101,5 +102,5 @@ GTEST_TEST(tuple, size_two) {
     EXPECT_TRUE(make_tuple(1) > make_tuple(0));
     EXPECT_TRUE(make_tuple(0, 'b') > make_tuple(0, 'a'));
 
-    EXPECT_TRUE(make_tuple(0, 1).cmp(make_tuple(0, 0)) == Ordering::greater());
+    EXPECT_TRUE(make_tuple(0, 1).cmp(make_tuple(0, 0)) == make_greater());
 }

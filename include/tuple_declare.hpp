@@ -18,21 +18,21 @@ struct TupleHolder;
 
 template<class Field, class ...Fields>
 struct CRUST_EBCO TupleHolder<Field, Fields...> : public Impl<
-        PartialEq<TupleHolder<Field, Fields...>>,
-        CRUST_DERIVE(Field, PartialEq),
-        CRUST_DERIVE(TupleHolder<Fields...>, PartialEq)
+        cmp::PartialEq<TupleHolder<Field, Fields...>>,
+        CRUST_DERIVE(Field, cmp::PartialEq),
+        CRUST_DERIVE(TupleHolder<Fields...>, cmp::PartialEq)
 >, public Impl<
-        Eq<TupleHolder<Field, Fields...>>,
-        CRUST_DERIVE(Field, Eq),
-        CRUST_DERIVE(TupleHolder<Fields...>, Eq)
+        cmp::Eq<TupleHolder<Field, Fields...>>,
+        CRUST_DERIVE(Field, cmp::Eq),
+        CRUST_DERIVE(TupleHolder<Fields...>, cmp::Eq)
 >, public Impl<
-        PartialOrd<TupleHolder<Field, Fields...>>,
-        CRUST_DERIVE(Field, PartialOrd),
-        CRUST_DERIVE(TupleHolder<Fields...>, PartialOrd)
+        cmp::PartialOrd<TupleHolder<Field, Fields...>>,
+        CRUST_DERIVE(Field, cmp::PartialOrd),
+        CRUST_DERIVE(TupleHolder<Fields...>, cmp::PartialOrd)
 >, public Impl<
-        Ord<TupleHolder<Field, Fields...>>,
-        CRUST_DERIVE(Field, Ord),
-        CRUST_DERIVE(TupleHolder<Fields...>, Ord)
+        cmp::Ord<TupleHolder<Field, Fields...>>,
+        CRUST_DERIVE(Field, cmp::Ord),
+        CRUST_DERIVE(TupleHolder<Fields...>, cmp::Ord)
 > {
     Field field;
     TupleHolder<Fields...> remains;
@@ -55,7 +55,7 @@ struct CRUST_EBCO TupleHolder<Field, Fields...> : public Impl<
 
     /// impl PartialOrd
 
-    constexpr Option<Ordering> partial_cmp(const TupleHolder &other) const;
+    constexpr Option<cmp::Ordering> partial_cmp(const TupleHolder &other) const;
 
     constexpr bool lt(const TupleHolder &other) const {
         return field != other.field ? field < other.field : remains < other.remains;
@@ -75,15 +75,15 @@ struct CRUST_EBCO TupleHolder<Field, Fields...> : public Impl<
 
     /// impl Ord
 
-    constexpr Ordering cmp(const TupleHolder &other) const;
+    constexpr cmp::Ordering cmp(const TupleHolder &other) const;
 };
 
 template<class Field>
 struct CRUST_EBCO TupleHolder<Field> :
-        public Impl<PartialEq<TupleHolder<Field>>, CRUST_DERIVE(Field, PartialEq)>,
-        public Impl<Eq<TupleHolder<Field>>, CRUST_DERIVE(Field, Eq)>,
-        public Impl<PartialOrd<TupleHolder<Field>>, CRUST_DERIVE(Field, PartialOrd)>,
-        public Impl<Ord<TupleHolder<Field>>, CRUST_DERIVE(Field, Ord)> {
+        public Impl<cmp::PartialEq<TupleHolder<Field>>, CRUST_DERIVE(Field, cmp::PartialEq)>,
+        public Impl<cmp::Eq<TupleHolder<Field>>, CRUST_DERIVE(Field, cmp::Eq)>,
+        public Impl<cmp::PartialOrd<TupleHolder<Field>>, CRUST_DERIVE(Field, cmp::PartialOrd)>,
+        public Impl<cmp::Ord<TupleHolder<Field>>, CRUST_DERIVE(Field, cmp::Ord)> {
     Field field;
 
     constexpr TupleHolder() noexcept: field{} {}
@@ -99,7 +99,7 @@ struct CRUST_EBCO TupleHolder<Field> :
 
     /// impl PartialOrd
 
-    constexpr Option<Ordering> partial_cmp(const TupleHolder &other) const;
+    constexpr Option<cmp::Ordering> partial_cmp(const TupleHolder &other) const;
 
     constexpr bool lt(const TupleHolder &other) const { return field < other.field; }
 
@@ -111,24 +111,24 @@ struct CRUST_EBCO TupleHolder<Field> :
 
     /// impl Ord
 
-    constexpr Ordering cmp(const TupleHolder &other) const;
+    constexpr cmp::Ordering cmp(const TupleHolder &other) const;
 };
 
 template<>
 struct CRUST_EBCO TupleHolder<> :
-        public PartialEq<TupleHolder<>>, public Eq<TupleHolder<>>,
-        public PartialOrd<TupleHolder<>>, public Ord<TupleHolder<>> {
+        public cmp::PartialEq<TupleHolder<>>, public cmp::Eq<TupleHolder<>>,
+        public cmp::PartialOrd<TupleHolder<>>, public cmp::Ord<TupleHolder<>> {
     /// impl PartialEq
 
     constexpr bool eq(const TupleHolder &) const { return true; }
 
     /// impl PartialOrd
 
-    constexpr Option<Ordering> partial_cmp(const TupleHolder &) const;
+    constexpr Option<cmp::Ordering> partial_cmp(const TupleHolder &) const;
 
     /// impl Ord
 
-    constexpr Ordering cmp(const TupleHolder &) const;
+    constexpr cmp::Ordering cmp(const TupleHolder &) const;
 };
 
 template<usize index, class ...Fields>
@@ -164,17 +164,17 @@ class Option;
 
 template<class ...Fields>
 class CRUST_EBCO Tuple : public Impl<
-        PartialEq<Tuple<Fields...>>,
-        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, PartialEq)
+        cmp::PartialEq<Tuple<Fields...>>,
+        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, cmp::PartialEq)
 >, public Impl<
-        Eq<Tuple<Fields...>>,
-        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, Eq)
+        cmp::Eq<Tuple<Fields...>>,
+        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, cmp::Eq)
 >, public Impl<
-        PartialOrd<Tuple<Fields...>>,
-        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, PartialOrd)
+        cmp::PartialOrd<Tuple<Fields...>>,
+        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, cmp::PartialOrd)
 >, public Impl<
-        Ord<Tuple<Fields...>>,
-        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, Ord)
+        cmp::Ord<Tuple<Fields...>>,
+        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, cmp::Ord)
 >, public Impl<MonoStateTag, sizeof...(Fields) == 0> {
 private:
     using __Holder = __impl_tuple::TupleHolder<typename RemoveRef<Fields>::Result...>;
@@ -206,7 +206,7 @@ public:
 
     /// impl PartialOrd
 
-    constexpr Option<Ordering> partial_cmp(const Tuple &other) const;
+    constexpr Option<cmp::Ordering> partial_cmp(const Tuple &other) const;
 
     constexpr bool lt(const Tuple &other) const { return holder < other.holder; }
 
@@ -218,7 +218,7 @@ public:
 
     /// impl Ord
 
-    constexpr Ordering cmp(const Tuple &other) const;
+    constexpr cmp::Ordering cmp(const Tuple &other) const;
 };
 
 template<>

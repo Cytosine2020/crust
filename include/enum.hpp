@@ -403,8 +403,7 @@ struct EnumIsTagOnly : public All<IsMonoState<Fields>::result...> {
 template<class ...Fields>
 struct CRUST_EBCO EnumTagUnion :
         public EnumTrivial<EnumTagUnion<Fields...>, EnumIsTrivial<Fields...>::result>,
-        public PartialEq<EnumTagUnion<Fields...>>, public Eq<EnumTagUnion<Fields...>> {
-private:
+        public cmp::PartialEq<EnumTagUnion<Fields...>>, public cmp::Eq<EnumTagUnion<Fields...>> {
     CRUST_STATIC_ASSERT(sizeof...(Fields) <= std::numeric_limits<u32>::max() &&
                         sizeof...(Fields) > 0 && !__impl_enum::EnumDuplicate<Fields...>::result);
 
@@ -419,7 +418,6 @@ private:
     __Holder holder;
     u32 index;
 
-public:
     template<class T>
     constexpr EnumTagUnion(T &&value) noexcept:
             holder{forward<T>(value)},
@@ -427,7 +425,6 @@ public:
         CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagUnion>::result);
     }
 
-private:
     struct __Drop {
         template<class T>
         CRUST_CXX14_CONSTEXPR void operator()(T &value) const { value.~T(); }
@@ -447,7 +444,6 @@ private:
         void operator()(T &value) { ::new(holder) __Holder{move(value)}; }
     };
 
-public:
     template<class T>
     EnumTagUnion &operator=(T &&value) noexcept {
         CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagUnion>::result);
@@ -472,19 +468,18 @@ public:
         return __Getter::template inner<R, V>(holder, forward<V>(visitor), index);
     }
 
-    template<class T>
-    CRUST_CXX14_CONSTEXPR bool let(T &ref) {
+    template<class T, class ...Fs>
+    CRUST_CXX14_CONSTEXPR bool let_helper(__impl_tuple::TupleHolder<Fs &...> ref) {
         constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
 
         if (index == i) {
-            ref = EnumGetter<i, __trivial, Fields...>::inner(holder);
+            __impl_tuple::LetTupleHelper<sizeof...(Fs), Fs...>::inner(
+                    ref, EnumGetter<i, __trivial, Fields...>::inner(holder));
             return true;
         } else {
             return false;
         }
     }
-
-private:
 
     /// impl PartialEq
 
@@ -498,12 +493,10 @@ private:
         };
     };
 
-public:
     CRUST_CXX14_CONSTEXPR bool eq(const EnumTagUnion &other) const {
         return this->index == other.index && visit<__Equal, bool>({&other.holder});
     }
 
-private:
     struct __NotEqual {
         const __Holder *other;
 
@@ -514,7 +507,6 @@ private:
         };
     };
 
-public:
     CRUST_CXX14_CONSTEXPR bool ne(const EnumTagUnion &other) const {
         return this->index != other.index || visit<__NotEqual, bool>({&other.holder});
     }
@@ -522,16 +514,14 @@ public:
 
 
 template<class ...Fields>
-class CRUST_EBCO EnumTagOnly :
-        public PartialEq<EnumTagOnly<Fields...>>,
-        public Eq<EnumTagOnly<Fields...>> {
-private:
+struct CRUST_EBCO EnumTagOnly :
+        public cmp::PartialEq<EnumTagOnly<Fields...>>,
+        public cmp::Eq<EnumTagOnly<Fields...>> {
     template<class T> using __IndexGetter = EnumTypeToIndex<T, Fields...>;
     using __Getter = TagVisitor<0, sizeof...(Fields), Fields...>;
 
     u32 index;
 
-public:
     template<class T>
     constexpr EnumTagOnly(T &&) noexcept:
             index{__IndexGetter<typename RemoveRef<T>::Result>::result} {
@@ -559,19 +549,18 @@ public:
         return __Getter::template inner<R, V>(forward<V>(visitor), index);
     }
 
-    template<class T>
-    CRUST_CXX14_CONSTEXPR bool let(T &ref) {
+    template<class T, class ...Fs>
+    CRUST_CXX14_CONSTEXPR bool let_helper(__impl_tuple::TupleHolder<Fs &...> ref) {
         constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
 
         if (index == i) {
-            ref = T{};
+            __impl_tuple::LetTupleHelper<sizeof...(Fs), Fs...>(ref, T{});
             return true;
         } else {
             return false;
         }
     }
 
-public:
     constexpr bool eq(const EnumTagOnly &other) const {
         return this->index == other.index;
     }
@@ -598,8 +587,8 @@ using EnumSelect = __EnumSelect<EnumIsTagOnly<Fields...>::result, Fields...>;
 
 template<class ...Fields>
 class CRUST_EBCO Enum :
-        public Impl<PartialEq<Enum<Fields...>>, CRUST_DERIVE(Fields, PartialEq)...>,
-        public Impl<Eq<Enum<Fields...>>, CRUST_DERIVE(Fields, Eq)...> {
+        public Impl<cmp::PartialEq<Enum<Fields...>>, CRUST_DERIVE(Fields, cmp::PartialEq)...>,
+        public Impl<cmp::Eq<Enum<Fields...>>, CRUST_DERIVE(Fields, cmp::Eq)...> {
 private:
     using Inner = __impl_enum::EnumSelect<Fields...>;
 
@@ -629,8 +618,10 @@ public:
         return inner.template visit<V, R>(forward<V>(visitor));
     }
 
-    template<class T>
-    CRUST_CXX14_CONSTEXPR bool let(T &ref) { return inner.let(ref); }
+    template<class T, class ...Fs>
+    CRUST_CXX14_CONSTEXPR bool let_helper(__impl_tuple::TupleHolder<Fs &...> ref) {
+        return inner.template let_helper<T>(ref);
+    }
 
     CRUST_CXX14_CONSTEXPR bool eq(const Enum &other) const { return inner == other.inner; }
 
@@ -647,13 +638,7 @@ struct LetEnum {
 
     template<class ...Vs>
     CRUST_CXX14_CONSTEXPR bool operator=(Enum<Vs...> &&enum_) {
-        T tmp;
-        if (enum_.template let<T>(tmp)) {
-            __impl_tuple::LetTuple<Fields...>{ref} = move(tmp);
-            return true;
-        } else {
-            return false;
-        }
+        return enum_.template let_helper<T>(ref);
     }
 };
 }

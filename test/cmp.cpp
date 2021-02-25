@@ -5,6 +5,7 @@
 
 
 using namespace crust;
+using namespace cmp;
 
 
 GTEST_TEST(cmp, derive) {
@@ -35,25 +36,25 @@ GTEST_TEST(cmp, derive) {
 
 
 GTEST_TEST(cmp, ordering) {
-    EXPECT_TRUE(Ordering::less() == Ordering::less());
-    EXPECT_TRUE(Ordering::equal() == Ordering::equal());
-    EXPECT_TRUE(Ordering::greater() == Ordering::greater());
-    EXPECT_TRUE(Ordering::less() < Ordering::equal());
-    EXPECT_TRUE(Ordering::less() < Ordering::greater());
-    EXPECT_TRUE(Ordering::equal() < Ordering::greater());
+    EXPECT_TRUE(make_less() == make_less());
+    EXPECT_TRUE(make_equal() == make_equal());
+    EXPECT_TRUE(make_greater() == make_greater());
+    EXPECT_TRUE(make_less() < make_equal());
+    EXPECT_TRUE(make_less() < make_greater());
+    EXPECT_TRUE(make_equal() < make_greater());
 
-    EXPECT_EQ(Ordering::equal().then(Ordering::less()), Ordering::less());
-    EXPECT_EQ(Ordering::less().then(Ordering::equal()), Ordering::less());
-    EXPECT_EQ(Ordering::greater().then(Ordering::equal()), Ordering::greater());
-    EXPECT_EQ(Ordering::equal().then_with(make_fn([]() {
-        return Ordering::less();
-    })), Ordering::less());
-    EXPECT_EQ(Ordering::less().then_with(make_fn([]() {
-        return Ordering::equal();
-    })), Ordering::less());
-    EXPECT_EQ(Ordering::greater().then_with(make_fn([]() {
-        return Ordering::equal();
-    })), Ordering::greater());
+    EXPECT_EQ(make_equal().then(make_less()), make_less());
+    EXPECT_EQ(make_less().then(make_equal()), make_less());
+    EXPECT_EQ(make_greater().then(make_equal()), make_greater());
+    EXPECT_EQ(make_equal().then_with(make_fn([]() {
+        return make_less();
+    })), make_less());
+    EXPECT_EQ(make_less().then_with(make_fn([]() {
+        return make_equal();
+    })), make_less());
+    EXPECT_EQ(make_greater().then_with(make_fn([]() {
+        return make_equal();
+    })), make_greater());
 }
 
 

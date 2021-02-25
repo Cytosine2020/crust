@@ -32,8 +32,8 @@ struct VisitType {
 GTEST_TEST(enum_, enum_) {
     using Enumerate = Enum<ClassA, ClassB>;
 
-    CRUST_STATIC_ASSERT(!CRUST_DERIVE(Enumerate, PartialEq));
-    CRUST_STATIC_ASSERT(!CRUST_DERIVE(Enumerate, Eq));
+    CRUST_STATIC_ASSERT(!CRUST_DERIVE(Enumerate, cmp::PartialEq));
+    CRUST_STATIC_ASSERT(!CRUST_DERIVE(Enumerate, cmp::Eq));
     CRUST_STATIC_ASSERT(!std::is_trivially_copyable<Enumerate>::value);
     CRUST_STATIC_ASSERT(!std::is_literal_type<Enumerate>::value);
 
