@@ -3,9 +3,11 @@
 
 
 #include "utility.hpp"
+#include "enum.hpp"
 
 
 namespace crust {
+namespace range {
 class RangeFull {
 };
 
@@ -15,9 +17,9 @@ public:
     T start;
     T end;
 
-    Range(T start, T end) : start{start}, end{end} {}
+    constexpr Range(T start, T end) : start{start}, end{end} {}
 
-    bool is_empty() const { return start >= end; }
+    constexpr bool is_empty() const { return start >= end; }
 };
 
 template<class T>
@@ -25,7 +27,7 @@ class RangeFrom {
 public:
     T start;
 
-    explicit RangeFrom(T start) : start{start} {}
+    explicit constexpr RangeFrom(T start) : start{start} {}
 };
 
 template<class T>
@@ -33,8 +35,9 @@ class RangeTo {
 public:
     T end;
 
-    explicit RangeTo(T end) : end{end} {}
+    explicit constexpr RangeTo(T end) : end{end} {}
 };
+}
 }
 
 

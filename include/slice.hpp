@@ -8,7 +8,7 @@
 
 namespace crust {
 template<class T>
-class Slice : public Index<Slice<T>, usize, T> {
+class Slice : public index::Index<Slice<T>, usize, T> {
 private:
     T *inner;
     usize size;

@@ -6,6 +6,7 @@
 
 
 namespace crust {
+namespace index {
 CRUST_TRAIT(Index, class Idx, class T)
 public:
     const T &index(Idx idx) const;
@@ -16,6 +17,7 @@ public:
 
     T &operator[](Idx idx) { return self().index_mut(idx); }
 };
+}
 }
 
 

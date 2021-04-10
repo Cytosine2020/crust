@@ -7,9 +7,9 @@
 
 namespace crust {
 template<class T>
-CRUST_ENUM_VARIANTS(Some, T);
+CRUST_ENUM_VARIANT(Some, T);
 
-CRUST_ENUM_VARIANTS(None);
+CRUST_ENUM_VARIANT(None);
 
 template<class T>
 constexpr Option<T> make_some(T &&value) {
@@ -48,6 +48,13 @@ struct Option<T>::Map {
 
     constexpr Option<U> operator()(const None &) const { return None{}; }
 };
+
+template<class T>
+CRUST_CXX14_CONSTEXPR Option<T> Option<T>::take() {
+    auto tmp = this->template move_variant<Option<T>>();
+    *this = None{};
+    return tmp;
+}
 }
 
 

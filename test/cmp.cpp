@@ -9,29 +9,29 @@ using namespace cmp;
 
 
 GTEST_TEST(cmp, derive) {
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(bool, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(u8, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(i8, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(u16, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(i16, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(u32, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(i32, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(u64, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(i64, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(usize, PartialEq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(isize, PartialEq));
+    CRUST_STATIC_ASSERT(Derive<bool, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<u8, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<i8, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<u16, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<i16, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<u32, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<i32, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<u64, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<i64, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<usize, PartialEq>::result);
+    CRUST_STATIC_ASSERT(Derive<isize, PartialEq>::result);
 
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(bool, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(u8, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(i8, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(u16, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(i16, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(u32, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(i32, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(u64, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(i64, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(usize, Eq));
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(isize, Eq));
+    CRUST_STATIC_ASSERT(Derive<bool, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<u8, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<i8, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<u16, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<i16, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<u32, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<i32, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<u64, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<i64, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<usize, Eq>::result);
+    CRUST_STATIC_ASSERT(Derive<isize, Eq>::result);
 }
 
 

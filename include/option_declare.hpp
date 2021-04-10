@@ -4,7 +4,7 @@
 
 #include "utility.hpp"
 #include "function.hpp"
-#include "enum.hpp"
+#include "enum_declare.hpp"
 #include "cmp_declare.hpp"
 #include "tuple_declare.hpp"
 
@@ -20,32 +20,12 @@ class Option : public Enum<Some<T>, None> {
 public:
     CRUST_ENUM_USE_BASE(Option, Enum<Some<T>, None>);
 
-private:
-    struct IsSome {
-        constexpr bool operator()(const Some<T> &) const { return true; }
+    constexpr bool is_some() const { return this->template is_variant<Some<T>>(); }
 
-        constexpr bool operator()(const None &) const { return false; }
-    };
+    constexpr bool is_none() const { return this->template is_variant<None>(); }
 
-public:
-    CRUST_CXX14_CONSTEXPR bool is_some() const { return this->template visit<IsSome, bool>(); }
-
-    CRUST_CXX14_CONSTEXPR bool is_none() const { return !is_some(); }
-
-private:
-    struct Contains {
-        const T &other;
-
-        constexpr bool operator()(const Some<T> &value) const {
-            return value.template get<0>() == other;
-        }
-
-        constexpr bool operator()(const None &) const { return false; }
-    };
-
-public:
     CRUST_CXX14_CONSTEXPR bool contains(const T &other) const {
-        return this->template visit<Contains, bool>({other});
+        return this->template eq_variant<T>(other);
     }
 
 private:
@@ -74,7 +54,7 @@ private:
     };
 
 public:
-    T &&unwrap() { return this->template visit<Unwrap, T &&>(); }
+    CRUST_CXX14_CONSTEXPR T &&unwrap() { return this->template visit<Unwrap, T &&>(); }
 
 private:
     struct UnwrapOr {
@@ -118,6 +98,8 @@ public:
     CRUST_CXX14_CONSTEXPR U map_or(U &&d, Fn<F, U(Arg)> &&f) const {
         return this->template visit<MapOr<F, Arg, U>, U>({d, move(f)});
     }
+
+    CRUST_CXX14_CONSTEXPR Option<T> take();
 };
 }
 

@@ -13,11 +13,11 @@
 
 namespace crust {
 namespace cmp {
-CRUST_ENUM_VARIANTS(Less);
+CRUST_ENUM_VARIANT(Less);
 
-CRUST_ENUM_VARIANTS(Equal);
+CRUST_ENUM_VARIANT(Equal);
 
-CRUST_ENUM_VARIANTS(Greater);
+CRUST_ENUM_VARIANT(Greater);
 
 class CRUST_EBCO Ordering :
         public Enum<Less, Equal, Greater>,
@@ -97,7 +97,7 @@ constexpr Ordering make_equal() { return Equal{}; }
 constexpr Ordering make_greater() { return Greater{}; }
 
 namespace __impl_cmp {
-template<class T, class U, bool = CRUST_DERIVE(T, Ord)>
+template<class T, class U, bool = Derive<T, Ord>::result>
 struct CmpHelper {
     constexpr static Option<Ordering> inner(const T &v1, const U &v2) {
         return operator_partial_cmp(v1, v2);
@@ -141,7 +141,7 @@ constexpr bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
 
 
 /// because c++ do not support add member function for primitive types (also <=> is only
-/// available for c++20), following two functions are for invoking `partial_cmp' or `cmp'
+/// available for c++20), following two functions are used for invoking `partial_cmp' or `cmp'
 /// for both struct implemented `PartialOrd' or `Ord' trait and primitive types.
 template<class T, class U>
 constexpr Option<Ordering> operator_partial_cmp(const T &v1, const U &v2) {
@@ -193,19 +193,19 @@ inline CRUST_CXX14_CONSTEXPR Ordering Ordering::cmp(const Ordering &other) const
 
 template<class T>
 constexpr T min(T &&v1, T &&v2) {
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
+    CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
     return v1.min(std::forward<T>(v2));
 }
 
 template<class T, class F>
 constexpr T min_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
+    CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
     return compare(v1, v2) == make_greater() ? forward<T>(v2) : forward<T>(v1);
 }
 
 template<class T, class F, class K>
 constexpr T min_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
+    CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
     return min_by(forward<T>(v1), forward<T>(v2), make_fn([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
     }));
@@ -213,19 +213,19 @@ constexpr T min_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
 
 template<class T>
 constexpr T &&max(T &&v1, T &&v2) {
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
+    CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
     return v1.max(std::forward<T>(v2));
 }
 
 template<class T, class F>
 constexpr T &&max_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
+    CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
     return compare(v1, v2) == make_greater() ? forward<T>(v1) : forward<T>(v2);
 }
 
 template<class T, class F, class K>
 constexpr T &&max_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
-    CRUST_STATIC_ASSERT(CRUST_DERIVE(T, Ord));
+    CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
     return max_by(forward<T>(v1), forward<T>(v2), make_fn([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
     }));
@@ -233,10 +233,10 @@ constexpr T &&max_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
 
 template<class T>
 class Reverse :
-        public Impl<PartialEq<Reverse<T>>, CRUST_DERIVE(T, PartialEq)>,
-        public Impl<Eq<Reverse<T>>, CRUST_DERIVE(T, Eq)>,
-        public Impl<PartialOrd<Reverse<T>>, CRUST_DERIVE(T, PartialOrd)>,
-        public Impl<Ord<Reverse<T>>, CRUST_DERIVE(T, Ord)> {
+        public Impl<PartialEq<Reverse<T>>, Derive<T, PartialEq>::result>,
+        public Impl<Eq<Reverse<T>>, Derive<T, Eq>::result>,
+        public Impl<PartialOrd<Reverse<T>>, Derive<T, PartialOrd>::result>,
+        public Impl<Ord<Reverse<T>>, Derive<T, Ord>::result> {
 public:
     T inner;
 

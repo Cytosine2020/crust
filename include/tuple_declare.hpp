@@ -19,20 +19,20 @@ struct TupleHolder;
 template<class Field, class ...Fields>
 struct CRUST_EBCO TupleHolder<Field, Fields...> : public Impl<
         cmp::PartialEq<TupleHolder<Field, Fields...>>,
-        CRUST_DERIVE(Field, cmp::PartialEq),
-        CRUST_DERIVE(TupleHolder<Fields...>, cmp::PartialEq)
+        Derive<Field, cmp::PartialEq>::result,
+        Derive<TupleHolder<Fields...>, cmp::PartialEq>::result
 >, public Impl<
         cmp::Eq<TupleHolder<Field, Fields...>>,
-        CRUST_DERIVE(Field, cmp::Eq),
-        CRUST_DERIVE(TupleHolder<Fields...>, cmp::Eq)
+        Derive<Field, cmp::Eq>::result,
+        Derive<TupleHolder<Fields...>, cmp::Eq>::result
 >, public Impl<
         cmp::PartialOrd<TupleHolder<Field, Fields...>>,
-        CRUST_DERIVE(Field, cmp::PartialOrd),
-        CRUST_DERIVE(TupleHolder<Fields...>, cmp::PartialOrd)
+        Derive<Field, cmp::PartialOrd>::result,
+        Derive<TupleHolder<Fields...>, cmp::PartialOrd>::result
 >, public Impl<
         cmp::Ord<TupleHolder<Field, Fields...>>,
-        CRUST_DERIVE(Field, cmp::Ord),
-        CRUST_DERIVE(TupleHolder<Fields...>, cmp::Ord)
+        Derive<Field, cmp::Ord>::result,
+        Derive<TupleHolder<Fields...>, cmp::Ord>::result
 > {
     Field field;
     TupleHolder<Fields...> remains;
@@ -80,10 +80,10 @@ struct CRUST_EBCO TupleHolder<Field, Fields...> : public Impl<
 
 template<class Field>
 struct CRUST_EBCO TupleHolder<Field> :
-        public Impl<cmp::PartialEq<TupleHolder<Field>>, CRUST_DERIVE(Field, cmp::PartialEq)>,
-        public Impl<cmp::Eq<TupleHolder<Field>>, CRUST_DERIVE(Field, cmp::Eq)>,
-        public Impl<cmp::PartialOrd<TupleHolder<Field>>, CRUST_DERIVE(Field, cmp::PartialOrd)>,
-        public Impl<cmp::Ord<TupleHolder<Field>>, CRUST_DERIVE(Field, cmp::Ord)> {
+        public Impl<cmp::PartialEq<TupleHolder<Field>>, Derive<Field, cmp::PartialEq>::result>,
+        public Impl<cmp::Eq<TupleHolder<Field>>, Derive<Field, cmp::Eq>::result>,
+        public Impl<cmp::PartialOrd<TupleHolder<Field>>, Derive<Field, cmp::PartialOrd>::result>,
+        public Impl<cmp::Ord<TupleHolder<Field>>, Derive<Field, cmp::Ord>::result> {
     Field field;
 
     constexpr TupleHolder() noexcept: field{} {}
@@ -165,16 +165,16 @@ class Option;
 template<class ...Fields>
 class CRUST_EBCO Tuple : public Impl<
         cmp::PartialEq<Tuple<Fields...>>,
-        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, cmp::PartialEq)
+        Derive<__impl_tuple::TupleHolder<Fields...>, cmp::PartialEq>::result
 >, public Impl<
         cmp::Eq<Tuple<Fields...>>,
-        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, cmp::Eq)
+        Derive<__impl_tuple::TupleHolder<Fields...>, cmp::Eq>::result
 >, public Impl<
         cmp::PartialOrd<Tuple<Fields...>>,
-        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, cmp::PartialOrd)
+        Derive<__impl_tuple::TupleHolder<Fields...>, cmp::PartialOrd>::result
 >, public Impl<
         cmp::Ord<Tuple<Fields...>>,
-        CRUST_DERIVE(__impl_tuple::TupleHolder<Fields...>, cmp::Ord)
+        Derive<__impl_tuple::TupleHolder<Fields...>, cmp::Ord>::result
 >, public Impl<MonoStateTag, sizeof...(Fields) == 0> {
 private:
     using __Holder = __impl_tuple::TupleHolder<typename RemoveRef<Fields>::Result...>;
@@ -234,6 +234,22 @@ constexpr Tuple<Fields...> make_tuple(Fields &&...fields) {
 
 namespace __impl_tuple {
 template<usize index, class ...Fields>
+struct TupleEqHelper {
+    static constexpr bool inner(TupleHolder<Fields &...> &ref, Tuple<Fields...> &tuple) {
+        return TupleEqHelper<index - 1, Fields...>::inner(ref, tuple) &&
+               TupleGetter<index - 1, Fields &...>::inner(ref) == tuple.template get<index - 1>();
+    }
+};
+
+template<class ...Fields>
+struct TupleEqHelper<0, Fields...> {
+    static CRUST_CXX14_CONSTEXPR bool inner(TupleHolder<Fields &...> &, Tuple<Fields...> &) {
+        return true;
+    }
+};
+
+
+template<usize index, class ...Fields>
 struct LetTupleHelper {
     static CRUST_CXX14_CONSTEXPR void
     inner(TupleHolder<Fields &...> &ref, Tuple<Fields...> &tuple) {
@@ -263,7 +279,7 @@ struct LetTuple {
 }
 
 template<class ...Fields>
-CRUST_CXX14_CONSTEXPR __impl_tuple::LetTuple<Fields...> let_tuple(Fields &...fields) {
+CRUST_CXX14_CONSTEXPR __impl_tuple::LetTuple<Fields...> let(Fields &...fields) {
     return __impl_tuple::LetTuple<Fields...>{fields...};
 }
 }

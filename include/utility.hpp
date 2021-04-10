@@ -172,9 +172,9 @@ struct Impl<T, false> {
 template<class T, bool ...conditions>
 using Impl = __impl_impl::Impl<T, All<conditions...>::result>;
 
-template<class Struct, class Trait>
+template<class Struct, template<class Self, class ...Args> class Trait, class ...Args>
 struct Derive {
-    static constexpr bool result = std::is_base_of<Trait, Struct>::value;
+    static constexpr bool result = std::is_base_of<Trait<Struct, Args...>, Struct>::value;
 };
 
 /// this tag is used for enum optimization
@@ -198,13 +198,8 @@ struct IsTransparent {
 };
 
 
-#define CRUST_ECHO(...) __VA_ARGS__
-
-#define CRUST_DERIVE(Struct, Trait, ...) \
-    ::crust::Derive<Struct, Trait<Struct, ##__VA_ARGS__>>::result
-
 #define CRUST_DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...) \
-    template<> struct Derive<PRIMITIVE, TRAIT<PRIMITIVE, ##__VA_ARGS__>> { \
+    template<> struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> { \
         static constexpr bool result = true; \
     }
 
@@ -250,7 +245,7 @@ struct IsTransparent {
     CRUST_USE_BASE_CONSTRUCTORS(NAME, __VA_ARGS__) \
     CRUST_USE_BASE_TRAIT_EQ(NAME, __VA_ARGS__)
 
-#define CRUST_ENUM_VARIANTS(NAME, ...) \
+#define CRUST_ENUM_VARIANT(NAME, ...) \
     struct NAME final : public Tuple<__VA_ARGS__> { \
         using Inner = Tuple<__VA_ARGS__>; \
         CRUST_USE_BASE_CONSTRUCTORS(NAME, Tuple<__VA_ARGS__>) \
