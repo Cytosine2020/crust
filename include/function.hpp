@@ -9,8 +9,7 @@ namespace crust {
 template<class Base, class F, F f>
 struct MemberFnStaticWrapper;
 
-template<class Base, class Self, class Ret, class ...Args,
-        Ret (Self::*f)(Args...) const>
+template<class Base, class Self, class Ret, class ...Args, Ret (Self::*f)(Args...) const>
 struct MemberFnStaticWrapper<Base, Ret (Self::*)(Args...) const, f> {
     using Inner = Ret(const Base *, Args...);
 

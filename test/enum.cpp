@@ -8,7 +8,7 @@
 
 using namespace crust;
 
-
+namespace {
 struct ClassA : test::RAIIChecker<ClassA> {
     CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(ClassA, test::RAIIChecker<ClassA>);
 };
@@ -17,8 +17,6 @@ struct ClassB : test::RAIIChecker<ClassA> {
     CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(ClassB, test::RAIIChecker<ClassA>);
 };
 
-
-namespace {
 template<class T>
 struct VisitType {
     bool operator()(const T &) { return true; }
@@ -40,13 +38,13 @@ GTEST_TEST(enum_, enum_) {
     auto recorder = std::make_shared<test::RAIIRecorder>(test::RAIIRecorder{});
 
     Enumerate a{ClassA{recorder}};
-    EXPECT_TRUE((a.visit<VisitType<ClassA>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<ClassA>{})));
     a = Enumerate{ClassB{recorder}};
-    EXPECT_TRUE((a.visit<VisitType<ClassB>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<ClassB>{})));
     a = ClassA{recorder};
-    EXPECT_TRUE((a.visit<VisitType<ClassA>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<ClassA>{})));
     a = ClassB{recorder};
-    EXPECT_TRUE((a.visit<VisitType<ClassB>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<ClassB>{})));
 }
 
 
@@ -83,17 +81,17 @@ GTEST_TEST(enum_, raii) {
     CRUST_STATIC_ASSERT(std::is_literal_type<Enumerate>::value);
 
     Enumerate a{A{}};
-    EXPECT_TRUE((a.visit<VisitType<A>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<A>{})));
     a = B{};
-    EXPECT_TRUE((a.visit<VisitType<B>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<B>{})));
     a = C{};
-    EXPECT_TRUE((a.visit<VisitType<C>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<C>{})));
     a = D{};
-    EXPECT_TRUE((a.visit<VisitType<D>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<D>{})));
     a = E{};
-    EXPECT_TRUE((a.visit<VisitType<E>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<E>{})));
     a = F{};
-    EXPECT_TRUE((a.visit<VisitType<F>, bool>()));
+    EXPECT_TRUE((a.visit<bool>(VisitType<F>{})));
 }
 
 GTEST_TEST(enum_, cmp) {

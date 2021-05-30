@@ -130,12 +130,12 @@ struct RemoveConstRef {
 };
 
 template<class T>
-struct IsLValueReference {
+struct IsLValueRef {
     static constexpr bool result = false;
 };
 
 template<class T>
-struct IsLValueReference<T &> {
+struct IsLValueRef<T &> {
     static constexpr bool result = true;
 };
 
@@ -151,7 +151,7 @@ constexpr T &&forward(typename RemoveRef<T>::Result &t) noexcept {
 
 template<class T>
 constexpr T &&forward(typename RemoveRef<T>::type &&t) noexcept {
-    CRUST_STATIC_ASSERT(!IsLValueReference<T>::result);
+    CRUST_STATIC_ASSERT(!IsLValueRef<T>::result);
     return static_cast<T &&>(t);
 }
 

@@ -35,7 +35,7 @@ private:
     };
 
 public:
-    Ordering reverse() const { return this->template visit<__Reverse, Ordering>(); }
+    Ordering reverse() const { return this->template visit<Ordering>(__Reverse{}); }
 
 private:
     struct __Then {
@@ -49,7 +49,7 @@ private:
 
 public:
     Ordering then(const Ordering &other) const {
-        return this->template visit<__Then, Ordering>({other});
+        return this->template visit<Ordering>(__Then{other});
     }
 
 private:
@@ -66,7 +66,7 @@ private:
 public:
     template<class F>
     CRUST_CXX14_CONSTEXPR Ordering then_with(Fn<F, Ordering()> &&f) const {
-        return this->template visit<__ThenWith<F>, Ordering>({move(f)});
+        return this->template visit<Ordering>(__ThenWith<F>{move(f)});
     }
 
 private:
@@ -78,7 +78,7 @@ private:
         constexpr i32 operator()(const Greater &) const { return 1; }
     };
 
-    CRUST_CXX14_CONSTEXPR i32 to_i32() const { return this->template visit<__ToI32, i32>(); }
+    CRUST_CXX14_CONSTEXPR i32 to_i32() const { return this->template visit<i32>(__ToI32{}); }
 
 public:
     /// impl PartialOrd

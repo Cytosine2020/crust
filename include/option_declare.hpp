@@ -33,7 +33,7 @@ private:
 
 public:
     CRUST_CXX14_CONSTEXPR Option<const T *> as_ptr() const {
-        return this->template visit<AsPtr, Option<const T *>>();
+        return this->template visit<Option<const T *>>(AsPtr{});
     }
 
 private:
@@ -41,7 +41,7 @@ private:
 
 public:
     CRUST_CXX14_CONSTEXPR Option<T *> as_mut_ptr() {
-        return this->template visit<AsMutPtr, Option<T *>>();
+        return this->template visit<Option<T *>>(AsMutPtr{});
     }
 
 private:
@@ -54,7 +54,7 @@ private:
     };
 
 public:
-    CRUST_CXX14_CONSTEXPR T &&unwrap() { return this->template visit<Unwrap, T &&>(); }
+    CRUST_CXX14_CONSTEXPR T &&unwrap() { return this->template visit<T &&>(Unwrap{}); }
 
 private:
     struct UnwrapOr {
@@ -67,7 +67,7 @@ private:
 
 public:
     CRUST_CXX14_CONSTEXPR T &&unwrap_or(T &&d) {
-        return this->template visit<UnwrapOr, T &&>({d});
+        return this->template visit<T &&>(UnwrapOr{d});
     }
 
 private:
@@ -77,7 +77,7 @@ private:
 public:
     template<class F, class Arg, class U>
     CRUST_CXX14_CONSTEXPR Option<U> map(Fn<F, U(Arg)> &&f) const {
-        return this->template visit<Map<F, Arg, U>, Option<U>>({move(f)});
+        return this->template visit<Option<U>>(Map<F, Arg, U>{move(f)});
     }
 
 private:
@@ -96,7 +96,7 @@ private:
 public:
     template<class F, class Arg, class U>
     CRUST_CXX14_CONSTEXPR U map_or(U &&d, Fn<F, U(Arg)> &&f) const {
-        return this->template visit<MapOr<F, Arg, U>, U>({d, move(f)});
+        return this->template visit<U>(MapOr<F, Arg, U>{d, move(f)});
     }
 
     CRUST_CXX14_CONSTEXPR Option<T> take();

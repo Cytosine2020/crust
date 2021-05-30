@@ -126,17 +126,17 @@ struct DeriveEq {
 
 template<class Self, class Rhs>
 struct Derive<Self, cmp::PartialEq, Rhs> {
-static constexpr bool result =__impl_derive_eq::DerivePartialEq<Self, Rhs>::result;
+    static constexpr bool result = __impl_derive_eq::DerivePartialEq<Self, Rhs>::result;
 };
 
 template<class Self>
 struct Derive<Self, cmp::PartialEq> {
-    static constexpr bool result =__impl_derive_eq::DerivePartialEq<Self, Self>::result;
+    static constexpr bool result = __impl_derive_eq::DerivePartialEq<Self, Self>::result;
 };
 
 template<class Self>
 struct Derive<Self, cmp::Eq> {
-static constexpr bool result = __impl_derive_eq::DeriveEq<Self>::result;
+    static constexpr bool result = __impl_derive_eq::DeriveEq<Self>::result;
 };
 }
 
