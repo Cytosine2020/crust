@@ -493,7 +493,7 @@ struct CRUST_EBCO EnumTagUnion :
         constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
         if (index == i) {
             __impl_tuple::LetTupleHelper<sizeof...(Fs), Fs...>::inner(
-                    ref, EnumGetter<i, __trivial, Fields...>::inner(holder));
+                    ref, move(EnumGetter<i, __trivial, Fields...>::inner(holder)));
             return true;
         } else {
             return false;

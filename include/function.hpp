@@ -3,6 +3,7 @@
 
 
 #include "utility.hpp"
+#include "tuple_declare.hpp"
 
 
 namespace crust {
@@ -53,7 +54,7 @@ struct MemberFnClosureWrapper<Return(Self::*)(Args...), f> {
 };
 
 #define CRUST_MEMBER_FN_CLOSURE_WRAPPER(PTR) \
-    ::crust::MemberFnClosureWrapper<decltype(PTR), PTR>
+    typename ::crust::MemberFnClosureWrapper<decltype(PTR), PTR>::Inner
 
 
 namespace __impl_raw_fn {
@@ -121,7 +122,7 @@ const FnVTable<Result, Args...> StaticFnVTable<Self, Result, Args...>::vtable{
 };
 }
 
-template<class Self, class F = typename CRUST_MEMBER_FN_CLOSURE_WRAPPER(&Self::operator())::Inner>
+template<class Self, class F = CRUST_MEMBER_FN_CLOSURE_WRAPPER(&Self::operator())>
 class FnMut;
 
 template<class Self, class Result, class ...Args>
@@ -152,7 +153,7 @@ constexpr FnMut<__impl_raw_fn::RawFn<F, f>, F> make_fn_mut() {
 
 #define CRUST_MAKE_FN_MUT(f) ::crust::make_fn_mut<decltype(f), f>()
 
-template<class Self, class F = typename CRUST_MEMBER_FN_CLOSURE_WRAPPER(&Self::operator())::Inner>
+template<class Self, class F = CRUST_MEMBER_FN_CLOSURE_WRAPPER(&Self::operator())>
 class Fn;
 
 template<class Self, class Result, class ...Args>
@@ -171,20 +172,16 @@ public:
 };
 
 template<class T, class Function>
-class FnMut<FnMut<T, Function>, Function> {
-};
+class FnMut<FnMut<T, Function>, Function>;
 
 template<class T, class Function>
-class Fn<Fn<T, Function>, Function> {
-};
+class Fn<Fn<T, Function>, Function>;
 
 template<class T, class Function>
-class FnMut<Fn<T, Function>, Function> {
-};
+class FnMut<Fn<T, Function>, Function>;
 
 template<class T, class Function>
-class Fn<FnMut<T, Function>, Function> {
-};
+class Fn<FnMut<T, Function>, Function>;
 
 template<class T>
 constexpr Fn<T> make_fn(T &&f) { return Fn<T>(forward<T>(f)); }
@@ -253,9 +250,9 @@ public:
 };
 
 template<class T>
-constexpr DynFnMut<typename CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())::Inner>
+constexpr DynFnMut<CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())>
 make_dyn_fn_mut(T &&f) {
-    using Function = typename CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())::Inner;
+    using Function = CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator());
     return DynFnMut<Function>(forward<T>(f));
 }
 
@@ -322,9 +319,9 @@ public:
 };
 
 template<class T>
-constexpr DynFn<typename CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())::Inner>
+constexpr DynFn<CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())>
 make_dyn_fn(T &&f) {
-    return DynFn<typename CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())::Inner>(forward<T>(f));
+    return DynFn<CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())>(forward<T>(f));
 }
 
 template<class F, class T>
@@ -334,6 +331,33 @@ template<class F, F *f>
 constexpr DynFn<F> make_dyn_fn() { return DynFn<F>(__impl_raw_fn::RawFn<F, f>{}); }
 
 #define CRUST_MAKE_DYN_FN(f) ::crust::make_dyn_fn<decltype(f), f>()
+
+namespace __impl_overloaded {
+template<class... Ts>
+struct Overloaded;
+
+template<class T, class... Ts>
+struct Overloaded<T, Ts...> : public T, public Overloaded<Ts ...> {
+    using T::operator();
+    using Overloaded<Ts ...>::operator();
+
+    explicit Overloaded(T t, Ts ...ts) :
+            T{forward<T>(t)}, Overloaded<Ts ...>{forward<Ts>(ts)...} {}
+};
+
+template<class T>
+struct Overloaded<T> : public T {
+    using T::operator();
+
+    explicit Overloaded(T t) : T{forward<T>(t)} {}
+};
+}
+
+
+template<class... Ts>
+__impl_overloaded::Overloaded<Ts...> overloaded(Ts &&...ts) {
+    return __impl_overloaded::Overloaded<Ts...>{forward<Ts>(ts)...};
+}
 }
 
 

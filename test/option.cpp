@@ -16,6 +16,11 @@ GTEST_TEST(option, option) {
     EXPECT_TRUE(make_some(0) != None{});
     EXPECT_FALSE(make_some(0) == None{});
 
+    EXPECT_TRUE(make_some(0).is_some());
+    EXPECT_FALSE(make_some(0).is_none());
+    EXPECT_TRUE(make_none<i32>().is_none());
+    EXPECT_FALSE(make_none<i32>().is_some());
+
     i32 x;
     if ((let<Some<i32>>(x) = make_some(1))) {
         EXPECT_EQ(x, 1);
@@ -26,4 +31,6 @@ GTEST_TEST(option, option) {
     if ((let<Some<i32>>(x) = make_none<i32>())) {
         GTEST_FAIL();
     }
+
+    make_some(0).as_ptr();
 }

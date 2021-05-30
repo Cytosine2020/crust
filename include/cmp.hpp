@@ -25,17 +25,13 @@ class CRUST_EBCO Ordering :
 public:
     CRUST_ENUM_USE_BASE(Ordering, Enum<Less, Equal, Greater>);
 
-private:
-    struct __Reverse {
-        constexpr Ordering operator()(const Less &) const { return Greater{}; }
-
-        constexpr Ordering operator()(const Equal &) const { return Equal{}; }
-
-        constexpr Ordering operator()(const Greater &) const { return Less{}; }
-    };
-
-public:
-    Ordering reverse() const { return this->template visit<Ordering>(__Reverse{}); }
+    Ordering reverse() const {
+        return this->template visit<Ordering>(overloaded(
+                [](const Less &) { return Greater{}; },
+                [](const Equal &) { return Equal{}; },
+                [](const Greater &) { return Less{}; }
+        ));
+    }
 
 private:
     struct __Then {
@@ -70,15 +66,13 @@ public:
     }
 
 private:
-    struct __ToI32 {
-        constexpr i32 operator()(const Less &) const { return -1; }
-
-        constexpr i32 operator()(const Equal &) const { return 0; }
-
-        constexpr i32 operator()(const Greater &) const { return 1; }
-    };
-
-    CRUST_CXX14_CONSTEXPR i32 to_i32() const { return this->template visit<i32>(__ToI32{}); }
+    CRUST_CXX14_CONSTEXPR i32 to_i32() const {
+        return this->template visit<i32>(overloaded(
+                [](const Less &) { return -1; },
+                [](const Equal &) { return 0; },
+                [](const Greater &) { return 1; }
+        ));
+    }
 
 public:
     /// impl PartialOrd
