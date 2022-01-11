@@ -33,13 +33,30 @@ set(CMAKE_CXX_STANDARD 11)
 
 if (NOT MSVC)
     add_compile_options(-Wall -Wextra -fno-exceptions -fno-rtti)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb -g3 -fno-omit-frame-pointer -D __DEBUG__")
+else ()
+    add_compile_options(/W 3 /sdl /EHr /GR-)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Z7 /D__DEBUG__")
 endif ()
+
+IF(CMAKE_BUILD_TYPE MATCHES RELEASE)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 include_directories(include)
 
-add_executable(test test/raii_checker.hpp test/test.cpp test/tuple.cpp test/slice.cpp test/cmp.cpp
-        test/function.cpp test/enum.cpp test/option.cpp test/iter.cpp test/range.cpp test/result.cpp)
+add_executable(test
+        test/raii_checker.hpp
+        test/test.cpp
+        test/tuple.cpp
+        test/slice.cpp
+        test/cmp.cpp
+        test/function.cpp
+        test/enum.cpp
+        test/option.cpp
+        test/iter.cpp
+        test/range.cpp
+        test/result.cpp
+)
 target_link_libraries(test gtest_main)
 add_test(NAME test COMMAND test)

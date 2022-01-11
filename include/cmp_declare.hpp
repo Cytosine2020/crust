@@ -15,7 +15,7 @@ public:
     /// Used for detecting `PartialEq', part of the workaround below.
     /// Should never be implemented by hand.
     template<class = void>
-    void __detect_trait_partial_eq(const Self &) const {}
+    static void __detect_trait_partial_eq(const Rhs &) {}
 
     bool eq(const Rhs &other) const;
 
@@ -31,7 +31,7 @@ public:
     /// Used for detecting `Eq', part of the workaround below.
     /// Should never be implemented by hand.
     template<class = void>
-    void __detect_trait_eq(const Self &) const {}
+    static void __detect_trait_eq() {}
 };
 
 class Ordering;
@@ -98,28 +98,28 @@ namespace __impl_derive_eq {
 ///
 /// Ugly workaround for detecting `PartialEq' and `Eq' for classes inherits `Tuple' and `Enum'.
 ///
-template<typename T, class Rhs>
+template<class T, class Rhs>
 struct DerivePartialEq {
-    template<typename U>
-    static u32 check(decltype(static_cast<void (U::*)(const Rhs &) const>(
+    template<class U>
+    static u32 check(decltype(static_cast<void (*)(const Rhs &)>(
             &U::template __detect_trait_partial_eq<>)));
 
-    template<typename>
+    template<class>
     static void check(...);
 
-    static constexpr bool result = IsSame<decltype(check<T>(0)), u32>::result;
+    static constexpr bool result = IsSame<decltype(check<T>(nullptr)), u32>::result;
 };
 
-template<typename T>
+template<class T>
 struct DeriveEq {
-    template<typename U>
-    static u32 check(decltype(static_cast<void (U::*)(const U &) const>(
+    template<class U>
+    static u32 check(decltype(static_cast<void (*)()>(
             &U::template __detect_trait_eq<>)));
 
-    template<typename>
+    template<class>
     static void check(...);
 
-    static constexpr bool result = IsSame<decltype(check<T>(0)), u32>::result;
+    static constexpr bool result = IsSame<decltype(check<T>(nullptr)), u32>::result;
 };
 }
 

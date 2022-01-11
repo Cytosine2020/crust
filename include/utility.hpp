@@ -199,7 +199,7 @@ struct IsTransparent {
 
 
 #define CRUST_DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...) \
-    template<> struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> { \
+    struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> { \
         static constexpr bool result = true; \
     }
 
@@ -232,14 +232,14 @@ struct IsTransparent {
     explicit constexpr NAME(Args &&...args) : __VA_ARGS__{::crust::forward<Args>(args)...} {}
 
 #define CRUST_USE_BASE_TRAIT_EQ(NAME, ...) \
-    template<class __T = __VA_ARGS__> \
-    decltype(static_cast<const __T *>(nullptr)->template \
-    __detect_trait_partial_eq<>(*static_cast<const __T *>(nullptr))) \
-    __detect_trait_partial_eq(const NAME &) const {} \
-    template<class __T = __VA_ARGS__> \
-    decltype(static_cast<const __T *>(nullptr)->template \
-    __detect_trait_eq<>(*static_cast<const __T *>(nullptr))) \
-    __detect_trait_eq(const NAME &) const {}
+    template<class = void> \
+    static void __detect_trait_partial_eq(const NAME &) { \
+        CRUST_STATIC_ASSERT(Derive<__VA_ARGS__, ::crust::cmp::PartialEq>); \
+    } \
+    template<class = void> \
+    static void __detect_trait_eq() { \
+        CRUST_STATIC_ASSERT(Derive<__VA_ARGS__, ::crust::cmp::Eq>); \
+    }
 
 #define CRUST_ENUM_USE_BASE(NAME, ...) \
     CRUST_USE_BASE_CONSTRUCTORS(NAME, __VA_ARGS__) \

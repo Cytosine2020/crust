@@ -25,17 +25,13 @@ class CRUST_EBCO Ordering :
 public:
     CRUST_ENUM_USE_BASE(Ordering, Enum<Less, Equal, Greater>);
 
-private:
-    struct __Reverse {
-        constexpr Ordering operator()(const Less &) const { return Greater{}; }
-
-        constexpr Ordering operator()(const Equal &) const { return Equal{}; }
-
-        constexpr Ordering operator()(const Greater &) const { return Less{}; }
-    };
-
-public:
-    Ordering reverse() const { return this->template visit<Ordering>(__Reverse{}); }
+    Ordering reverse() const {
+        return this->template visit<Ordering>(overloaded(
+                [](const Less &) { return Greater{}; },
+                [](const Equal &) { return Equal{}; },
+                [](const Greater &) { return Less{}; }
+        ));
+    }
 
 private:
     struct __Then {
@@ -70,15 +66,13 @@ public:
     }
 
 private:
-    struct __ToI32 {
-        constexpr i32 operator()(const Less &) const { return -1; }
-
-        constexpr i32 operator()(const Equal &) const { return 0; }
-
-        constexpr i32 operator()(const Greater &) const { return 1; }
-    };
-
-    CRUST_CXX14_CONSTEXPR i32 to_i32() const { return this->template visit<i32>(__ToI32{}); }
+    CRUST_CXX14_CONSTEXPR i32 to_i32() const {
+        return this->template visit<i32>(overloaded(
+                [](const Less &) { return -1; },
+                [](const Equal &) { return 0; },
+                [](const Greater &) { return 1; }
+        ));
+    }
 
 public:
     /// impl PartialOrd
@@ -153,35 +147,35 @@ constexpr Ordering operator_cmp(const T &v1, const U &v2) {
     return v1.cmp(v2);
 }
 
-#define IMPL_OPERATOR_CMP(type) \
-template<> \
+#define IMPL_PRIMITIVE(FN, ...) \
+    template<> FN(bool, ##__VA_ARGS__); \
+    template<> FN(char, ##__VA_ARGS__); \
+    template<> FN(u8, ##__VA_ARGS__); \
+    template<> FN(i8, ##__VA_ARGS__); \
+    template<> FN(u16, ##__VA_ARGS__); \
+    template<> FN(i16, ##__VA_ARGS__); \
+    template<> FN(u32, ##__VA_ARGS__); \
+    template<> FN(i32, ##__VA_ARGS__); \
+    template<> FN(u64, ##__VA_ARGS__); \
+    template<> FN(i64, ##__VA_ARGS__)
+
+#define IMPL_OPERATOR_CMP(type, ...) \
 inline constexpr Ordering operator_cmp(const type &v1, const type &v2) { \
     return v1 < v2 ? make_less() : v1 > v2 ? make_greater() : make_equal(); \
-}\
-template<> \
+}
+
+IMPL_PRIMITIVE(IMPL_OPERATOR_CMP);
+
+#undef IMPL_OPERATOR_CMP
+
+#define IMPL_OPERATOR_PARTIAL_CMP(type, ...) \
 inline constexpr Option<Ordering> operator_partial_cmp(const type &v1, const type &v2) { \
     return make_some(operator_cmp(v1, v2)); \
 }
 
-IMPL_OPERATOR_CMP(char);
+IMPL_PRIMITIVE(IMPL_OPERATOR_PARTIAL_CMP);
 
-IMPL_OPERATOR_CMP(u8);
-
-IMPL_OPERATOR_CMP(i8);
-
-IMPL_OPERATOR_CMP(u16);
-
-IMPL_OPERATOR_CMP(i16);
-
-IMPL_OPERATOR_CMP(u32);
-
-IMPL_OPERATOR_CMP(i32);
-
-IMPL_OPERATOR_CMP(u64);
-
-IMPL_OPERATOR_CMP(i64);
-
-#undef IMPL_OPERATOR_CMP
+#undef IMPL_OPERATOR_PARTIAL_CMP
 
 inline CRUST_CXX14_CONSTEXPR Option<Ordering> Ordering::partial_cmp(const Ordering &other) const {
     return operator_partial_cmp(this->to_i32(), other.to_i32());
@@ -266,30 +260,12 @@ public:
 };
 }
 
-#define IMPL_PRIMITIVE(Trait) \
-    CRUST_DERIVE_PRIMITIVE(char, Trait); \
-    CRUST_DERIVE_PRIMITIVE(u8, Trait); \
-    CRUST_DERIVE_PRIMITIVE(i8, Trait); \
-    CRUST_DERIVE_PRIMITIVE(u16, Trait); \
-    CRUST_DERIVE_PRIMITIVE(i16, Trait); \
-    CRUST_DERIVE_PRIMITIVE(u32, Trait); \
-    CRUST_DERIVE_PRIMITIVE(i32, Trait); \
-    CRUST_DERIVE_PRIMITIVE(u64, Trait); \
-    CRUST_DERIVE_PRIMITIVE(i64, Trait)
+IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::PartialEq);
+IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::Eq);
+IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::PartialOrd);
+IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::Ord);
 
-CRUST_DERIVE_PRIMITIVE(bool, cmp::PartialEq);
-
-IMPL_PRIMITIVE(cmp::PartialEq);
-
-CRUST_DERIVE_PRIMITIVE(bool, cmp::Eq);
-
-IMPL_PRIMITIVE(cmp::Eq);
-
-IMPL_PRIMITIVE(cmp::PartialOrd);
-
-IMPL_PRIMITIVE(cmp::Ord);
-
-#undef IMPL_PRIMATIVE
+#undef IMPL_PRIMITIVE
 
 // todo: implement for float point numbers
 }

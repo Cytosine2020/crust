@@ -252,15 +252,15 @@ struct TupleEqHelper<0, Fields...> {
 template<usize index, class ...Fields>
 struct LetTupleHelper {
     static CRUST_CXX14_CONSTEXPR void
-    inner(TupleHolder<Fields &...> &ref, Tuple<Fields...> &tuple) {
+    inner(TupleHolder<Fields &...> &ref, Tuple<Fields...> &&tuple) {
         TupleGetter<index - 1, Fields &...>::inner(ref) = move(tuple.template get<index - 1>());
-        LetTupleHelper<index - 1, Fields...>::inner(ref, tuple);
+        LetTupleHelper<index - 1, Fields...>::inner(ref, move(tuple));
     }
 };
 
 template<class ...Fields>
 struct LetTupleHelper<0, Fields...> {
-    static CRUST_CXX14_CONSTEXPR void inner(TupleHolder<Fields &...> &, Tuple<Fields...> &) {}
+    static CRUST_CXX14_CONSTEXPR void inner(TupleHolder<Fields &...> &, Tuple<Fields...> &&) {}
 };
 
 
@@ -268,19 +268,20 @@ template<class ...Fields>
 struct LetTuple {
     TupleHolder<Fields &...> ref;
 
-    explicit constexpr LetTuple(const TupleHolder<Fields &...> &ref) : ref{ref} {}
-
     explicit constexpr LetTuple(Fields &...fields) : ref{fields...} {}
 
     CRUST_CXX14_CONSTEXPR void operator=(Tuple<Fields...> &&tuple) {
-        LetTupleHelper<sizeof...(Fields), Fields...>::inner(ref, tuple);
+        LetTupleHelper<sizeof...(Fields), Fields...>::inner(ref, move(tuple));
     }
 };
 }
 
 template<class ...Fields>
-CRUST_CXX14_CONSTEXPR __impl_tuple::LetTuple<Fields...> let(Fields &...fields) {
-    return __impl_tuple::LetTuple<Fields...>{fields...};
+CRUST_CXX14_CONSTEXPR __impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>
+let(Fields &&...fields) {
+    return __impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>{
+            forward<Fields>(fields)...
+    };
 }
 }
 

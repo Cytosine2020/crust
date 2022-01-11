@@ -28,75 +28,45 @@ public:
         return this->template eq_variant<T>(other);
     }
 
-private:
-    struct AsPtr;
-
-public:
     CRUST_CXX14_CONSTEXPR Option<const T *> as_ptr() const {
-        return this->template visit<Option<const T *>>(AsPtr{});
+        return map(make_fn([](const T &value) { return &value; }));
     }
 
-private:
-    struct AsMutPtr;
-
-public:
     CRUST_CXX14_CONSTEXPR Option<T *> as_mut_ptr() {
-        return this->template visit<Option<T *>>(AsMutPtr{});
+        return map(make_fn([](T &value) { return &value; }));
     }
 
-private:
-    struct Unwrap {
-        constexpr T &&operator()(Some<T> &value) const { return move(value); }
-
-        CRUST_CXX14_CONSTEXPR T &&operator()(None &) const {
-            CRUST_PANIC("called `Option::unwrap()` on a `None` value");
-        }
-    };
-
-public:
-    CRUST_CXX14_CONSTEXPR T &&unwrap() { return this->template visit<T &&>(Unwrap{}); }
-
-private:
-    struct UnwrapOr {
-        T &&d;
-
-        CRUST_CXX14_CONSTEXPR T &&operator()(Some<T> &value) { return move(value); }
-
-        CRUST_CXX14_CONSTEXPR T &&operator()(None &) { return move(d); }
-    };
-
-public:
-    CRUST_CXX14_CONSTEXPR T &&unwrap_or(T &&d) {
-        return this->template visit<T &&>(UnwrapOr{d});
+    CRUST_CXX14_CONSTEXPR T unwrap() {
+        return this->template visit<T>(overloaded(
+                [](Some<T> &value) { return move(value.template get<0>()); },
+                [](None &) { CRUST_PANIC("called `Option::unwrap()` on a `None` value"); }
+        ));
     }
 
-private:
-    template<class F, class Arg, class U>
-    struct Map;
-
-public:
-    template<class F, class Arg, class U>
-    CRUST_CXX14_CONSTEXPR Option<U> map(Fn<F, U(Arg)> &&f) const {
-        return this->template visit<Option<U>>(Map<F, Arg, U>{move(f)});
+    CRUST_CXX14_CONSTEXPR T unwrap_or(T &&d) {
+        return this->template visit<T>(overloaded(
+                [](Some<T> &value) { return move(value.template get<0>()); },
+                [&](None &) { return d; }
+        ));
     }
 
-private:
-    template<class F, class Arg, class U>
-    struct MapOr {
-        U &&d;
-        Fn<F, U(Arg)> &&f;
+    template<class U, class F>
+    CRUST_CXX14_CONSTEXPR Option<U> map(Fn<F, U(const T &)> &&f) const;
 
-        CRUST_CXX14_CONSTEXPR U operator()(const Some<T> &value) {
-            return f(value.template get<0>());
-        }
+    template<class U, class F>
+    CRUST_CXX14_CONSTEXPR U map_or(U &&d, Fn<F, U(const T &)> &&f) const {
+        return this->template visit<U>(overloaded(
+                [&](const Some<T> &value) { return f(value.template get<0>()); },
+                [&](const None &) { return move<U>(d); }
+        ));
+    }
 
-        CRUST_CXX14_CONSTEXPR U operator()(const None &) { return forward<U>(d); }
-    };
-
-public:
-    template<class F, class Arg, class U>
-    CRUST_CXX14_CONSTEXPR U map_or(U &&d, Fn<F, U(Arg)> &&f) const {
-        return this->template visit<U>(MapOr<F, Arg, U>{d, move(f)});
+    template<class U, class D, class F>
+    CRUST_CXX14_CONSTEXPR U map_or_else(Fn<D, U()> &&d, Fn<F, U(const T &)> &&f) const {
+        return this->template visit<U>(overloaded(
+                [&](const Some<T> &value) { return f(value.template get<0>()); },
+                [&](const None &) { return d(); }
+        ));
     }
 
     CRUST_CXX14_CONSTEXPR Option<T> take();

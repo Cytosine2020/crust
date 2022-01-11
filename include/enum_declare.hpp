@@ -136,10 +136,6 @@ struct EnumGetter<0, trivial, Field, Fields...> {
     static constexpr const Result &inner(const Self &self) { return self.field; }
 
     static constexpr Result &inner(Self &self) { return self.field; }
-
-    static constexpr const Result &&inner_move(const Self &&self) { return move(self.field); }
-
-    static constexpr Result &&inner_move(Self &&self) { return move(self.field); }
 };
 
 template<usize offset, usize size, bool trivial, class ...Fields>
@@ -168,27 +164,11 @@ public:
                ? LowerGetter::template inner<R, V>(self, forward<V>(impl), index)
                : UpperGetter::template inner<R, V>(self, forward<V>(impl), index);
     }
-
-    template<class R, class V>
-    static CRUST_CXX14_CONSTEXPR R
-    inner_move(const EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) {
-        return index < cut
-               ? LowerGetter::template inner<R, V>(move(self), forward<V>(impl), index)
-               : UpperGetter::template inner<R, V>(move(self), forward<V>(impl), index);
-    }
-
-    template<class R, class V>
-    static CRUST_CXX14_CONSTEXPR R
-    inner_move(EnumHolder<trivial, Fields...> &&self, V &&impl, usize index) {
-        return index < cut
-               ? LowerGetter::template inner<R, V>(move(self), forward<V>(impl), index)
-               : UpperGetter::template inner<R, V>(move(self), forward<V>(impl), index);
-    }
 };
 
 #define ENUM_VISITOR_BRANCH(index) \
     case offset + index: \
-        return forward<V>(impl)(EnumGetter<offset + index, trivial, Fields...>::inner(self))
+        return impl(EnumGetter<offset + index, trivial, Fields...>::inner(self))
 
 #define ENUM_VISITOR_IMPL(len) \
     template<usize offset, bool trivial, class ...Fields> \
@@ -213,39 +193,23 @@ public:
     }
 
 ENUM_VISITOR_IMPL(16);
-
 ENUM_VISITOR_IMPL(15);
-
 ENUM_VISITOR_IMPL(14);
-
 ENUM_VISITOR_IMPL(13);
-
 ENUM_VISITOR_IMPL(12);
-
 ENUM_VISITOR_IMPL(11);
-
 ENUM_VISITOR_IMPL(10);
-
 ENUM_VISITOR_IMPL(9);
-
 ENUM_VISITOR_IMPL(8);
-
 ENUM_VISITOR_IMPL(7);
-
 ENUM_VISITOR_IMPL(6);
-
 ENUM_VISITOR_IMPL(5);
-
 ENUM_VISITOR_IMPL(4);
-
 ENUM_VISITOR_IMPL(3);
-
 ENUM_VISITOR_IMPL(2);
-
 ENUM_VISITOR_IMPL(1);
 
 #undef ENUM_VISITOR_IMPL
-#undef ENUM_VISITOR_MOVE_BRANCH
 #undef ENUM_VISITOR_BRANCH
 
 
@@ -276,7 +240,7 @@ public:
 #define TAG_VISITOR_BRANCH(index) \
     case offset + index: { \
         auto tmp = typename EnumType<offset + index, Fields...>::Result{}; \
-        return forward<V>(impl)(tmp); \
+        return impl(tmp); \
     }
 
 #define TAG_VISITOR_IMPL(len) \
@@ -293,39 +257,23 @@ public:
     }
 
 TAG_VISITOR_IMPL(16);
-
 TAG_VISITOR_IMPL(15);
-
 TAG_VISITOR_IMPL(14);
-
 TAG_VISITOR_IMPL(13);
-
 TAG_VISITOR_IMPL(12);
-
 TAG_VISITOR_IMPL(11);
-
 TAG_VISITOR_IMPL(10);
-
 TAG_VISITOR_IMPL(9);
-
 TAG_VISITOR_IMPL(8);
-
 TAG_VISITOR_IMPL(7);
-
 TAG_VISITOR_IMPL(6);
-
 TAG_VISITOR_IMPL(5);
-
 TAG_VISITOR_IMPL(4);
-
 TAG_VISITOR_IMPL(3);
-
 TAG_VISITOR_IMPL(2);
-
 TAG_VISITOR_IMPL(1);
 
 #undef TAG_VISITOR_IMPL
-#undef TAG_VISITOR_MOVE_BRANCH
 #undef TAG_VISITOR_BRANCH
 
 
@@ -493,7 +441,7 @@ struct CRUST_EBCO EnumTagUnion :
         constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
         if (index == i) {
             __impl_tuple::LetTupleHelper<sizeof...(Fs), Fs...>::inner(
-                    ref, EnumGetter<i, __trivial, Fields...>::inner(holder));
+                    ref, move(EnumGetter<i, __trivial, Fields...>::inner(holder)));
             return true;
         } else {
             return false;
