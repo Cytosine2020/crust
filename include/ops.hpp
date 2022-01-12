@@ -9,13 +9,13 @@ namespace crust {
 namespace index {
 CRUST_TRAIT(Index, class Idx, class T)
 public:
-    const T &index(Idx idx) const;
+  const T &index(Idx idx) const;
 
-    T &index_mut(Idx idx);
+  T &index_mut(Idx idx);
 
-    const T &operator[](Idx idx) const { return self().index(idx); }
+  const T &operator[](Idx idx) const { return self().index(idx); }
 
-    T &operator[](Idx idx) { return self().index_mut(idx); }
+  T &operator[](Idx idx) { return self().index_mut(idx); }
 };
 }
 }

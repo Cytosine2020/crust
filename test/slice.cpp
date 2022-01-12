@@ -8,11 +8,11 @@ using namespace crust;
 
 
 GTEST_TEST(slice, slice) {
-    constexpr usize BUFFER_SIZE = 10;
+  constexpr usize BUFFER_SIZE = 10;
 
-    u8 buffer[BUFFER_SIZE]{};
+  u8 buffer[BUFFER_SIZE]{};
 
-    auto slice = Slice<u8>::from_raw_parts(buffer, BUFFER_SIZE);
+  auto slice = Slice<u8>::from_raw_parts(buffer, BUFFER_SIZE);
 
-    EXPECT_EQ(slice[1], 0);
+  EXPECT_EQ(slice[1], 0);
 }

@@ -40,22 +40,24 @@ namespace crust {
 #endif
 
 
-[[noreturn]] static inline void __panic(const char *file, int line, const char *msg) {
-    fprintf(stderr, "Abort at file %s, line %d: %s\n", file, line, msg);
+[[noreturn]] static inline void
+__panic(const char *file, int line, const char *msg) {
+  fprintf(stderr, "Abort at file %s, line %d: %s\n", file, line, msg);
 
-    abort();
+  abort();
 }
 
 #define CRUST_PANIC(msg) ::crust::__panic(__FILE__, __LINE__, msg)
 
 static inline CRUST_CXX14_CONSTEXPR void
 _assert(const char *file, int line, const char *msg, bool condition) {
-    if (!condition) {
-        __panic(file, line, msg);
-    }
+  if (!condition) {
+    __panic(file, line, msg);
+  }
 }
 
-#define CRUST_ASSERT(...) ::crust::_assert(__FILE__, __LINE__, #__VA_ARGS__, __VA_ARGS__)
+#define CRUST_ASSERT(...) \
+    ::crust::_assert(__FILE__, __LINE__, #__VA_ARGS__, __VA_ARGS__)
 
 using i8 = int8_t;
 using u8 = uint8_t;
@@ -78,12 +80,12 @@ using usize = u64;
 
 template<class A, class B>
 struct IsSame {
-    static constexpr bool result = false;
+  static constexpr bool result = false;
 };
 
 template<class A>
 struct IsSame<A, A> {
-    static constexpr bool result = true;
+  static constexpr bool result = true;
 };
 
 template<bool ...conditions>
@@ -91,68 +93,68 @@ struct All;
 
 template<bool condition, bool ...conditions>
 struct All<condition, conditions...> {
-    static constexpr bool result = condition && All<conditions...>::result;
+  static constexpr bool result = condition && All<conditions...>::result;
 };
 
 template<>
 struct All<> {
-    static constexpr bool result = true;
+  static constexpr bool result = true;
 };
 
 template<class T>
 struct RemoveRef {
-    using Result = T;
+  using Result = T;
 };
 
 template<class T>
 struct RemoveRef<T &> {
-    using Result = T;
+  using Result = T;
 };
 
 template<class T>
 struct RemoveRef<T &&> {
-    using Result = T;
+  using Result = T;
 };
 
 template<class T>
 struct RemoveConst {
-    using Result = T;
+  using Result = T;
 };
 
 template<class T>
 struct RemoveConst<const T> {
-    using Result = T;
+  using Result = T;
 };
 
 template<class T>
 struct RemoveConstRef {
-    using Result = typename RemoveRef<typename RemoveConst<T>::Result>::Result;
+  using Result = typename RemoveRef<typename RemoveConst<T>::Result>::Result;
 };
 
 template<class T>
 struct IsLValueRef {
-    static constexpr bool result = false;
+  static constexpr bool result = false;
 };
 
 template<class T>
 struct IsLValueRef<T &> {
-    static constexpr bool result = true;
+  static constexpr bool result = true;
 };
 
 template<class T>
 constexpr typename RemoveRef<T>::Result &&move(T &&t) noexcept {
-    return static_cast<typename RemoveRef<T>::Result &&>(t);
+  return static_cast<typename RemoveRef<T>::Result &&>(t);
 }
 
 template<class T>
 constexpr T &&forward(typename RemoveRef<T>::Result &t) noexcept {
-    return static_cast<T &&>(t);
+  return static_cast<T &&>(t);
 }
 
 template<class T>
 constexpr T &&forward(typename RemoveRef<T>::type &&t) noexcept {
-    CRUST_STATIC_ASSERT(!IsLValueRef<T>::result);
-    return static_cast<T &&>(t);
+  CRUST_STATIC_ASSERT(!IsLValueRef<T>::result);
+  return static_cast<T &&>(t);
 }
 
 namespace __impl_impl {
@@ -172,9 +174,14 @@ struct Impl<T, false> {
 template<class T, bool ...conditions>
 using Impl = __impl_impl::Impl<T, All<conditions...>::result>;
 
-template<class Struct, template<class Self, class ...Args> class Trait, class ...Args>
+template<
+    class Struct,
+    template<class Self, class ...Args> class Trait,
+    class ...Args
+>
 struct Derive {
-    static constexpr bool result = std::is_base_of<Trait<Struct, Args...>, Struct>::value;
+  static constexpr bool result =
+      std::is_base_of<Trait<Struct, Args...>, Struct>::value;
 };
 
 /// this tag is used for enum optimization
@@ -184,7 +191,7 @@ struct MonoStateTag {
 
 template<class T>
 struct IsMonoState {
-    static constexpr bool result = std::is_base_of<MonoStateTag, T>::value;
+  static constexpr bool result = std::is_base_of<MonoStateTag, T>::value;
 };
 
 /// this tag is used for enum optimization
@@ -194,63 +201,67 @@ struct TransparentTag {
 
 template<class T>
 struct IsTransparent {
-    static constexpr bool result = std::is_base_of<TransparentTag, T>::value;
+  static constexpr bool result = std::is_base_of<TransparentTag, T>::value;
 };
 
 
 #define CRUST_DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...) \
-    struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> { \
-        static constexpr bool result = true; \
-    }
+  struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> { \
+    static constexpr bool result = true; \
+  }
 
 #define CRUST_TRAIT_DECLARE(TRAIT, ...) \
-    template<class Self, ##__VA_ARGS__> \
-    class TRAIT
+  template<class Self, ##__VA_ARGS__> \
+  class TRAIT
 
 #define CRUST_USE_SELF(TRAIT) \
-    constexpr const Self &self() const { \
-        CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
-        return *static_cast<const Self *>(this); \
-    } \
-    CRUST_CXX14_CONSTEXPR Self &self() { \
-        CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
-        return *static_cast<Self *>(this); \
-    }
+  constexpr const Self &self() const { \
+    CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
+    return *static_cast<const Self *>(this); \
+  } \
+  CRUST_CXX14_CONSTEXPR Self &self() { \
+    CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
+    return *static_cast<Self *>(this); \
+  }
 
 #define CRUST_TRAIT(TRAIT, ...) \
-    CRUST_TRAIT_DECLARE(TRAIT, ##__VA_ARGS__) { \
-    public: \
-        CRUST_USE_SELF(TRAIT); \
-    private:
+  CRUST_TRAIT_DECLARE(TRAIT, ##__VA_ARGS__) { \
+  public: \
+    CRUST_USE_SELF(TRAIT); \
+  private:
 
 #define CRUST_USE_BASE_CONSTRUCTORS(NAME, ...) \
-    template<class ...Args> \
-    constexpr NAME(Args &&...args) : __VA_ARGS__{::crust::forward<Args>(args)...} {}
+  template<class ...Args> \
+  constexpr NAME(Args &&...args) : \
+      __VA_ARGS__{::crust::forward<Args>(args)...} \
+  {}
 
 #define CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(NAME, ...) \
-    template<class ...Args> \
-    explicit constexpr NAME(Args &&...args) : __VA_ARGS__{::crust::forward<Args>(args)...} {}
+  template<class ...Args> \
+  explicit constexpr NAME(Args &&...args) : \
+      __VA_ARGS__{::crust::forward<Args>(args)...} \
+  {}
 
 #define CRUST_USE_BASE_TRAIT_EQ(NAME, ...) \
-    template<class = void> \
-    static void __detect_trait_partial_eq(const NAME &) { \
-        CRUST_STATIC_ASSERT(Derive<__VA_ARGS__, ::crust::cmp::PartialEq>); \
-    } \
-    template<class = void> \
-    static void __detect_trait_eq() { \
-        CRUST_STATIC_ASSERT(Derive<__VA_ARGS__, ::crust::cmp::Eq>); \
-    }
+  template<class = void> \
+  static void __detect_trait_partial_eq(const NAME &) { \
+    CRUST_STATIC_ASSERT(Derive<__VA_ARGS__, ::crust::cmp::PartialEq>::result); \
+  } \
+  template<class = void> \
+  static void __detect_trait_eq() { \
+    CRUST_STATIC_ASSERT(Derive<__VA_ARGS__, ::crust::cmp::Eq>::result); \
+  }
 
 #define CRUST_ENUM_USE_BASE(NAME, ...) \
-    CRUST_USE_BASE_CONSTRUCTORS(NAME, __VA_ARGS__) \
-    CRUST_USE_BASE_TRAIT_EQ(NAME, __VA_ARGS__)
+  CRUST_USE_BASE_CONSTRUCTORS(NAME, __VA_ARGS__) \
+  CRUST_USE_BASE_TRAIT_EQ(NAME, __VA_ARGS__)
 
 #define CRUST_ENUM_VARIANT(NAME, ...) \
-    struct NAME final : public Tuple<__VA_ARGS__> { \
-        using Inner = Tuple<__VA_ARGS__>; \
-        CRUST_USE_BASE_CONSTRUCTORS(NAME, Tuple<__VA_ARGS__>) \
-        CRUST_USE_BASE_TRAIT_EQ(NAME, Tuple<__VA_ARGS__>) \
-    }
+  struct NAME final : public Tuple<__VA_ARGS__> { \
+    using Inner = Tuple<__VA_ARGS__>; \
+    CRUST_USE_BASE_CONSTRUCTORS(NAME, Tuple<__VA_ARGS__>) \
+    CRUST_USE_BASE_TRAIT_EQ(NAME, Tuple<__VA_ARGS__>) \
+  }
 
 #define CRUST_MACRO_REPEAT_1(FN) FN(0)
 #define CRUST_MACRO_REPEAT_2(FN) CRUST_MACRO_REPEAT_1(FN); FN(1)

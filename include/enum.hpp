@@ -13,22 +13,24 @@ namespace __impl_enum {
 template<class... Fields>
 template<class T>
 CRUST_CXX14_CONSTEXPR Option<T> EnumTagUnion<Fields...>::move_variant() {
-    constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
-    return index == i ? make_some(EnumGetter<i, __trivial, Fields...>::inner(holder)) : None{};
+  constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
+  return index == i ?
+      make_some(EnumGetter<i, __trivial, Fields...>::inner(holder)) :
+      None{};
 }
 
 template<class... Fields>
 template<class T>
 CRUST_CXX14_CONSTEXPR Option<T> EnumTagOnly<Fields...>::move_variant() {
-    constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
-    return index == i ? make_some(T{}) : None{};
+  constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
+  return index == i ? make_some(T{}) : None{};
 }
 }
 
 template<class... Fields>
 template<class T>
 CRUST_CXX14_CONSTEXPR Option<T> Enum<Fields...>::move_variant() {
-    return inner.template move_variant<T>();
+  return inner.template move_variant<T>();
 }
 }
 
