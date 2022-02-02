@@ -24,6 +24,12 @@ struct A : test::RAIIChecker<A> {
 
 i32 fn_c() { return 5; }
 
+i32 fn_d(int a) { return a; }
+
+i32 fn_e(int &a) { return a; }
+
+i32 fn_f(int &&a) { return a; }
+
 template<class F>
 i32 test_fn(Fn<F, i32()> fn) { return fn(); }
 
@@ -35,9 +41,15 @@ i32 test_dyn_fn(DynFn<i32()> fn) { return fn(); }
 i32 test_dyn_fn_mut(DynFnMut<i32()> fn) { return fn(); }
 }
 
-
 GTEST_TEST(function, raii) {
   auto recorder = std::make_shared<test::RAIIRecorder>();
+
+  GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&fn_d))(11), 11);
+  GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&fn_f))(13), 13);
+
+  int i = 14;
+  GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&fn_d))(i), 14);
+  GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&fn_e))(i), 14);
 
   A a{recorder};
   GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&A::fn_b))(a), 4);

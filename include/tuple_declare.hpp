@@ -192,6 +192,7 @@ struct TupleGetter<0, Field, Fields...> {
 template<class T>
 class Option;
 
+// todo: zero sized type optimization
 template<class ...Fields>
 class CRUST_EBCO Tuple : public Impl<
     cmp::PartialEq<Tuple<Fields...>>,
@@ -286,9 +287,9 @@ namespace __impl_tuple {
 template<usize index, class ...Fields>
 struct TupleEqHelper {
   static constexpr bool
-  inner(TupleHolder<Fields &...> &ref, Tuple<Fields...> &tuple) {
+  inner(TupleHolder<const Fields &...> ref, const Tuple<Fields...> &tuple) {
     return TupleEqHelper<index - 1, Fields...>::inner(ref, tuple) &&
-        TupleGetter<index - 1, Fields &...>::inner(ref) ==
+        TupleGetter<index - 1, const Fields &...>::inner(ref) ==
         tuple.template get<index - 1>();
   }
 };
@@ -296,7 +297,7 @@ struct TupleEqHelper {
 template<class ...Fields>
 struct TupleEqHelper<0, Fields...> {
   static CRUST_CXX14_CONSTEXPR bool
-  inner(TupleHolder<Fields &...> &, Tuple<Fields...> &) {
+  inner(TupleHolder<const Fields &...>, const Tuple<Fields...> &) {
     return true;
   }
 };

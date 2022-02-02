@@ -43,10 +43,6 @@ public:
 class Ordering;
 
 CRUST_TRAIT(PartialOrd, class Rhs = Self)
-private:
-  /// this function will choose `cmp' over `partial_cmp'
-  constexpr Option<Ordering> cmp_helper(const Rhs &other) const;
-
 public:
   Option<Ordering> partial_cmp(const Rhs &other) const;
 
@@ -109,10 +105,8 @@ public:
 }
 
 namespace __impl_derive_eq {
-///
 /// Ugly workaround for detecting `PartialEq' and `Eq' for classes inherits
 /// `Tuple' and `Enum'.
-///
 template<class T, class Rhs>
 struct DerivePartialEq {
   template<class U>

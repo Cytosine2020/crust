@@ -28,14 +28,14 @@ struct RawMemFn;
 
 template<class Self, class Ret, class ...Args, Ret (Self::*f)(Args...) const>
 struct RawMemFn<Ret (Self::*)(Args...) const, f> {
-  constexpr Ret operator()(const Self &self, Args &&...args) const {
+  constexpr Ret operator()(const Self &self, Args ...args) const {
     return (self.*f)(forward<Args>(args)...);
   }
 };
 
 template<class Self, class Ret, class ...Args, Ret (Self::*f)(Args...)>
 struct RawMemFn<Ret (Self::*)(Args...), f> {
-  constexpr Ret operator()(Self &self, Args &&...args) const {
+  constexpr Ret operator()(Self &self, Args ...args) const {
     return (self.*f)(forward<Args>(args)...);
   }
 };
@@ -45,7 +45,9 @@ struct RawFn;
 
 template<class Ret, class ...Args, Ret(*f)(Args...)>
 struct RawFn<Ret(Args...), f> {
-  constexpr Ret operator()(Args &&...args) const { return f(args...); }
+  constexpr Ret operator()(Args ...args) const {
+    return f(forward<Args>(args)...);
+  }
 };
 }
 
@@ -62,7 +64,7 @@ private:
 public:
   constexpr Fn(Self &&self) : self{move(self)} {}
 
-  CRUST_CXX14_CONSTEXPR Ret operator()(Args &&...args) const {
+  CRUST_CXX14_CONSTEXPR Ret operator()(Args ...args) const {
     return self(forward<Args>(args)...);
   }
 };
@@ -106,7 +108,7 @@ private:
 public:
   constexpr FnMut(Self &&self) : self{move(self)} {}
 
-  CRUST_CXX14_CONSTEXPR Ret operator()(Args &&...args) {
+  CRUST_CXX14_CONSTEXPR Ret operator()(Args ...args) {
     return self(forward<Args>(args)...);
   }
 };
@@ -184,7 +186,7 @@ template<class Self, class Ret, class ...Args>
 struct StaticFnMutVTable {
   static const FnMutVTable<Ret, Args...> vtable;
 
-  static CRUST_CXX14_CONSTEXPR Ret call(void *self, Args &&...args) {
+  static CRUST_CXX14_CONSTEXPR Ret call(void *self, Args ...args) {
     return (*reinterpret_cast<Self *>(self))(forward<Args>(args)...);
   }
 };
@@ -299,7 +301,7 @@ public:
     return *this;
   }
 
-  CRUST_CXX14_CONSTEXPR Ret operator()(Args &&...args) {
+  CRUST_CXX14_CONSTEXPR Ret operator()(Args ...args) {
     return vtable->call(self, forward<Args>(args)...);
   }
 

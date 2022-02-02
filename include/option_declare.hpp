@@ -28,8 +28,8 @@ public:
     return this->template is_variant<None>();
   }
 
-  CRUST_CXX14_CONSTEXPR bool contains(const T &other) const {
-    return this->template eq_variant<T>(other);
+  constexpr bool contains(const T &other) const {
+    return this->template eq_variant<Some<T>>(other);
   }
 
   CRUST_CXX14_CONSTEXPR Option<const T *> as_ptr() const {

@@ -20,11 +20,11 @@ public:
 
   template<class B, class F>
   B fold(B &&init, Fn<F, B(B &&, Item &&)> f) {
-    B accum = std::forward(init);
+    B accum = forward(init);
 
     Item x;
     while ((let<Some<Item>>(x) = self().next())) {
-      accum = f(std::move(accum), std::move(x));
+      accum = f(move(accum), move(x));
     }
 
     return accum;

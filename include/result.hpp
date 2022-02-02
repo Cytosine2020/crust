@@ -29,11 +29,17 @@ public:
   }
 
   constexpr bool contains(const T &other) const {
-    return this->template eq_variant<T>(other);
+    return this->template visit<bool>(
+        [&](const Ok<T> &value) { return value.template get<0>() == other; },
+        [](const Err<E> &) { return false; }
+    );
   }
 
   constexpr bool contains_err(const E &other) const {
-    return this->template eq_variant<E>(other);
+    return this->template visit<bool>(
+        [](const Ok<T> &) { return false; },
+        [&](const Err<E> &value) { return value.template get<0>() == other; }
+    );
   }
 
   CRUST_CXX14_CONSTEXPR Option<T> ok() {

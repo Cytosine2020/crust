@@ -200,19 +200,14 @@ struct Derive {
       std::is_base_of<Trait<Struct, Args...>, Struct>::value;
 };
 
-/// this tag is used for enum optimization
-
-struct MonoStateTag {};
+struct MonoStateTag {}; /// this tag is used for enum optimization
 
 template<class T>
 struct IsMonoState {
   static constexpr bool result = std::is_base_of<MonoStateTag, T>::value;
 };
 
-/// this tag is used for enum optimization
-
-struct TransparentTag {
-};
+struct TransparentTag {}; /// this tag is used for enum optimization
 
 template<class T>
 struct IsTransparent {

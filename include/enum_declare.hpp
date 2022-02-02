@@ -182,11 +182,11 @@ public:
   }
 };
 
-#define ENUM_VISITOR_BRANCH(index) \
+#define __ENUM_VISITOR_BRANCH(index) \
   case offset + index: \
     return impl(EnumGetter<offset + index, trivial, Fields...>::inner(self))
 
-#define ENUM_VISITOR_IMPL(len) \
+#define __ENUM_VISITOR_IMPL(len) \
   template<usize offset, bool trivial, class ...Fields> \
   struct EnumVisitor<offset, len, trivial, Fields...> { \
     CRUST_STATIC_ASSERT(offset + len <= sizeof...(Fields)); \
@@ -195,7 +195,7 @@ public:
     inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
       switch (index) { \
         CRUST_DEFAULT_UNREACHABLE; \
-        CRUST_MACRO_REPEAT(len, ENUM_VISITOR_BRANCH); \
+        CRUST_MACRO_REPEAT(len, __ENUM_VISITOR_BRANCH); \
       } \
     } \
     template<class R, class V> \
@@ -203,30 +203,30 @@ public:
     inner(EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
       switch (index) { \
         CRUST_DEFAULT_UNREACHABLE; \
-        CRUST_MACRO_REPEAT(len, ENUM_VISITOR_BRANCH); \
+        CRUST_MACRO_REPEAT(len, __ENUM_VISITOR_BRANCH); \
       } \
     } \
   }
 
-ENUM_VISITOR_IMPL(16);
-ENUM_VISITOR_IMPL(15);
-ENUM_VISITOR_IMPL(14);
-ENUM_VISITOR_IMPL(13);
-ENUM_VISITOR_IMPL(12);
-ENUM_VISITOR_IMPL(11);
-ENUM_VISITOR_IMPL(10);
-ENUM_VISITOR_IMPL(9);
-ENUM_VISITOR_IMPL(8);
-ENUM_VISITOR_IMPL(7);
-ENUM_VISITOR_IMPL(6);
-ENUM_VISITOR_IMPL(5);
-ENUM_VISITOR_IMPL(4);
-ENUM_VISITOR_IMPL(3);
-ENUM_VISITOR_IMPL(2);
-ENUM_VISITOR_IMPL(1);
+__ENUM_VISITOR_IMPL(16);
+__ENUM_VISITOR_IMPL(15);
+__ENUM_VISITOR_IMPL(14);
+__ENUM_VISITOR_IMPL(13);
+__ENUM_VISITOR_IMPL(12);
+__ENUM_VISITOR_IMPL(11);
+__ENUM_VISITOR_IMPL(10);
+__ENUM_VISITOR_IMPL(9);
+__ENUM_VISITOR_IMPL(8);
+__ENUM_VISITOR_IMPL(7);
+__ENUM_VISITOR_IMPL(6);
+__ENUM_VISITOR_IMPL(5);
+__ENUM_VISITOR_IMPL(4);
+__ENUM_VISITOR_IMPL(3);
+__ENUM_VISITOR_IMPL(2);
+__ENUM_VISITOR_IMPL(1);
 
-#undef ENUM_VISITOR_IMPL
-#undef ENUM_VISITOR_BRANCH
+#undef __ENUM_VISITOR_IMPL
+#undef __ENUM_VISITOR_BRANCH
 
 
 template<usize offset, usize size, class ...Fields>
@@ -255,13 +255,11 @@ public:
   }
 };
 
-#define TAG_VISITOR_BRANCH(index) \
-  case offset + index: { \
-    auto tmp = typename EnumType<offset + index, Fields...>::Result{}; \
-    return impl(tmp); \
-  }
+#define __TAG_VISITOR_BRANCH(index) \
+  case offset + index: \
+    return impl(typename EnumType<offset + index, Fields...>::Result{});
 
-#define TAG_VISITOR_IMPL(len) \
+#define __TAG_VISITOR_IMPL(len) \
   template<usize offset, class ...Fields> \
   struct TagVisitor<offset, len, Fields...> { \
     CRUST_STATIC_ASSERT(offset + len <= sizeof...(Fields)); \
@@ -269,30 +267,30 @@ public:
     static CRUST_CXX14_CONSTEXPR R inner(V &&impl, usize index) { \
       switch (index) { \
         CRUST_DEFAULT_UNREACHABLE; \
-        CRUST_MACRO_REPEAT(len, TAG_VISITOR_BRANCH); \
+        CRUST_MACRO_REPEAT(len, __TAG_VISITOR_BRANCH); \
       } \
     } \
   }
 
-TAG_VISITOR_IMPL(16);
-TAG_VISITOR_IMPL(15);
-TAG_VISITOR_IMPL(14);
-TAG_VISITOR_IMPL(13);
-TAG_VISITOR_IMPL(12);
-TAG_VISITOR_IMPL(11);
-TAG_VISITOR_IMPL(10);
-TAG_VISITOR_IMPL(9);
-TAG_VISITOR_IMPL(8);
-TAG_VISITOR_IMPL(7);
-TAG_VISITOR_IMPL(6);
-TAG_VISITOR_IMPL(5);
-TAG_VISITOR_IMPL(4);
-TAG_VISITOR_IMPL(3);
-TAG_VISITOR_IMPL(2);
-TAG_VISITOR_IMPL(1);
+__TAG_VISITOR_IMPL(16);
+__TAG_VISITOR_IMPL(15);
+__TAG_VISITOR_IMPL(14);
+__TAG_VISITOR_IMPL(13);
+__TAG_VISITOR_IMPL(12);
+__TAG_VISITOR_IMPL(11);
+__TAG_VISITOR_IMPL(10);
+__TAG_VISITOR_IMPL(9);
+__TAG_VISITOR_IMPL(8);
+__TAG_VISITOR_IMPL(7);
+__TAG_VISITOR_IMPL(6);
+__TAG_VISITOR_IMPL(5);
+__TAG_VISITOR_IMPL(4);
+__TAG_VISITOR_IMPL(3);
+__TAG_VISITOR_IMPL(2);
+__TAG_VISITOR_IMPL(1);
 
-#undef TAG_VISITOR_IMPL
-#undef TAG_VISITOR_BRANCH
+#undef __TAG_VISITOR_IMPL
+#undef __TAG_VISITOR_BRANCH
 
 
 template<class T, class ...Fields>
@@ -457,7 +455,7 @@ struct CRUST_EBCO EnumTagUnion :
     using Index = __IndexGetter<typename RemoveRef<T>::Result>;
     return index == Index::result + 1 &&
         __impl_tuple::TupleEqHelper<sizeof...(Fs), Fs...>::inner(
-            __impl_tuple::TupleHolder<Fs &...>{other...},
+            __impl_tuple::TupleHolder<const Fs &...>{other...},
             EnumGetter<Index::result, __trivial, Fields...>::inner(holder)
         );
   }

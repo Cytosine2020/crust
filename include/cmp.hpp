@@ -14,9 +14,7 @@
 namespace crust {
 namespace cmp {
 CRUST_ENUM_VARIANT(Less);
-
 CRUST_ENUM_VARIANT(Equal);
-
 CRUST_ENUM_VARIANT(Greater);
 
 class CRUST_EBCO Ordering :
@@ -29,6 +27,7 @@ public:
 
 private:
   CRUST_CXX14_CONSTEXPR i32 to_i32() const {
+    // todo: allow assigning number
     return this->template visit<i32>(
         [](const Less &) { return -1; },
         [](const Equal &) { return 0; },
@@ -65,7 +64,7 @@ public:
   /// impl PartialOrd
 
   CRUST_CXX14_CONSTEXPR Option<Ordering>
-  partial_cmp(const Ordering &other) const;
+  partial_cmp(const Ordering &other) const { return make_some(cmp(other)); }
 
   /// impl Ord
 
@@ -77,51 +76,6 @@ constexpr Ordering make_less() { return Less{}; }
 constexpr Ordering make_equal() { return Equal{}; }
 
 constexpr Ordering make_greater() { return Greater{}; }
-
-namespace __impl_cmp {
-template<class T, class U, bool = Derive<T, Ord>::result>
-struct CmpHelper {
-  constexpr static Option<Ordering> inner(const T &v1, const U &v2) {
-    return operator_partial_cmp(v1, v2);
-  }
-};
-
-template<class T>
-struct CmpHelper<T, T, true> {
-  constexpr static Option<Ordering> inner(const T &v1, const T &v2) {
-    return make_some(operator_cmp(v1, v2));
-  }
-};
-}
-
-template<class Self, class Rhs>
-constexpr Option<Ordering>
-PartialOrd<Self, Rhs>::cmp_helper(const Rhs &other) const {
-  return __impl_cmp::CmpHelper<Self, Rhs>::inner(self(), other);
-}
-
-template<class Self, class Rhs>
-constexpr bool PartialOrd<Self, Rhs>::lt(const Rhs &other) const {
-  return self().cmp_helper(other) == make_some(make_less());
-}
-
-template<class Self, class Rhs>
-constexpr bool PartialOrd<Self, Rhs>::le(const Rhs &other) const {
-  return self().cmp_helper(other) == make_some(make_less()) ||
-       self().cmp_helper(other) == make_some(make_equal());
-}
-
-template<class Self, class Rhs>
-constexpr bool PartialOrd<Self, Rhs>::gt(const Rhs &other) const {
-  return self().cmp_helper(other) == make_some(make_greater());
-}
-
-template<class Self, class Rhs>
-constexpr bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
-  return self().cmp_helper(other) == make_some(make_greater()) ||
-       self().cmp_helper(other) == make_some(make_equal());
-}
-
 
 /// because c++ do not support add member function for primitive types,
 /// following two functions are used for invoking `partial_cmp' or `cmp' for
@@ -136,7 +90,30 @@ constexpr Ordering operator_cmp(const T &v1, const U &v2) {
   return v1.cmp(v2);
 }
 
-#define IMPL_PRIMITIVE(FN, ...) \
+// todo: refactor
+template<class Self, class Rhs>
+constexpr bool PartialOrd<Self, Rhs>::lt(const Rhs &other) const {
+  return operator_partial_cmp(self(), other).contains(make_less());
+}
+
+template<class Self, class Rhs>
+constexpr bool PartialOrd<Self, Rhs>::le(const Rhs &other) const {
+  return operator_partial_cmp(self(), other) == make_some(make_greater()) ||
+       operator_partial_cmp(self(), other) == make_some(make_equal());
+}
+
+template<class Self, class Rhs>
+constexpr bool PartialOrd<Self, Rhs>::gt(const Rhs &other) const {
+  return operator_partial_cmp(self(), other).contains(make_greater());
+}
+
+template<class Self, class Rhs>
+constexpr bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
+  return operator_partial_cmp(self(), other) == make_some(make_greater()) ||
+       operator_partial_cmp(self(), other) == make_some(make_equal());
+}
+
+#define __IMPL_PRIMITIVE(FN, ...) \
   template<> FN(bool, ##__VA_ARGS__); \
   template<> FN(char, ##__VA_ARGS__); \
   template<> FN(u8, ##__VA_ARGS__); \
@@ -148,39 +125,34 @@ constexpr Ordering operator_cmp(const T &v1, const U &v2) {
   template<> FN(u64, ##__VA_ARGS__); \
   template<> FN(i64, ##__VA_ARGS__)
 
-#define IMPL_OPERATOR_CMP(type, ...) \
+#define __IMPL_OPERATOR_CMP(type, ...) \
 inline constexpr Ordering operator_cmp(const type &v1, const type &v2) { \
   return v1 < v2 ? make_less() : v1 > v2 ? make_greater() : make_equal(); \
 }
 
-IMPL_PRIMITIVE(IMPL_OPERATOR_CMP);
+__IMPL_PRIMITIVE(__IMPL_OPERATOR_CMP);
 
-#undef IMPL_OPERATOR_CMP
+#undef __IMPL_OPERATOR_CMP
 
-#define IMPL_OPERATOR_PARTIAL_CMP(type, ...) \
+#define __IMPL_OPERATOR_PARTIAL_CMP(type, ...) \
 inline constexpr Option<Ordering> \
 operator_partial_cmp(const type &v1, const type &v2) { \
   return make_some(operator_cmp(v1, v2)); \
 }
 
-IMPL_PRIMITIVE(IMPL_OPERATOR_PARTIAL_CMP);
+__IMPL_PRIMITIVE(__IMPL_OPERATOR_PARTIAL_CMP);
 
-#undef IMPL_OPERATOR_PARTIAL_CMP
-
-inline CRUST_CXX14_CONSTEXPR Option<Ordering>
-Ordering::partial_cmp(const Ordering &other) const {
-  return operator_partial_cmp(this->to_i32(), other.to_i32());
-}
+#undef __IMPL_OPERATOR_PARTIAL_CMP
 
 inline CRUST_CXX14_CONSTEXPR Ordering
 Ordering::cmp(const Ordering &other) const {
-  return operator_cmp(this->to_i32(), other.to_i32());
+  return operator_cmp(to_i32(), other.to_i32());
 }
 
 template<class T>
 constexpr T min(T &&v1, T &&v2) {
   CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
-  return v1.min(std::forward<T>(v2));
+  return v1.min(forward<T>(v2));
 }
 
 template<class T, class F>
@@ -205,7 +177,7 @@ constexpr T min_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> f) {
 template<class T>
 constexpr T max(T &&v1, T &&v2) {
   CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
-  return v1.max(std::forward<T>(v2));
+  return v1.max(forward<T>(v2));
 }
 
 template<class T, class F>
@@ -272,12 +244,12 @@ public:
 };
 }
 
-IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::PartialEq);
-IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::Eq);
-IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::PartialOrd);
-IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::Ord);
+__IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::PartialEq);
+__IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::Eq);
+__IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::PartialOrd);
+__IMPL_PRIMITIVE(CRUST_DERIVE_PRIMITIVE, cmp::Ord);
 
-#undef IMPL_PRIMITIVE
+#undef __IMPL_PRIMITIVE
 
 // todo: implement for float point numbers
 }
