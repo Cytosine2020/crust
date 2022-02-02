@@ -19,7 +19,7 @@ public:
   }
 
   template<class B, class F>
-  B fold(B &&init, Fn<F, B &&(B &&, Item &&)> &&f) {
+  B fold(B &&init, Fn<F, B(B &&, Item &&)> f) {
     B accum = std::forward(init);
 
     Item x;

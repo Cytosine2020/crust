@@ -32,8 +32,8 @@ GTEST_TEST(option, option) {
     GTEST_FAIL();
   }
 
-  // EXPECT_TRUE(*make_some(1234).as_ptr().unwrap_or(0) == 1234);
-  EXPECT_TRUE(*make_some(1234).map(make_fn(
-    [](const i32 &value) { return &value; }
+  EXPECT_TRUE(*make_some(1234).as_ptr().unwrap_or(0) == 1234);
+  EXPECT_TRUE(*make_some(1234).map(bind(
+      [](const i32 &value) { return &value; }
   )).unwrap_or(0) == 1234);
 }

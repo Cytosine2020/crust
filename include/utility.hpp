@@ -142,6 +142,22 @@ struct IsLValueRef<T &> {
 };
 
 template<class T>
+struct IsRValueRef {
+  static constexpr bool result = false;
+};
+
+template<class T>
+struct IsRValueRef<T &&> {
+  static constexpr bool result = true;
+};
+
+template<class T>
+struct IsRef {
+  static constexpr bool result
+      = IsLValueRef<T>::result || IsRValueRef<T>::result;
+};
+
+template<class T>
 constexpr typename RemoveRef<T>::Result &&move(T &&t) noexcept {
   return static_cast<typename RemoveRef<T>::Result &&>(t);
 }
@@ -152,7 +168,7 @@ constexpr T &&forward(typename RemoveRef<T>::Result &t) noexcept {
 }
 
 template<class T>
-constexpr T &&forward(typename RemoveRef<T>::type &&t) noexcept {
+constexpr T &&forward(typename RemoveRef<T>::Result &&t) noexcept {
   CRUST_STATIC_ASSERT(!IsLValueRef<T>::result);
   return static_cast<T &&>(t);
 }
@@ -186,8 +202,7 @@ struct Derive {
 
 /// this tag is used for enum optimization
 
-struct MonoStateTag {
-};
+struct MonoStateTag {};
 
 template<class T>
 struct IsMonoState {
@@ -280,6 +295,11 @@ struct IsTransparent {
 #define CRUST_MACRO_REPEAT_15(FN) CRUST_MACRO_REPEAT_14(FN); FN(14)
 #define CRUST_MACRO_REPEAT_16(FN) CRUST_MACRO_REPEAT_15(FN); FN(15)
 #define CRUST_MACRO_REPEAT(N, FN) CRUST_MACRO_REPEAT_##N(FN)
+
+template<class Type, Type obj>
+struct TmplArg {};
+
+#define CRUST_TMPL_ARG(obj) ::crust::TmplArg<decltype(obj), (obj)>{}
 }
 
 

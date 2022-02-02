@@ -22,13 +22,13 @@ constexpr Option<T> make_none() { return None{}; }
 template<class T>
 template<class U, class F>
 CRUST_CXX14_CONSTEXPR Option<U>
-Option<T>::map(Fn<F, U(const T &)> &&f) const {
-  return this->template visit<Option<U>>(overloaded(
+Option<T>::map(Fn<F, U(const T &)> f) const {
+  return this->template visit<Option<U>>(
       [&](const Some<T> &value) {
         return make_some(f(value.template get<0>()));
       },
       [](const None &) { return make_none<U>(); }
-  ));
+  );
 }
 
 template<class T>

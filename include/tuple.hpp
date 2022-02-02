@@ -13,7 +13,7 @@ namespace __impl_tuple {
 template<class Field, class ...Fields>
 constexpr Option<cmp::Ordering>
 TupleHolder<Field, Fields...>::partial_cmp(const TupleHolder &other) const {
-  return cmp::operator_partial_cmp(this->field, other.field).map(make_fn(
+  return cmp::operator_partial_cmp(this->field, other.field).map(bind(
       [&](cmp::Ordering value) {
         return value.then(
             cmp::operator_partial_cmp(this->remains, other.remains)

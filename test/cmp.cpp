@@ -46,13 +46,13 @@ GTEST_TEST(cmp, ordering) {
   EXPECT_EQ(make_equal().then(make_less()), make_less());
   EXPECT_EQ(make_less().then(make_equal()), make_less());
   EXPECT_EQ(make_greater().then(make_equal()), make_greater());
-  EXPECT_EQ(make_equal().then_with(make_fn([]() {
+  EXPECT_EQ(make_equal().then_with(bind([]() {
     return make_less();
   })), make_less());
-  EXPECT_EQ(make_less().then_with(make_fn([]() {
+  EXPECT_EQ(make_less().then_with(bind([]() {
     return make_equal();
   })), make_less());
-  EXPECT_EQ(make_greater().then_with(make_fn([]() {
+  EXPECT_EQ(make_greater().then_with(bind([]() {
     return make_equal();
   })), make_greater());
 }
@@ -65,32 +65,32 @@ GTEST_TEST(cmp, min_max) {
   EXPECT_EQ(make_tuple(0, 'b'), min_by_key(
       make_tuple(0, 'b'),
       make_tuple(1, 'a'),
-      make_fn([](const Tuple<i32, char> &value) {
+      bind([](const Tuple<i32, char> &value) {
         return value.get<0>();
-      }))
-  );
+      })
+  ));
 
   EXPECT_EQ(make_tuple(1, 'a'), min_by_key(
       make_tuple(0, 'b'),
       make_tuple(1, 'a'),
-      make_fn([](const Tuple<i32, char> &value) {
+      bind([](const Tuple<i32, char> &value) {
         return value.get<1>();
-      }))
-  );
+      })
+  ));
 
   EXPECT_EQ(make_tuple(1, 'a'), max_by_key(
       make_tuple(0, 'b'),
       make_tuple(1, 'a'),
-      make_fn([](const Tuple<i32, char> &value) {
+      bind([](const Tuple<i32, char> &value) {
         return value.get<0>();
-      }))
-  );
+      })
+  ));
 
   EXPECT_EQ(make_tuple(0, 'b'), max_by_key(
       make_tuple(0, 'b'),
       make_tuple(1, 'a'),
-      make_fn([](const Tuple<i32, char> &value) {
+      bind([](const Tuple<i32, char> &value) {
         return value.get<1>();
-      }))
-  );
+      })
+  ));
 }

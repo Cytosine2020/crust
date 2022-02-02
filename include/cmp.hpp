@@ -21,60 +21,47 @@ CRUST_ENUM_VARIANT(Greater);
 
 class CRUST_EBCO Ordering :
     public Enum<Less, Equal, Greater>,
-    public PartialOrd<Ordering>, public Ord<Ordering> {
+    public PartialOrd<Ordering>,
+    public Ord<Ordering>
+{
 public:
   CRUST_ENUM_USE_BASE(Ordering, Enum<Less, Equal, Greater>);
 
-  Ordering reverse() const {
-    return this->template visit<Ordering>(overloaded(
-        [](const Less &) { return Greater{}; },
-        [](const Equal &) { return Equal{}; },
-        [](const Greater &) { return Less{}; }
-    ));
-  }
-
-private:
-  struct __Then {
-    const Ordering &other;
-
-    constexpr Ordering operator()(const Equal &) const { return other; }
-
-    template<class T>
-    constexpr Ordering operator()(const T &) const { return T{}; }
-  };
-
-public:
-  Ordering then(const Ordering &other) const {
-    return this->template visit<Ordering>(__Then{other});
-  }
-
-private:
-  template<class F>
-  struct __ThenWith {
-    Fn<F, Ordering()> &&f;
-
-    CRUST_CXX14_CONSTEXPR Ordering operator()(const Equal &) { return f(); }
-
-    template<class T>
-    CRUST_CXX14_CONSTEXPR Ordering operator()(const T &) { return T{}; }
-  };
-
-public:
-  template<class F>
-  CRUST_CXX14_CONSTEXPR Ordering then_with(Fn<F, Ordering()> &&f) const {
-    return this->template visit<Ordering>(__ThenWith<F>{move(f)});
-  }
-
 private:
   CRUST_CXX14_CONSTEXPR i32 to_i32() const {
-    return this->template visit<i32>(overloaded(
+    return this->template visit<i32>(
         [](const Less &) { return -1; },
         [](const Equal &) { return 0; },
         [](const Greater &) { return 1; }
-    ));
+    );
   }
 
 public:
+  Ordering reverse() const {
+    return this->template visit<Ordering>(
+        [](const Less &) { return Greater{}; },
+        [](const Equal &) { return Equal{}; },
+        [](const Greater &) { return Less{}; }
+    );
+  }
+
+  Ordering then(const Ordering &other) const {
+    return this->template visit<Ordering>(
+        [](const Less &) { return Less{}; },
+        [&](const Equal &) { return other; },
+        [](const Greater &) { return Greater{}; }
+    );
+  }
+
+  template<class F>
+  CRUST_CXX14_CONSTEXPR Ordering then_with(Fn<F, Ordering()> f) const {
+    return this->template visit<Ordering>(
+        [](const Less &) { return Less{}; },
+        [&](const Equal &) { return f(); },
+        [](const Greater &) { return Greater{}; }
+    );
+  }
+
   /// impl PartialOrd
 
   CRUST_CXX14_CONSTEXPR Option<Ordering>
@@ -198,43 +185,43 @@ constexpr T min(T &&v1, T &&v2) {
 
 template<class T, class F>
 constexpr T
-min_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
+min_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> compare) {
   CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
   return compare(v1, v2) == make_greater() ? forward<T>(v2) : forward<T>(v1);
 }
 
 template<class T, class F, class K>
-constexpr T min_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
+constexpr T min_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> f) {
   CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
   return min_by(
       forward<T>(v1),
       forward<T>(v2),
-      make_fn([&](const T &v1, const T &v2) {
+      bind([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
       })
   );
 }
 
 template<class T>
-constexpr T &&max(T &&v1, T &&v2) {
+constexpr T max(T &&v1, T &&v2) {
   CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
   return v1.max(std::forward<T>(v2));
 }
 
 template<class T, class F>
-constexpr T &&
-max_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> &&compare) {
+constexpr T
+max_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> compare) {
   CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
   return compare(v1, v2) == make_greater() ? forward<T>(v1) : forward<T>(v2);
 }
 
 template<class T, class F, class K>
-constexpr T &&max_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> &&f) {
+constexpr T max_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> f) {
   CRUST_STATIC_ASSERT(Derive<T, Ord>::result);
   return max_by(
       forward<T>(v1),
       forward<T>(v2),
-      make_fn([&](const T &v1, const T &v2) {
+      bind([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
       })
   );

@@ -7,42 +7,137 @@
 
 
 namespace crust {
-template<class Base, class F, F f>
-struct MemberFnStaticWrapper;
-
+namespace __impl_fn {
 template<
-    class Base,
-    class Self,
-    class Ret,
-    class ...Args,
-    Ret (Self::*f)(Args...) const
+    class Self, class F = decltype(&Self::operator()), F f = &Self::operator()
 >
-struct MemberFnStaticWrapper<Base, Ret (Self::*)(Args...) const, f> {
-  using Inner = Ret(const Base *, Args...);
+struct MemFnClosure;
 
-  constexpr static Ret inner(const Base *self, Args...args) {
-    return (reinterpret_cast<const Self *>(self)->*f)(forward<Args>(args)...);
+template<class Self, class Ret, class ...Args, Ret(Self::*f)(Args...) const>
+struct MemFnClosure<Self, Ret(Self::*)(Args...) const, f> {
+  using Inner = Ret(Args...);
+};
+
+template<class Self, class Ret, class ...Args, Ret(Self::*f)(Args...)>
+struct MemFnClosure<Self, Ret(Self::*)(Args...), f> {
+  using Inner = Ret(Args...);
+};
+
+template<class F, F f>
+struct RawMemFn;
+
+template<class Self, class Ret, class ...Args, Ret (Self::*f)(Args...) const>
+struct RawMemFn<Ret (Self::*)(Args...) const, f> {
+  constexpr Ret operator()(const Self &self, Args &&...args) const {
+    return (self.*f)(forward<Args>(args)...);
   }
 };
 
-template<
-    class Base,
-    class Self,
-    class Ret,
-    class ...Args,
-    Ret (Self::*f)(Args...)
->
-struct MemberFnStaticWrapper<Base, Ret (Self::*)(Args...), f> {
-  using Inner = Ret(Base *, Args...);
-
-  static constexpr Ret inner(Base *self, Args...args) {
-    return (reinterpret_cast<Self *>(self)->*f)(forward<Args>(args)...);
+template<class Self, class Ret, class ...Args, Ret (Self::*f)(Args...)>
+struct RawMemFn<Ret (Self::*)(Args...), f> {
+  constexpr Ret operator()(Self &self, Args &&...args) const {
+    return (self.*f)(forward<Args>(args)...);
   }
 };
 
-#define CRUST_MEMBER_FN_STATIC_WRAPPER(BASE, PTR) \
-  ::crust::MemberFnStaticWrapper<BASE, decltype(PTR), PTR>
+template<class F, F *f>
+struct RawFn;
 
+template<class Ret, class ...Args, Ret(*f)(Args...)>
+struct RawFn<Ret(Args...), f> {
+  constexpr Ret operator()(Args &&...args) const { return f(args...); }
+};
+}
+
+template<class Self, class F = typename __impl_fn::MemFnClosure<Self>::Inner>
+class Fn;
+
+template<class Self, class Ret, class ...Args>
+class Fn<Self, Ret(Args...)> {
+private:
+  CRUST_STATIC_ASSERT(!IsRef<Self>::result);
+
+  Self self;
+
+public:
+  constexpr Fn(Self &&self) : self{move(self)} {}
+
+  CRUST_CXX14_CONSTEXPR Ret operator()(Args &&...args) const {
+    return self(forward<Args>(args)...);
+  }
+};
+
+template<class F, F *f>
+Fn<__impl_fn::RawFn<F, f>> bind(TmplArg<F *, f>) {
+  return Fn<__impl_fn::RawFn<F, f>>{__impl_fn::RawFn<F, f>{}};
+}
+
+template<class T, class F, F *f>
+Fn<__impl_fn::RawFn<F, f>, T> bind(TmplArg<F *, f>) {
+  return Fn<__impl_fn::RawFn<F, f>, T>{__impl_fn::RawFn<F, f>{}};
+}
+
+template<class F, F f>
+Fn<__impl_fn::RawMemFn<F, f>> bind(TmplArg<F, f>) {
+  return Fn<__impl_fn::RawMemFn<F, f>>{__impl_fn::RawMemFn<F, f>{}};
+}
+
+template<class T, class F, F f>
+Fn<__impl_fn::RawMemFn<F, f>, T> bind(TmplArg<F, f>) {
+  return Fn<__impl_fn::RawMemFn<F, f>, T>{__impl_fn::RawMemFn<F, f>{}};
+}
+
+template<class T>
+constexpr Fn<T> bind(T &&f) { return Fn<T>{forward<T>(f)}; }
+
+template<class F, class T>
+constexpr Fn<T, F> bind(T &&f) { return Fn<T, F>{forward<T>(f)}; }
+
+template<class Self, class F = typename __impl_fn::MemFnClosure<Self>::Inner>
+class FnMut;
+
+template<class Self, class Ret, class ...Args>
+class FnMut<Self, Ret(Args...)> {
+private:
+  CRUST_STATIC_ASSERT(!IsRef<Self>::result);
+
+  Self self;
+
+public:
+  constexpr FnMut(Self &&self) : self{move(self)} {}
+
+  CRUST_CXX14_CONSTEXPR Ret operator()(Args &&...args) {
+    return self(forward<Args>(args)...);
+  }
+};
+
+template<class F, F *f>
+FnMut<__impl_fn::RawFn<F, f>> bind_mut(TmplArg<F *, f>) {
+  return FnMut<__impl_fn::RawFn<F, f>>{__impl_fn::RawFn<F, f>{}};
+}
+
+template<class T, class F, F *f>
+FnMut<__impl_fn::RawFn<F, f>, T> bind_mut(TmplArg<F *, f>) {
+  return FnMut<__impl_fn::RawFn<F, f>, T>{__impl_fn::RawFn<F, f>{}};
+}
+
+template<class F, F f>
+FnMut<__impl_fn::RawMemFn<F, f>> bind_mut(TmplArg<F, f>) {
+  return FnMut<__impl_fn::RawMemFn<F, f>>{__impl_fn::RawMemFn<F, f>{}};
+}
+
+template<class T, class F, F f>
+FnMut<__impl_fn::RawMemFn<F, f>, T> bind_mut(TmplArg<F, f>) {
+  return FnMut<__impl_fn::RawMemFn<F, f>, T>{__impl_fn::RawMemFn<F, f>{}};
+}
+
+template<class T>
+constexpr FnMut<T> bind_mut(T &&f) { return FnMut<T>{forward<T>(f)}; }
+
+template<class F, class T>
+constexpr FnMut<T, F> bind_mut(T &&f) { return FnMut<T, F>{forward<T>(f)}; }
+
+namespace __impl_fn {
 template<class Base, class Self>
 struct DestructorStaticWrapper {
   using Inner = void(Base *);
@@ -52,184 +147,70 @@ struct DestructorStaticWrapper {
   }
 };
 
-template<class F, F f>
-struct MemberFnClosureWrapper;
-
-template<
-    class Self,
-    class Return,
-    class ...Args, Return (Self::*f)(Args...) const
->
-struct MemberFnClosureWrapper<Return(Self::*)(Args...) const, f> {
-  using Inner = Return(Args...);
-};
-
-template<class Self, class Return, class ...Args, Return (Self::*f)(Args...)>
-struct MemberFnClosureWrapper<Return(Self::*)(Args...), f> {
-  using Inner = Return(Args...);
-};
-
-#define CRUST_MEMBER_FN_CLOSURE_WRAPPER(PTR) \
-  typename ::crust::MemberFnClosureWrapper<decltype(PTR), PTR>::Inner
-
-
-namespace __impl_raw_fn {
-template<class F, F *f>
-class RawFn;
-
-template<class Result, class ...Args, Result(*f)(Args...)>
-class RawFn<Result(Args...), f> {
-public:
-  CRUST_CXX14_CONSTEXPR Result operator()(Args ...args) { return f(args...); }
-
-  constexpr Result operator()(Args ...args) const { return f(args...); }
-};
-
-
-template<class Result, class ...Args>
-struct FnMutVTable {
+template<class Ret, class ...Args>
+struct FnVTable {
   void (*drop)(void *);
-
-  usize size, align;
-
-  Result (*call_mut)(void *, Args...);
+  usize size;
+  usize align;
+  Ret (*call)(const void *, Args...);
 };
 
-template<class Self, class Result, class ...Args>
-struct StaticFnMutVTable {
-  const static FnMutVTable<Result, Args...> vtable;
+template<class Self, class Ret, class ...Args>
+struct StaticFnVTable {
+  static const FnVTable<Ret, Args...> vtable;
 
-  static CRUST_CXX14_CONSTEXPR Result call_mut(void *self, Args ...args) {
-    (*reinterpret_cast<Self *>(self))(forward<Args>(args)...);
+  static constexpr Ret call(const void *self, Args &&...args) {
+    return (*reinterpret_cast<const Self *>(self))(forward<Args>(args)...);
   }
 };
 
-template<class Self, class Result, class ...Args>
-const FnMutVTable<Result, Args...>
-StaticFnMutVTable<Self, Result, Args...>::vtable{
+template<class Self, class Ret, class ...Args>
+const FnVTable<Ret, Args...> StaticFnVTable<Self, Ret, Args...>::vtable{
     DestructorStaticWrapper<void, Self>::inner,
     sizeof(Self),
     alignof(Self),
-    call_mut,
+    call,
 };
 
-template<class Result, class ...Args>
-struct FnVTable {
+template<class Ret, class ...Args>
+struct FnMutVTable {
   void (*drop)(void *);
-
-  usize size, align;
-
-  Result (*call)(const void *, Args...);
+  usize size;
+  usize align;
+  Ret (*call)(void *, Args...);
 };
 
-template<class Self, class Result, class ...Args>
-struct StaticFnVTable {
-  const static FnVTable<Result, Args...> vtable;
+template<class Self, class Ret, class ...Args>
+struct StaticFnMutVTable {
+  static const FnMutVTable<Ret, Args...> vtable;
 
-  static CRUST_CXX14_CONSTEXPR Result call(const void *self, Args ...args) {
-    (*reinterpret_cast<const Self *>(self))(forward<Args>(args)...);
+  static CRUST_CXX14_CONSTEXPR Ret call(void *self, Args &&...args) {
+    return (*reinterpret_cast<Self *>(self))(forward<Args>(args)...);
   }
 };
 
-template<class Self, class Result, class ...Args>
-const FnVTable<Result, Args...> StaticFnVTable<Self, Result, Args...>::vtable{
+template<class Self, class Ret, class ...Args>
+const FnMutVTable<Ret, Args...> StaticFnMutVTable<Self, Ret, Args...>::vtable{
     DestructorStaticWrapper<void, Self>::inner,
-    sizeof(Self), alignof(Self),
+    sizeof(Self),
+    alignof(Self),
     call,
 };
 }
 
-template<
-    class Self, class F = CRUST_MEMBER_FN_CLOSURE_WRAPPER(&Self::operator())
->
-class FnMut;
-
-template<class Self, class Result, class ...Args>
-class FnMut<Self, Result(Args...)> {
-private:
-  Self self;
-
-public:
-  constexpr FnMut(const Self &self) : self{self} {}
-
-  constexpr FnMut(Self &&self) : self{move(self)} {}
-
-  CRUST_CXX14_CONSTEXPR Result operator()(Args ...args) {
-    return self(forward<Args>(args)...);
-  }
-};
-
-template<class T>
-constexpr FnMut<T> make_fn_mut(T &&f) { return FnMut<T>(forward<T>(f)); }
-
-template<class F, class T>
-constexpr FnMut<T, F> make_fn_mut(T &&f) { return FnMut<T, F>(forward<T>(f)); }
-
-template<class F, F *f>
-constexpr FnMut<__impl_raw_fn::RawFn<F, f>, F> make_fn_mut() {
-  return FnMut<__impl_raw_fn::RawFn<F, f>, F>(__impl_raw_fn::RawFn<F, f>{});
-}
-
-#define CRUST_MAKE_FN_MUT(f) ::crust::make_fn_mut<decltype(f), f>()
-
-template<
-    class Self, class F = CRUST_MEMBER_FN_CLOSURE_WRAPPER(&Self::operator())
->
-class Fn;
-
-template<class Self, class Result, class ...Args>
-class Fn<Self, Result(Args...)> {
-private:
-  Self self;
-
-public:
-  constexpr Fn(const Self &self) : self{self} {}
-
-  constexpr Fn(Self &&self) : self{move(self)} {}
-
-  CRUST_CXX14_CONSTEXPR Result operator()(Args ...args) const {
-    return self(forward<Args>(args)...);
-  }
-};
-
-template<class T, class Function>
-class FnMut<FnMut<T, Function>, Function>;
-
-template<class T, class Function>
-class Fn<Fn<T, Function>, Function>;
-
-template<class T, class Function>
-class FnMut<Fn<T, Function>, Function>;
-
-template<class T, class Function>
-class Fn<FnMut<T, Function>, Function>;
-
-template<class T>
-constexpr Fn<T> make_fn(T &&f) { return Fn<T>(forward<T>(f)); }
-
-template<class F, class T>
-constexpr Fn<T, F> make_fn(T &&f) { return Fn<T, F>(forward<T>(f)); }
-
-template<class F, F *f>
-constexpr Fn<__impl_raw_fn::RawFn<F, f>, F> make_fn() {
-  return Fn<__impl_raw_fn::RawFn<F, f>, F>(__impl_raw_fn::RawFn<F, f>{});
-}
-
-#define CRUST_MAKE_FN(f) ::crust::make_fn<decltype(f), f>()
+template<class F>
+class DynFn;
 
 template<class F>
 class DynFnMut;
 
-template<class Result, class ...Args>
-class DynFnMut<Result(Args...)> {
+template<class Ret, class ...Args>
+class DynFn<Ret(Args...)> {
 private:
-  using VTable = __impl_raw_fn::FnMutVTable<Result, Args...>;
-
-  template<class Self>
-  using StaticVTable = __impl_raw_fn::StaticFnMutVTable<Self, Result, Args...>;
+  friend DynFnMut<Ret(Args...)>;
 
   void *self;
-  const VTable *vtable;
+  const __impl_fn::FnVTable<Ret, Args...> *vtable;
 
   void drop() {
     vtable->drop(self);
@@ -239,88 +220,14 @@ private:
 
 public:
   template<class Self>
-  explicit constexpr DynFnMut(Self &&self) noexcept:
-      self{new Self{forward<Self>(self)}}, vtable{&StaticVTable<Self>::vtable}
+  constexpr DynFn(Self &&self) noexcept :
+      self{new Self{forward<Self>(self)}},
+      vtable{&__impl_fn::StaticFnVTable<Self, Ret, Args...>::vtable}
   {}
 
-  template<class F, F f>
-  explicit constexpr DynFnMut(__impl_raw_fn::RawFn<F, f>) noexcept:
-      self{nullptr}, vtable{&StaticVTable<__impl_raw_fn::RawFn<F, f>>::vtable}
-  {}
-
-  DynFnMut(DynFnMut &&other) noexcept {
-    if (this != &other) {
-      self = other.self;
-      vtable = other.vtable;
-      other.self = nullptr;
-    }
-  }
-
-  DynFnMut &operator=(DynFnMut &&other) noexcept {
-    if (this != &other) {
-      if (self != nullptr) { drop(); }
-      self = other.self;
-      vtable = other.vtable;
-      other.self = nullptr;
-    }
-  }
-
-  CRUST_CXX14_CONSTEXPR Result operator()(Args ...args) {
-    return vtable->call_mut(self, forward<Args>(args)...);
-  }
-
-  ~DynFnMut() { if (self != nullptr) { drop(); }}
-};
-
-template<class T>
-constexpr DynFnMut<CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())>
-make_dyn_fn_mut(T &&f) {
-  using Function = CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator());
-  return DynFnMut<Function>(forward<T>(f));
-}
-
-template<class F, class T>
-constexpr DynFnMut<F> make_dyn_fn_mut(T &&f) {
-  return DynFnMut<F>(forward<T>(f));
-}
-
-template<class F, F *f>
-constexpr DynFnMut<F> make_dyn_fn_mut() {
-  return DynFnMut<F>(__impl_raw_fn::RawFn<F, f>{});
-}
-
-#define CRUST_MAKE_DYN_FN_MUT(f) ::crust::make_dyn_fn_mut<decltype(f), f>()
-
-
-template<class F>
-class DynFn;
-
-template<class Result, class ...Args>
-class DynFn<Result(Args...)> {
-private:
-  using VTable = __impl_raw_fn::FnVTable<Result, Args...>;
-
-  template<class Self>
-  using StaticVTable = __impl_raw_fn::StaticFnVTable<Self, Result, Args...>;
-
-  void *self;
-  const VTable *vtable;
-
-  void drop() {
-    vtable->drop(self);
-    delete reinterpret_cast<char *>(self);
-    self = nullptr;
-  }
-
-public:
-  template<class Self>
-  explicit constexpr DynFn(Self &&self) noexcept :
-      self{new Self{forward<Self>(self)}}, vtable{&StaticVTable<Self>::vtable}
-  {}
-
-  template<class F, F f>
-  explicit constexpr DynFn(__impl_raw_fn::RawFn<F, f>) noexcept :
-      self{nullptr}, vtable{&StaticVTable<__impl_raw_fn::RawFn<F, f>>::vtable}
+  template<class F, F *f>
+  constexpr DynFn(TmplArg<F *, f>) noexcept :
+      DynFn{__impl_fn::RawFn<F, f>{}}
   {}
 
   DynFn(DynFn &&other) noexcept {
@@ -338,57 +245,66 @@ public:
       vtable = other.vtable;
       other.self = nullptr;
     }
+
+    return *this;
   }
 
-  constexpr Result operator()(Args ...args) const {
+  constexpr Ret operator()(Args &&...args) const {
     return vtable->call(self, forward<Args>(args)...);
   }
 
   ~DynFn() { if (self != nullptr) { drop(); }}
 };
 
-template<class T>
-constexpr DynFn<CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())>
-make_dyn_fn(T &&f) {
-  return DynFn<CRUST_MEMBER_FN_CLOSURE_WRAPPER(&T::operator())>(forward<T>(f));
-}
+template<class Ret, class ...Args>
+class DynFnMut<Ret(Args...)> {
+private:
+  void *self;
+  const __impl_fn::FnMutVTable<Ret, Args...> *vtable;
 
-template<class F, class T>
-constexpr DynFn<F> make_dyn_fn(T &&f) { return DynFn<F>(forward<T>(f)); }
+  void drop() {
+    vtable->drop(self);
+    delete reinterpret_cast<char *>(self);
+    self = nullptr;
+  }
 
-template<class F, F *f>
-constexpr DynFn<F> make_dyn_fn() {
-  return DynFn<F>(__impl_raw_fn::RawFn<F, f>{});
-}
+public:
+  template<class Self>
+  constexpr DynFnMut(Self &&self) noexcept :
+      self{new Self{forward<Self>(self)}},
+      vtable{&__impl_fn::StaticFnMutVTable<Self, Ret, Args...>::vtable}
+  {}
 
-#define CRUST_MAKE_DYN_FN(f) ::crust::make_dyn_fn<decltype(f), f>()
+  template<class F, F *f>
+  constexpr DynFnMut(TmplArg<F *, f>) noexcept :
+      DynFnMut{__impl_fn::RawFn<F, f>{}}
+  {}
 
-namespace __impl_overloaded {
-template<class... Ts>
-struct Overloaded;
+  DynFnMut(DynFnMut &&other) noexcept {
+    if (this != &other) {
+      self = other.self;
+      vtable = other.vtable;
+      other.self = nullptr;
+    }
+  }
 
-template<class T, class... Ts>
-struct Overloaded<T, Ts...> : public T, public Overloaded<Ts ...> {
-  using T::operator();
-  using Overloaded<Ts ...>::operator();
+  DynFnMut &operator=(DynFnMut &&other) noexcept {
+    if (this != &other) {
+      if (self != nullptr) { drop(); }
+      self = other.self;
+      vtable = other.vtable;
+      other.self = nullptr;
+    }
 
-  explicit Overloaded(T t, Ts ...ts) :
-      T{forward<T>(t)}, Overloaded<Ts ...>{forward<Ts>(ts)...} {}
+    return *this;
+  }
+
+  CRUST_CXX14_CONSTEXPR Ret operator()(Args &&...args) {
+    return vtable->call(self, forward<Args>(args)...);
+  }
+
+  ~DynFnMut() { if (self != nullptr) { drop(); }}
 };
-
-template<class T>
-struct Overloaded<T> : public T {
-  using T::operator();
-
-  explicit Overloaded(T t) : T{forward<T>(t)} {}
-};
-}
-
-
-template<class... Ts>
-__impl_overloaded::Overloaded<Ts...> overloaded(Ts &&...ts) {
-  return __impl_overloaded::Overloaded<Ts...>{forward<Ts>(ts)...};
-}
 }
 
 
