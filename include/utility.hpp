@@ -220,25 +220,23 @@ struct IsTransparent {
     static constexpr bool result = true; \
   }
 
-#define CRUST_TRAIT_DECLARE(TRAIT, ...) \
+#define CRUST_TRAIT(TRAIT, ...) \
   template<class Self, ##__VA_ARGS__> \
-  class TRAIT
+  struct TRAIT
 
-#define CRUST_USE_SELF(TRAIT) \
-  constexpr const Self &self() const { \
+#define CRUST_TRAIT_REQUIRE(TRAIT, ...) \
+  protected: \
+  constexpr TRAIT() { \
     CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
+    CRUST_STATIC_ASSERT(::crust::All<__VA_ARGS__>::result); \
+  } \
+  constexpr const Self &self() const { \
     return *static_cast<const Self *>(this); \
   } \
   CRUST_CXX14_CONSTEXPR Self &self() { \
-    CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
     return *static_cast<Self *>(this); \
-  }
-
-#define CRUST_TRAIT(TRAIT, ...) \
-  CRUST_TRAIT_DECLARE(TRAIT, ##__VA_ARGS__) { \
-  public: \
-    CRUST_USE_SELF(TRAIT); \
-  private:
+  } \
+  public:
 
 #define CRUST_USE_BASE_CONSTRUCTORS(NAME, ...) \
   template<class ...Args> \

@@ -36,7 +36,7 @@ private:
   }
 
 public:
-  Ordering reverse() const {
+  CRUST_CXX14_CONSTEXPR Ordering reverse() const {
     return this->template visit<Ordering>(
         [](const Less &) { return Greater{}; },
         [](const Equal &) { return Equal{}; },
@@ -44,7 +44,7 @@ public:
     );
   }
 
-  Ordering then(const Ordering &other) const {
+  CRUST_CXX14_CONSTEXPR Ordering then(const Ordering &other) const {
     return this->template visit<Ordering>(
         [](const Less &) { return Less{}; },
         [&](const Equal &) { return other; },
@@ -206,40 +206,54 @@ class Reverse :
     public Impl<PartialOrd<Reverse<T>>, Derive<T, PartialOrd>::result>,
     public Impl<Ord<Reverse<T>>, Derive<T, Ord>::result> {
 public:
+  CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(Reverse, inner);
+
   T inner;
 
   /// impl PartialEq
 
   constexpr bool eq(const Reverse &other) const {
-    return inner == other.inner;
+    return other.inner == inner;
   }
 
   /// impl PartialOrd
 
   constexpr Option<Ordering> partial_cmp(const Reverse &other) const {
-    return operator_partial_cmp(other.inner, this->inner);
+    return operator_partial_cmp(other.inner, inner);
   }
 
   constexpr bool lt(const Reverse &other) const {
-    return other.inner < this->inner;
+    return other.inner < inner;
   }
 
   constexpr bool le(const Reverse &other) const {
-    return other.inner <= this->inner;
+    return other.inner <= inner;
   }
 
   constexpr bool gt(const Reverse &other) const {
-    return other.inner > this->inner;
+    return other.inner > inner;
   }
 
   constexpr bool ge(const Reverse &other) const {
-    return other.inner >= this->inner;
+    return other.inner >= inner;
   }
 
   /// impl Ord
 
   constexpr Ordering cmp(const Reverse &other) const {
-    return operator_cmp(other.inner, this->inner);
+    return operator_cmp(other.inner, inner);
+  }
+
+  CRUST_CXX14_CONSTEXPR Reverse max(const Reverse &&other) {
+    return Reverse{inner.min(move(other.inner))};
+  }
+
+  CRUST_CXX14_CONSTEXPR Reverse min(const Reverse &&other) {
+    return Reverse{inner.max(move(other.inner))};
+  }
+
+  CRUST_CXX14_CONSTEXPR Reverse clamp(Reverse &&min, Reverse &&max) {
+    return Reverse{inner.clamp(move(max.inner), move(min.inner))};
   }
 };
 }

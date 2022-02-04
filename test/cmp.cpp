@@ -10,6 +10,7 @@ using namespace cmp;
 
 GTEST_TEST(cmp, derive) {
   CRUST_STATIC_ASSERT(Derive<bool, PartialEq>::result);
+  CRUST_STATIC_ASSERT(Derive<char, PartialEq>::result);
   CRUST_STATIC_ASSERT(Derive<u8, PartialEq>::result);
   CRUST_STATIC_ASSERT(Derive<i8, PartialEq>::result);
   CRUST_STATIC_ASSERT(Derive<u16, PartialEq>::result);
@@ -22,6 +23,7 @@ GTEST_TEST(cmp, derive) {
   CRUST_STATIC_ASSERT(Derive<isize, PartialEq>::result);
 
   CRUST_STATIC_ASSERT(Derive<bool, Eq>::result);
+  CRUST_STATIC_ASSERT(Derive<char, Eq>::result);
   CRUST_STATIC_ASSERT(Derive<u8, Eq>::result);
   CRUST_STATIC_ASSERT(Derive<i8, Eq>::result);
   CRUST_STATIC_ASSERT(Derive<u16, Eq>::result);
@@ -32,6 +34,32 @@ GTEST_TEST(cmp, derive) {
   CRUST_STATIC_ASSERT(Derive<i64, Eq>::result);
   CRUST_STATIC_ASSERT(Derive<usize, Eq>::result);
   CRUST_STATIC_ASSERT(Derive<isize, Eq>::result);
+
+  CRUST_STATIC_ASSERT(Derive<bool, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<char, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<u8, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<i8, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<u16, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<i16, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<u32, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<i32, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<u64, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<i64, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<usize, PartialOrd>::result);
+  CRUST_STATIC_ASSERT(Derive<isize, PartialOrd>::result);
+
+  CRUST_STATIC_ASSERT(Derive<bool, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<char, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<u8, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<i8, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<u16, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<i16, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<u32, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<i32, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<u64, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<i64, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<usize, Ord>::result);
+  CRUST_STATIC_ASSERT(Derive<isize, Ord>::result);
 }
 
 
@@ -93,4 +121,11 @@ GTEST_TEST(cmp, min_max) {
         return value.get<1>();
       })
   ));
+}
+
+GTEST_TEST(cmp, reverse) {
+  cmp::Reverse<int> a{0};
+  cmp::Reverse<int> b{1};
+
+  EXPECT_TRUE(a > b);
 }

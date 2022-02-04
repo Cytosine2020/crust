@@ -7,8 +7,9 @@
 
 namespace crust {
 namespace index {
-CRUST_TRAIT(Index, class Idx, class T)
-public:
+CRUST_TRAIT(Index, class Idx, class T) {
+  CRUST_TRAIT_REQUIRE(Index);
+
   const T &index(Idx idx) const;
 
   T &index_mut(Idx idx);

@@ -10,13 +10,15 @@ class Formatter {
 
 };
 
-CRUST_TRAIT(Debug)
-public:
+CRUST_TRAIT(Debug) {
+  CRUST_TRAIT_REQUIRE(Debug);
+
   bool fmt_debug(Formatter &fmt);
 };
 
-CRUST_TRAIT(Display)
-public:
+CRUST_TRAIT(Display) {
+  CRUST_TRAIT_REQUIRE(Display);
+
   bool fmt_display(Formatter &fmt);
 };
 }

@@ -311,19 +311,24 @@ struct EnumTrivial;
 
 template<class Self>
 struct EnumTrivial<Self, true> {
-protected:
   void drop() {}
 };
 
 template<class Self>
 struct EnumTrivial<Self, false> {
-protected:
-  CRUST_USE_SELF(EnumTrivial);
+  constexpr EnumTrivial() {
+    CRUST_STATIC_ASSERT(std::is_base_of<EnumTrivial, Self>::value);
+  }
+
+  constexpr const Self &self() const {
+    return *static_cast<const Self *>(this);
+  }
+
+  CRUST_CXX14_CONSTEXPR Self &self() {
+    return *static_cast<Self *>(this);
+  };
 
   void drop() { self().visit(typename Self::__Drop{}); }
-
-public:
-  constexpr EnumTrivial() noexcept = default;
 
   EnumTrivial(const EnumTrivial &other) noexcept {
     if (this != &other) {

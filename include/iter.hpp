@@ -10,8 +10,9 @@
 
 namespace crust {
 namespace iter {
-CRUST_TRAIT(Iterator, class Item)
-public:
+CRUST_TRAIT(Iterator, class Item) {
+  CRUST_TRAIT_REQUIRE(Iterator);
+
   Option<Item> next();
 
   constexpr Tuple<usize, Option<usize>> size_hint() const {

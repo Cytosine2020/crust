@@ -10,8 +10,9 @@ template<class T>
 class Option;
 
 namespace cmp {
-CRUST_TRAIT(PartialEq, class Rhs = Self)
-public:
+CRUST_TRAIT(PartialEq, class Rhs = Self) {
+  CRUST_TRAIT_REQUIRE(PartialEq);
+
   /// Used for detecting `PartialEq', part of the workaround below.
   /// Should never be implemented by hand.
   template<class = void>
@@ -32,8 +33,9 @@ public:
   }
 };
 
-CRUST_TRAIT(Eq)
-public:
+CRUST_TRAIT(Eq) {
+  CRUST_TRAIT_REQUIRE(Eq, Derive<Self, PartialEq>::result);
+
   /// Used for detecting `Eq', part of the workaround below.
   /// Should never be implemented by hand.
   template<class = void>
@@ -42,8 +44,9 @@ public:
 
 class Ordering;
 
-CRUST_TRAIT(PartialOrd, class Rhs = Self)
-public:
+CRUST_TRAIT(PartialOrd, class Rhs = Self) {
+  CRUST_TRAIT_REQUIRE(PartialOrd, Derive<Self, PartialEq>::result);
+
   Option<Ordering> partial_cmp(const Rhs &other) const;
 
   constexpr bool lt(const Rhs &other) const;
@@ -71,8 +74,13 @@ public:
   }
 };
 
-CRUST_TRAIT(Ord)
-public:
+CRUST_TRAIT(Ord) {
+  CRUST_TRAIT_REQUIRE(Ord,
+    Derive<Self, PartialEq>::result,
+    Derive<Self, Eq>::result,
+    Derive<Self, PartialOrd>::result
+  );
+
   Ordering cmp(const Self &other) const;
 
   CRUST_CXX14_CONSTEXPR Self max(Self &&other) {
