@@ -8,8 +8,7 @@
 
 namespace crust {
 namespace range {
-class RangeFull {
-};
+class RangeFull {};
 
 template<class T>
 class Range {

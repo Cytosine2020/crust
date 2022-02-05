@@ -60,23 +60,17 @@ GTEST_TEST(enum_, enum_) {
 
 
 namespace {
-struct A : public MonoStateTag {
-};
+struct A : public MonoStateTag {};
 
-struct B : public MonoStateTag {
-};
+struct B : public MonoStateTag {};
 
-struct C {
-};
+struct C {};
 
-struct D {
-};
+struct D {};
 
-struct E {
-};
+struct E {};
 
-struct F {
-};
+struct F {};
 }
 
 

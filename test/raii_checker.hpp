@@ -9,8 +9,7 @@
 
 
 namespace test {
-struct RAIITypeInfo {
-};
+struct RAIITypeInfo {};
 
 class RAIIRecorder {
 private:

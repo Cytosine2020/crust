@@ -201,12 +201,10 @@ template<class T, bool condition>
 struct Impl;
 
 template<class T>
-struct Impl<T, true> : public T {
-};
+struct Impl<T, true> : public T {};
 
 template<class T>
-struct Impl<T, false> {
-};
+struct Impl<T, false> {};
 }
 
 

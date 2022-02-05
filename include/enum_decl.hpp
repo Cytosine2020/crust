@@ -107,8 +107,7 @@ union EnumHolder<false, Field, Fields...> {
 };
 
 template<bool trivial>
-union EnumHolder<trivial> {
-};
+union EnumHolder<trivial> {};
 
 template<usize index, class ...Fields>
 struct EnumType;
