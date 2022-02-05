@@ -1,15 +1,15 @@
-#ifndef CRUST_TUPLE_HPP
-#define CRUST_TUPLE_HPP
+#ifndef _CRUST_INCLUDE_TUPLE_HPP
+#define _CRUST_INCLUDE_TUPLE_HPP
 
 
-#include "tuple_declare.hpp"
+#include "tuple_decl.hpp"
 
 #include "option.hpp"
 #include "cmp.hpp"
 
 
 namespace crust {
-namespace __impl_tuple {
+namespace _impl_tuple {
 template<class Field, class ...Fields>
 constexpr Option<cmp::Ordering>
 TupleHolder<Field, Fields...>::partial_cmp(const TupleHolder &other) const {
@@ -65,4 +65,4 @@ constexpr cmp::Ordering Tuple<Fields...>::cmp(const Tuple &other) const {
 }
 
 
-#endif //CRUST_TUPLE_HPP
+#endif //_CRUST_INCLUDE_TUPLE_HPP

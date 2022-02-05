@@ -1,5 +1,5 @@
-#ifndef CRUST_RANGE_HPP
-#define CRUST_RANGE_HPP
+#ifndef _CRUST_INCLUDE_RANGE_HPP
+#define _CRUST_INCLUDE_RANGE_HPP
 
 
 #include "utility.hpp"
@@ -41,4 +41,4 @@ public:
 }
 
 
-#endif //CRUST_RANGE_HPP
+#endif //_CRUST_INCLUDE_RANGE_HPP

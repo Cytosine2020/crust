@@ -1,5 +1,5 @@
-#ifndef CRUST_RESULT_HPP
-#define CRUST_RESULT_HPP
+#ifndef _CRUST_INCLUDE_RESULT_HPP
+#define _CRUST_INCLUDE_RESULT_HPP
 
 
 #include "utility.hpp"
@@ -42,15 +42,15 @@ public:
     );
   }
 
-  CRUST_CXX14_CONSTEXPR Option<T> ok() {
+  crust_cxx14_constexpr Option<T> ok() {
     return this->template move_variant<Option<T>>();
   }
 
-  CRUST_CXX14_CONSTEXPR Option<E> err() {
+  crust_cxx14_constexpr Option<E> err() {
     return this->template move_variant<Option<E>>();
   }
 };
 }
 
 
-#endif //CRUST_RESULT_HPP
+#endif //_CRUST_INCLUDE_RESULT_HPP

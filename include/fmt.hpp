@@ -1,5 +1,5 @@
-#ifndef CRUST_FMT_HPP
-#define CRUST_FMT_HPP
+#ifndef _CRUST_INCLUDE_FMT_HPP
+#define _CRUST_INCLUDE_FMT_HPP
 
 
 #include "utility.hpp"
@@ -24,4 +24,4 @@ CRUST_TRAIT(Display) {
 }
 
 
-#endif //CRUST_FMT_HPP
+#endif //_CRUST_INCLUDE_FMT_HPP

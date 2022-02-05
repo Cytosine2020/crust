@@ -1,5 +1,5 @@
-#ifndef CRUST_ITER_HPP
-#define CRUST_ITER_HPP
+#ifndef _CRUST_INCLUDE_ITER_HPP
+#define _CRUST_INCLUDE_ITER_HPP
 
 
 #include "utility.hpp"
@@ -35,4 +35,4 @@ CRUST_TRAIT(Iterator, class Item) {
 }
 
 
-#endif //CRUST_ITER_HPP
+#endif //_CRUST_INCLUDE_ITER_HPP

@@ -1,12 +1,12 @@
-#ifndef CRUST_OPTION_DECLARE_HPP
-#define CRUST_OPTION_DECLARE_HPP
+#ifndef _CRUST_INCLUDE_OPTION_DECL_HPP
+#define _CRUST_INCLUDE_OPTION_DECL_HPP
 
 
 #include "utility.hpp"
 #include "function.hpp"
-#include "enum_declare.hpp"
-#include "cmp_declare.hpp"
-#include "tuple_declare.hpp"
+#include "enum_decl.hpp"
+#include "cmp_decl.hpp"
+#include "tuple_decl.hpp"
 
 
 namespace crust {
@@ -32,24 +32,24 @@ public:
     return this->template eq_variant<Some<T>>(other);
   }
 
-  CRUST_CXX14_CONSTEXPR Option<const T *> as_ptr() const {
+  crust_cxx14_constexpr Option<const T *> as_ptr() const {
     return map(bind([](const T &value) { return &value; }));
   }
 
-  CRUST_CXX14_CONSTEXPR Option<T *> as_mut_ptr() {
+  crust_cxx14_constexpr Option<T *> as_mut_ptr() {
     return map(bind([](T &value) { return &value; }));
   }
 
-  CRUST_CXX14_CONSTEXPR T unwrap() {
+  crust_cxx14_constexpr T unwrap() {
     return this->template visit<T>(
         [](Some<T> &value) { return move(value.template get<0>()); },
         [](None &) {
-          CRUST_PANIC("called `Option::unwrap()` on a `None` value");
+          crust_panic("called `Option::unwrap()` on a `None` value");
         }
     );
   }
 
-  CRUST_CXX14_CONSTEXPR T unwrap_or(T &&d) {
+  crust_cxx14_constexpr T unwrap_or(T &&d) {
     return this->template visit<T>(
         [](Some<T> &value) { return move(value.template get<0>()); },
         [&](None &) { return d; }
@@ -57,10 +57,10 @@ public:
   }
 
   template<class U, class F>
-  CRUST_CXX14_CONSTEXPR Option<U> map(Fn<F, U(const T &)> f) const;
+  crust_cxx14_constexpr Option<U> map(Fn<F, U(const T &)> f) const;
 
   template<class U, class F>
-  CRUST_CXX14_CONSTEXPR U map_or(U &&d, Fn<F, U(const T &)> f) const {
+  crust_cxx14_constexpr U map_or(U &&d, Fn<F, U(const T &)> f) const {
     return this->template visit<U>(
         [&](const Some<T> &value) { return f(value.template get<0>()); },
         [&](const None &) { return move<U>(d); }
@@ -68,7 +68,7 @@ public:
   }
 
   template<class U, class D, class F>
-  CRUST_CXX14_CONSTEXPR U
+  crust_cxx14_constexpr U
   map_or_else(Fn<D, U()> d, Fn<F, U(const T &)> f) const {
     return this->template visit<U>(
         [&](const Some<T> &value) { return f(value.template get<0>()); },
@@ -76,9 +76,9 @@ public:
     );
   }
 
-  CRUST_CXX14_CONSTEXPR Option<T> take();
+  crust_cxx14_constexpr Option<T> take();
 };
 }
 
 
-#endif //CRUST_OPTION_DECLARE_HPP
+#endif //_CRUST_INCLUDE_OPTION_DECL_HPP

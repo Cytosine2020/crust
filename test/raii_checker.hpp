@@ -1,5 +1,5 @@
-#ifndef CRUST_RAII_CHECKER_HPP
-#define CRUST_RAII_CHECKER_HPP
+#ifndef _CRUST_TEST_RAII_CHECKER_HPP
+#define _CRUST_TEST_RAII_CHECKER_HPP
 
 
 #include <unordered_map>
@@ -24,17 +24,17 @@ public:
   RAIIRecorder() noexcept : record{} {}
 
   void construct(const RAIITypeInfo *type_info, void *self) {
-    CRUST_ASSERT(record.find(self) == record.end());
+    crust_assert(record.find(self) == record.end());
     record.emplace(self, Record{type_info});
   }
 
   void deconstruct(const RAIITypeInfo *type_info, void *self) {
     auto ptr = record.find(self);
-    CRUST_ASSERT(ptr != record.end() && ptr->second.type_info == type_info);
+    crust_assert(ptr != record.end() && ptr->second.type_info == type_info);
     record.erase(ptr);
   }
 
-  ~RAIIRecorder() { CRUST_ASSERT(record.empty()); }
+  ~RAIIRecorder() { crust_assert(record.empty()); }
 };
 
 template<class Self>
@@ -45,7 +45,7 @@ private:
   std::shared_ptr<RAIIRecorder> recorder;
 
 public:
-  explicit RAIIChecker(std::shared_ptr<RAIIRecorder> recorder) noexcept:
+  explicit RAIIChecker(std::shared_ptr<RAIIRecorder> recorder) noexcept :
       recorder{std::move(recorder)} {
     this->recorder->construct(&TYPE_INFO, this);
   }
@@ -59,12 +59,12 @@ public:
   }
 
   RAIIChecker &operator=(const RAIIChecker &other) {
-    CRUST_ASSERT(recorder == other.recorder);
+    crust_assert(recorder == other.recorder);
     return *this;
   }
 
   RAIIChecker &operator=(RAIIChecker &&other) {
-    CRUST_ASSERT(recorder == other.recorder);
+    crust_assert(recorder == other.recorder);
     return *this;
   }
 
@@ -76,4 +76,4 @@ const RAIITypeInfo RAIIChecker<Self>::TYPE_INFO{};
 }
 
 
-#endif //CRUST_RAII_CHECKER_HPP
+#endif //_CRUST_TEST_RAII_CHECKER_HPP

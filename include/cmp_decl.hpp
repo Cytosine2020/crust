@@ -1,5 +1,5 @@
-#ifndef CRUST_CMP_DECLARE_HPP
-#define CRUST_CMP_DECLARE_HPP
+#ifndef _CRUST_INCLUDE_CMP_DECL_HPP
+#define _CRUST_INCLUDE_CMP_DECL_HPP
 
 
 #include "utility.hpp"
@@ -16,7 +16,7 @@ CRUST_TRAIT(PartialEq, class Rhs = Self) {
   /// Used for detecting `PartialEq', part of the workaround below.
   /// Should never be implemented by hand.
   template<class = void>
-  static void __detect_trait_partial_eq(const Rhs &) {}
+  static void _detect_trait_partial_eq(const Rhs &) {}
 
   bool eq(const Rhs &other) const;
 
@@ -39,7 +39,7 @@ CRUST_TRAIT(Eq) {
   /// Used for detecting `Eq', part of the workaround below.
   /// Should never be implemented by hand.
   template<class = void>
-  static void __detect_trait_eq() {}
+  static void _detect_trait_eq() {}
 };
 
 class Ordering;
@@ -83,7 +83,7 @@ CRUST_TRAIT(Ord) {
 
   Ordering cmp(const Self &other) const;
 
-  CRUST_CXX14_CONSTEXPR Self max(Self &&other) {
+  crust_cxx14_constexpr Self max(Self &&other) {
     if (self() > other) {
       return move(self());
     } else {
@@ -91,7 +91,7 @@ CRUST_TRAIT(Ord) {
     }
   }
 
-  CRUST_CXX14_CONSTEXPR Self min(Self &&other) {
+  crust_cxx14_constexpr Self min(Self &&other) {
     if (self() > other) {
       return move(other);
     } else {
@@ -99,8 +99,8 @@ CRUST_TRAIT(Ord) {
     }
   }
 
-  CRUST_CXX14_CONSTEXPR Self clamp(Self &&min, Self &&max) {
-    CRUST_ASSERT(min <= max);
+  crust_cxx14_constexpr Self clamp(Self &&min, Self &&max) {
+    crust_assert(min <= max);
     if (self() < min) {
       return move(min);
     } else if (self() > max) {
@@ -112,14 +112,14 @@ CRUST_TRAIT(Ord) {
 };
 }
 
-namespace __impl_derive_eq {
+namespace _impl_derive_eq {
 /// Ugly workaround for detecting `PartialEq' and `Eq' for classes inherits
 /// `Tuple' and `Enum'.
 template<class T, class Rhs>
 struct DerivePartialEq {
   template<class U>
   static u32 check(decltype(static_cast<void (*)(const Rhs &)>(
-      &U::template __detect_trait_partial_eq<>)));
+      &U::template _detect_trait_partial_eq<>)));
 
   template<class>
   static void check(...);
@@ -132,7 +132,7 @@ template<class T>
 struct DeriveEq {
   template<class U>
   static u32 check(decltype(static_cast<void (*)()>(
-      &U::template __detect_trait_eq<>)));
+      &U::template _detect_trait_eq<>)));
 
   template<class>
   static void check(...);
@@ -146,21 +146,21 @@ struct DeriveEq {
 template<class Self, class Rhs>
 struct Derive<Self, cmp::PartialEq, Rhs> {
   static constexpr bool result =
-      __impl_derive_eq::DerivePartialEq<Self, Rhs>::result;
+      _impl_derive_eq::DerivePartialEq<Self, Rhs>::result;
 };
 
 template<class Self>
 struct Derive<Self, cmp::PartialEq> {
   static constexpr bool result =
-      __impl_derive_eq::DerivePartialEq<Self, Self>::result;
+      _impl_derive_eq::DerivePartialEq<Self, Self>::result;
 };
 
 template<class Self>
 struct Derive<Self, cmp::Eq> {
   static constexpr bool result =
-      __impl_derive_eq::DeriveEq<Self>::result;
+      _impl_derive_eq::DeriveEq<Self>::result;
 };
 }
 
 
-#endif //CRUST_CMP_DECLARE_HPP
+#endif //_CRUST_INCLUDE_CMP_DECL_HPP

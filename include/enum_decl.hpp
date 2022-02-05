@@ -1,20 +1,20 @@
-#ifndef CRUST_ENUM_DECLARE_HPP
-#define CRUST_ENUM_DECLARE_HPP
+#ifndef _CRUST_INCLUDE_ENUM_DECL_HPP
+#define _CRUST_INCLUDE_ENUM_DECL_HPP
 
 
 #include <new>
 #include <limits>
 
 #include "utility.hpp"
-#include "cmp_declare.hpp"
-#include "tuple_declare.hpp"
+#include "cmp_decl.hpp"
+#include "tuple_decl.hpp"
 
 
 namespace crust {
 template<class T>
 class Option;
 
-namespace __impl_enum {
+namespace _impl_enum {
 template<class T, class ...Fields>
 struct EnumInclude;
 
@@ -67,8 +67,8 @@ union EnumHolder<true, Field, Fields...> {
   constexpr explicit EnumHolder(T &&field) noexcept :
       remains{forward<T>(field)}
   {
-    CRUST_STATIC_ASSERT(
-        !IsSame<typename RemoveConstRef<T>::Result, Field>::result
+    crust_static_assert(
+        !IsSame<typename RemoveConstOrRef<T>::Result, Field>::result
     );
   }
 };
@@ -90,8 +90,8 @@ union EnumHolder<false, Field, Fields...> {
   constexpr explicit EnumHolder(T &&field) noexcept :
       remains{forward<T>(field)}
   {
-    CRUST_STATIC_ASSERT(
-        !IsSame<typename RemoveConstRef<T>::Result, Field>::result
+    crust_static_assert(
+        !IsSame<typename RemoveConstOrRef<T>::Result, Field>::result
     );
   }
 
@@ -156,7 +156,7 @@ struct EnumGetter<0, trivial, Field, Fields...> {
 template<usize offset, usize size, bool trivial, class ...Fields>
 struct EnumVisitor {
 private:
-  CRUST_STATIC_ASSERT(offset + size <= sizeof...(Fields));
+  crust_static_assert(offset + size <= sizeof...(Fields));
 
   static constexpr usize cut = size / 2;
 
@@ -166,7 +166,7 @@ private:
 
 public:
   template<class R, class V>
-  static CRUST_CXX14_CONSTEXPR R
+  static crust_cxx14_constexpr R
   inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) {
     return index < cut
          ? LowerGetter::template inner<R, V>(self, forward<V>(impl), index)
@@ -174,7 +174,7 @@ public:
   }
 
   template<class R, class V>
-  static CRUST_CXX14_CONSTEXPR R
+  static crust_cxx14_constexpr R
   inner(EnumHolder<trivial, Fields...> &self, V &&impl, usize index) {
     return index < cut
          ? LowerGetter::template inner<R, V>(self, forward<V>(impl), index)
@@ -182,57 +182,59 @@ public:
   }
 };
 
-#define __ENUM_VISITOR_BRANCH(index) \
+#define _ENUM_VISITOR_BRANCH(index) \
   case offset + index: \
     return impl(EnumGetter<offset + index, trivial, Fields...>::inner(self))
 
-#define __ENUM_VISITOR_IMPL(len) \
+#define _ENUM_VISITOR_IMPL(len) \
   template<usize offset, bool trivial, class ...Fields> \
   struct EnumVisitor<offset, len, trivial, Fields...> { \
-    CRUST_STATIC_ASSERT(offset + len <= sizeof...(Fields)); \
+    crust_static_assert(offset + len <= sizeof...(Fields)); \
     template<class R, class V> \
-    static CRUST_CXX14_CONSTEXPR R \
+    static crust_cxx14_constexpr R \
     inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
       switch (index) { \
-        CRUST_DEFAULT_UNREACHABLE; \
-        CRUST_MACRO_REPEAT(len, __ENUM_VISITOR_BRANCH); \
+        default: \
+          crust_unreachable(); \
+        CRUST_MACRO_REPEAT(len, _ENUM_VISITOR_BRANCH); \
       } \
     } \
     template<class R, class V> \
-    static CRUST_CXX14_CONSTEXPR R \
+    static crust_cxx14_constexpr R \
     inner(EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
       switch (index) { \
-        CRUST_DEFAULT_UNREACHABLE; \
-        CRUST_MACRO_REPEAT(len, __ENUM_VISITOR_BRANCH); \
+        default: \
+          crust_unreachable(); \
+        CRUST_MACRO_REPEAT(len, _ENUM_VISITOR_BRANCH); \
       } \
     } \
   }
 
-__ENUM_VISITOR_IMPL(16);
-__ENUM_VISITOR_IMPL(15);
-__ENUM_VISITOR_IMPL(14);
-__ENUM_VISITOR_IMPL(13);
-__ENUM_VISITOR_IMPL(12);
-__ENUM_VISITOR_IMPL(11);
-__ENUM_VISITOR_IMPL(10);
-__ENUM_VISITOR_IMPL(9);
-__ENUM_VISITOR_IMPL(8);
-__ENUM_VISITOR_IMPL(7);
-__ENUM_VISITOR_IMPL(6);
-__ENUM_VISITOR_IMPL(5);
-__ENUM_VISITOR_IMPL(4);
-__ENUM_VISITOR_IMPL(3);
-__ENUM_VISITOR_IMPL(2);
-__ENUM_VISITOR_IMPL(1);
+_ENUM_VISITOR_IMPL(16);
+_ENUM_VISITOR_IMPL(15);
+_ENUM_VISITOR_IMPL(14);
+_ENUM_VISITOR_IMPL(13);
+_ENUM_VISITOR_IMPL(12);
+_ENUM_VISITOR_IMPL(11);
+_ENUM_VISITOR_IMPL(10);
+_ENUM_VISITOR_IMPL(9);
+_ENUM_VISITOR_IMPL(8);
+_ENUM_VISITOR_IMPL(7);
+_ENUM_VISITOR_IMPL(6);
+_ENUM_VISITOR_IMPL(5);
+_ENUM_VISITOR_IMPL(4);
+_ENUM_VISITOR_IMPL(3);
+_ENUM_VISITOR_IMPL(2);
+_ENUM_VISITOR_IMPL(1);
 
-#undef __ENUM_VISITOR_IMPL
-#undef __ENUM_VISITOR_BRANCH
+#undef _ENUM_VISITOR_IMPL
+#undef _ENUM_VISITOR_BRANCH
 
 
 template<usize offset, usize size, class ...Fields>
 struct TagVisitor {
 private:
-  CRUST_STATIC_ASSERT(offset + size <= sizeof...(Fields));
+  crust_static_assert(offset + size <= sizeof...(Fields));
 
   static constexpr usize cut = size / 2;
 
@@ -241,56 +243,50 @@ private:
 
 public:
   template<class R, class V>
-  static CRUST_CXX14_CONSTEXPR R inner(V &&impl, usize index) {
-    return index < cut ?
-        LowerGetter::template inner<R, V>(forward<V>(impl), index) :
-        UpperGetter::template inner<R, V>(forward<V>(impl), index);
-  }
-
-  template<class R, class V>
-  static CRUST_CXX14_CONSTEXPR R inner_move(V &&impl, usize index) {
+  static crust_cxx14_constexpr R inner(V &&impl, usize index) {
     return index < cut ?
         LowerGetter::template inner<R, V>(forward<V>(impl), index) :
         UpperGetter::template inner<R, V>(forward<V>(impl), index);
   }
 };
 
-#define __TAG_VISITOR_BRANCH(index) \
+#define _TAG_VISITOR_BRANCH(index) \
   case offset + index: \
     return impl(typename EnumType<offset + index, Fields...>::Result{});
 
-#define __TAG_VISITOR_IMPL(len) \
+#define _TAG_VISITOR_IMPL(len) \
   template<usize offset, class ...Fields> \
   struct TagVisitor<offset, len, Fields...> { \
-    CRUST_STATIC_ASSERT(offset + len <= sizeof...(Fields)); \
+    crust_static_assert(offset + len <= sizeof...(Fields)); \
     template<class R, class V> \
-    static CRUST_CXX14_CONSTEXPR R inner(V &&impl, usize index) { \
+    static crust_cxx14_constexpr R inner(V &&impl, usize index) { \
       switch (index) { \
-        CRUST_DEFAULT_UNREACHABLE; \
-        CRUST_MACRO_REPEAT(len, __TAG_VISITOR_BRANCH); \
+        default: \
+          crust_unreachable(); \
+        CRUST_MACRO_REPEAT(len, _TAG_VISITOR_BRANCH); \
       } \
     } \
   }
 
-__TAG_VISITOR_IMPL(16);
-__TAG_VISITOR_IMPL(15);
-__TAG_VISITOR_IMPL(14);
-__TAG_VISITOR_IMPL(13);
-__TAG_VISITOR_IMPL(12);
-__TAG_VISITOR_IMPL(11);
-__TAG_VISITOR_IMPL(10);
-__TAG_VISITOR_IMPL(9);
-__TAG_VISITOR_IMPL(8);
-__TAG_VISITOR_IMPL(7);
-__TAG_VISITOR_IMPL(6);
-__TAG_VISITOR_IMPL(5);
-__TAG_VISITOR_IMPL(4);
-__TAG_VISITOR_IMPL(3);
-__TAG_VISITOR_IMPL(2);
-__TAG_VISITOR_IMPL(1);
+_TAG_VISITOR_IMPL(16);
+_TAG_VISITOR_IMPL(15);
+_TAG_VISITOR_IMPL(14);
+_TAG_VISITOR_IMPL(13);
+_TAG_VISITOR_IMPL(12);
+_TAG_VISITOR_IMPL(11);
+_TAG_VISITOR_IMPL(10);
+_TAG_VISITOR_IMPL(9);
+_TAG_VISITOR_IMPL(8);
+_TAG_VISITOR_IMPL(7);
+_TAG_VISITOR_IMPL(6);
+_TAG_VISITOR_IMPL(5);
+_TAG_VISITOR_IMPL(4);
+_TAG_VISITOR_IMPL(3);
+_TAG_VISITOR_IMPL(2);
+_TAG_VISITOR_IMPL(1);
 
-#undef __TAG_VISITOR_IMPL
-#undef __TAG_VISITOR_BRANCH
+#undef _TAG_VISITOR_IMPL
+#undef _TAG_VISITOR_BRANCH
 
 
 template<class T, class ...Fields>
@@ -317,35 +313,37 @@ struct EnumTrivial<Self, true> {
 template<class Self>
 struct EnumTrivial<Self, false> {
   constexpr EnumTrivial() {
-    CRUST_STATIC_ASSERT(std::is_base_of<EnumTrivial, Self>::value);
+    crust_static_assert(std::is_base_of<EnumTrivial, Self>::value);
   }
 
   constexpr const Self &self() const {
     return *static_cast<const Self *>(this);
   }
 
-  CRUST_CXX14_CONSTEXPR Self &self() {
+  crust_cxx14_constexpr Self &self() {
     return *static_cast<Self *>(this);
   };
 
-  void drop() { self().visit(typename Self::__Drop{}); }
+  void drop() {
+    if (self().index != 0) { self().visit(typename Self::Drop{}); }
+  }
 
   EnumTrivial(const EnumTrivial &other) noexcept {
     if (this != &other) {
-      other.self().visit(typename Self::__Copy{&self().holder});
+      other.self().visit(typename Self::Copy{&self().holder});
     }
   }
 
   EnumTrivial(EnumTrivial &&other) noexcept {
     if (this != &other) {
-      other.self().visit(typename Self::__Emplace{&self().holder});
+      other.self().visit(typename Self::Emplace{&self().holder});
     }
   }
 
   EnumTrivial &operator=(const EnumTrivial &other) noexcept {
     if (this != &other) {
       drop();
-      other.self().visit(typename Self::__Copy{&self().holder});
+      other.self().visit(typename Self::Copy{&self().holder});
     }
 
     return *this;
@@ -354,7 +352,7 @@ struct EnumTrivial<Self, false> {
   EnumTrivial &operator=(EnumTrivial &&other) noexcept {
     if (this != &other) {
       drop();
-      other.self().visit(typename Self::__Emplace{&self().holder});
+      other.self().visit(typename Self::Emplace{&self().holder});
     }
 
     return *this;
@@ -373,7 +371,7 @@ struct EnumIsTagOnly : public All<IsMonoState<Fields>::result...> {};
 
 
 template<class ...Fields>
-struct CRUST_EBCO EnumTagUnion :
+struct crust_ebco EnumTagUnion :
     public EnumTrivial<
         EnumTagUnion<Fields...>,
         EnumIsTrivial<Fields...>::result
@@ -381,101 +379,114 @@ struct CRUST_EBCO EnumTagUnion :
     public cmp::PartialEq<EnumTagUnion<Fields...>>,
     public cmp::Eq<EnumTagUnion<Fields...>>
 {
-  static constexpr bool __trivial = EnumIsTrivial<Fields...>::result;
+  static constexpr bool _trivial = EnumIsTrivial<Fields...>::result;
 
-  friend EnumTrivial<EnumTagUnion, __trivial>;
+  friend EnumTrivial<EnumTagUnion, _trivial>;
 
-  using __Holder =
-      EnumHolder<__trivial, typename RemoveRef<Fields>::Result...>;
-  template<class T> using __IndexGetter = EnumTypeToIndex<T, Fields...>;
-  using __Getter = EnumVisitor<0, sizeof...(Fields), __trivial, Fields...>;
+  using Holder =
+      EnumHolder<_trivial, typename RemoveConstOrRef<Fields>::Result...>;
+  template<class T> using IndexGetter = EnumTypeToIndex<T, Fields...>;
+  using Getter = EnumVisitor<0, sizeof...(Fields), _trivial, Fields...>;
 
-  __Holder holder;
+  Holder holder;
   u32 index;
 
   constexpr EnumTagUnion() noexcept : holder{}, index{0} {}
 
   template<class T>
-  constexpr EnumTagUnion(T &&value) noexcept :
+  explicit constexpr EnumTagUnion(T &&value) noexcept :
       holder{forward<T>(value)},
-      index{__IndexGetter<typename RemoveRef<T>::Result>::result + 1}
+      index{IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1}
   {
-    CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagUnion>::result);
+    crust_static_assert(
+        !IsSame<typename RemoveConstOrRef<T>::Result, EnumTagUnion>::result
+    );
   }
 
-  struct __Drop {
+  struct Drop {
     template<class T>
-    CRUST_CXX14_CONSTEXPR void operator()(T &value) const { value.~T(); }
+    crust_cxx14_constexpr void operator()(T &value) const { value.~T(); }
   };
 
-  struct __Copy {
-    __Holder *holder;
+  struct Copy {
+    Holder *holder;
 
     template<class T>
-    void operator()(const T &value) { ::new(holder) __Holder{value}; }
+    void operator()(const T &value) { ::new(holder) Holder{value}; }
   };
 
-  struct __Emplace {
-    __Holder *holder;
+  struct Emplace {
+    Holder *holder;
 
     template<class T>
-    void operator()(T &value) { ::new(holder) __Holder{move(value)}; }
+    void operator()(T &value) { ::new(holder) Holder{move(value)}; }
   };
 
   template<class T>
   EnumTagUnion &operator=(T &&value) noexcept {
-    CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagUnion>::result);
+    crust_static_assert(
+        !IsSame<typename RemoveConstOrRef<T>::Result, EnumTagUnion>::result
+    );
 
     this->drop();
 
-    ::new(&holder) __Holder{forward<T>(value)};
-    index = __IndexGetter<typename RemoveRef<T>::Result>::result + 1;
+    ::new(&holder) Holder{forward<T>(value)};
+    index = IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1;
 
     return *this;
   }
 
   template<class R = void, class V>
-  CRUST_CXX14_CONSTEXPR R visit(V &&visitor) const {
-    CRUST_ASSERT(index - 1 < sizeof...(Fields));
-    return __Getter::template inner<R, V>(
+  crust_cxx14_constexpr R visit(V &&visitor) const {
+    crust_assert(index - 1 < sizeof...(Fields));
+    return Getter::template inner<R, V>(
         holder, forward<V>(visitor), index - 1
     );
   }
 
   template<class R = void, class V>
-  CRUST_CXX14_CONSTEXPR R visit(V &&visitor) {
-    CRUST_ASSERT(index - 1 < sizeof...(Fields));
-    return __Getter::template inner<R, V>(
+  crust_cxx14_constexpr R visit(V &&visitor) {
+    crust_assert(index - 1 < sizeof...(Fields));
+    return Getter::template inner<R, V>(
         holder, forward<V>(visitor), index - 1
     );
   }
 
+  template<class T, class V>
+  constexpr bool visit_variant(V &&visitor) const {
+    using Index = IndexGetter<typename RemoveConstOrRef<T>::Result>;
+    return index == Index::result + 1 ? visitor(
+        EnumGetter<Index::result, _trivial, Fields...>::inner(holder)
+    ) : visitor();
+  }
+
   template<class T>
   constexpr bool is_variant() const {
-    return index == __IndexGetter<typename RemoveRef<T>::Result>::result + 1;
+    return index ==
+        IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1;
   }
 
   template<class T, class ...Fs>
   constexpr bool eq_variant(const Fs &...other) const {
-    using Index = __IndexGetter<typename RemoveRef<T>::Result>;
+    using Index = IndexGetter<typename RemoveConstOrRef<T>::Result>;
     return index == Index::result + 1 &&
-        __impl_tuple::TupleEqHelper<sizeof...(Fs), Fs...>::inner(
-            __impl_tuple::TupleHolder<const Fs &...>{other...},
-            EnumGetter<Index::result, __trivial, Fields...>::inner(holder)
+        _impl_tuple::TupleEqHelper<sizeof...(Fs), Fs...>::inner(
+            _impl_tuple::TupleHolder<const Fs &...>{other...},
+            EnumGetter<Index::result, _trivial, Fields...>::inner(holder)
         );
   }
 
   template<class T>
-  CRUST_CXX14_CONSTEXPR Option<T> move_variant();
+  crust_cxx14_constexpr Option<T> move_variant();
 
   template<class T, class ...Fs>
-  CRUST_CXX14_CONSTEXPR bool
-  let_helper(__impl_tuple::TupleHolder<Fs &...> ref) {
+  crust_cxx14_constexpr bool
+  let_helper(_impl_tuple::TupleHolder<Fs &...> ref) {
     if (is_variant<T>()) {
-      __impl_tuple::LetTupleHelper<sizeof...(Fs), Fs...>::inner(
+      _impl_tuple::LetTupleHelper<sizeof...(Fs), Fs...>::inner(
           ref, move(EnumGetter<
-              __IndexGetter<typename RemoveRef<T>::Result>::result,
-              __trivial,
+              IndexGetter<typename RemoveConstOrRef<T>::Result>::result,
+              _trivial,
               Fields...
           >::inner(holder))
       );
@@ -487,98 +498,99 @@ struct CRUST_EBCO EnumTagUnion :
 
   /// impl PartialEq
 
-  struct __Equal {
-    const __Holder *other;
+  struct Equal {
+    const Holder *other;
 
     template<class T>
     constexpr bool operator()(const T &value) const {
       return value == EnumGetter<
-          __IndexGetter<typename RemoveRef<T>::Result>::result,
-          __trivial,
+          IndexGetter<typename RemoveConstOrRef<T>::Result>::result,
+          _trivial,
           Fields...
       >::inner(*other);
     };
   };
 
-  CRUST_CXX14_CONSTEXPR bool eq(const EnumTagUnion &other) const {
-    return this->index == other.index && visit<bool>(__Equal{&other.holder});
+  crust_cxx14_constexpr bool eq(const EnumTagUnion &other) const {
+    return this->index == other.index && visit<bool>(Equal{&other.holder});
   }
 
-  struct __NotEqual {
-    const __Holder *other;
+  struct NotEqual {
+    const Holder *other;
 
     template<class T>
     constexpr bool operator()(const T &value) const {
       return value != EnumGetter<
-          __IndexGetter<typename RemoveRef<T>::Result>::result,
-          __trivial,
+          IndexGetter<typename RemoveConstOrRef<T>::Result>::result,
+          _trivial,
           Fields...
       >::inner(*other);
     };
   };
 
-  CRUST_CXX14_CONSTEXPR bool ne(const EnumTagUnion &other) const {
+  crust_cxx14_constexpr bool ne(const EnumTagUnion &other) const {
     return this->index != other.index ||
-        visit<bool>(__NotEqual{&other.holder});
+        visit<bool>(NotEqual{&other.holder});
   }
 };
 
 
 template<class ...Fields>
-struct CRUST_EBCO EnumTagOnly :
+struct crust_ebco EnumTagOnly :
     public cmp::PartialEq<EnumTagOnly<Fields...>>,
     public cmp::Eq<EnumTagOnly<Fields...>> {
-  template<class T> using __IndexGetter = EnumTypeToIndex<T, Fields...>;
-  using __Getter = TagVisitor<0, sizeof...(Fields), Fields...>;
+  template<class T> using IndexGetter = EnumTypeToIndex<T, Fields...>;
+  using Getter = TagVisitor<0, sizeof...(Fields), Fields...>;
 
   u32 index;
 
   constexpr EnumTagOnly() noexcept : index{0} {}
 
   template<class T>
-  constexpr EnumTagOnly(T &&) noexcept :
-      index{__IndexGetter<typename RemoveRef<T>::Result>::result + 1}
+  explicit constexpr EnumTagOnly(T &&) noexcept :
+      index{IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1}
   {
-    CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagOnly>::result);
+    crust_static_assert(!IsSame<RemoveConstOrRef<T>, EnumTagOnly>::result);
   }
 
   template<class T>
   EnumTagOnly &operator=(T &&) noexcept {
-    CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, EnumTagOnly>::result);
+    crust_static_assert(!IsSame<RemoveConstOrRef<T>, EnumTagOnly>::result);
 
-    index = __IndexGetter<typename RemoveRef<T>::Result>::result + 1;
+    index = IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1;
 
     return *this;
   }
 
   template<class R = void, class V>
-  CRUST_CXX14_CONSTEXPR R visit(V &&visitor) const {
-    CRUST_ASSERT(index - 1 < sizeof...(Fields));
-    return __Getter::template inner<R, V>(forward<V>(visitor), index - 1);
+  crust_cxx14_constexpr R visit(V &&visitor) const {
+    crust_assert(index - 1 < sizeof...(Fields));
+    return Getter::template inner<R, V>(forward<V>(visitor), index - 1);
   }
 
   template<class R = void, class V>
-  CRUST_CXX14_CONSTEXPR R visit(V &&visitor) {
-    CRUST_ASSERT(index - 1 < sizeof...(Fields));
-    return __Getter::template inner<R, V>(forward<V>(visitor), index - 1);
+  crust_cxx14_constexpr R visit(V &&visitor) {
+    crust_assert(index - 1 < sizeof...(Fields));
+    return Getter::template inner<R, V>(forward<V>(visitor), index - 1);
   }
 
   template<class T>
   constexpr bool is_variant() const {
-    return index == __IndexGetter<typename RemoveRef<T>::Result>::result + 1;
+    return index ==
+        IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1;
   }
 
   template<class T>
   constexpr bool eq_variant() const { return is_variant<T>(); }
 
   template<class T>
-  CRUST_CXX14_CONSTEXPR Option<T> move_variant();
+  crust_cxx14_constexpr Option<T> move_variant();
 
   template<class T, class ...Fs>
-  CRUST_CXX14_CONSTEXPR bool
-  let_helper(__impl_tuple::TupleHolder<Fs &...> ref) {
+  crust_cxx14_constexpr bool
+  let_helper(_impl_tuple::TupleHolder<Fs &...> ref) {
     if (is_variant<T>()) {
-      __impl_tuple::LetTupleHelper<sizeof...(Fs), Fs...>(ref, T{});
+      _impl_tuple::LetTupleHelper<sizeof...(Fs), Fs...>(ref, T{});
       return true;
     } else {
       return false;
@@ -591,20 +603,17 @@ struct CRUST_EBCO EnumTagOnly :
 };
 
 template<bool is_tag_only, class ...Fields>
-struct __EnumSelect;
+struct EnumSelect;
 
 template<class ...Fields>
-struct __EnumSelect<false, Fields...> : public EnumTagUnion<Fields...> {
-  CRUST_USE_BASE_CONSTRUCTORS(__EnumSelect, EnumTagUnion<Fields...>);
+struct EnumSelect<false, Fields...> : public EnumTagUnion<Fields...> {
+  CRUST_USE_BASE_CONSTRUCTORS(EnumSelect, EnumTagUnion<Fields...>);
 };
 
 template<class ...Fields>
-struct __EnumSelect<true, Fields...> : public EnumTagOnly<Fields...> {
-  CRUST_USE_BASE_CONSTRUCTORS(__EnumSelect, EnumTagOnly<Fields...>);
+struct EnumSelect<true, Fields...> : public EnumTagOnly<Fields...> {
+  CRUST_USE_BASE_CONSTRUCTORS(EnumSelect, EnumTagOnly<Fields...>);
 };
-
-template<class ...Fields>
-using EnumSelect = __EnumSelect<EnumIsTagOnly<Fields...>::result, Fields...>;
 
 template<class T, class ...Fields>
 struct LetEnum;
@@ -635,7 +644,7 @@ Overloaded<Ts...> overloaded(Ts &&...ts) {
 }
 
 template<class ...Fields>
-class CRUST_EBCO Enum :
+class crust_ebco Enum :
     public Impl<
         cmp::PartialEq<Enum<Fields...>>,
         Derive<Fields, cmp::PartialEq>::result...
@@ -643,17 +652,19 @@ class CRUST_EBCO Enum :
     public Impl<cmp::Eq<Enum<Fields...>>, Derive<Fields, cmp::Eq>::result...>
 {
 private:
-  CRUST_STATIC_ASSERT(
-      sizeof...(Fields) < std::numeric_limits<u32>::max() &&
-      sizeof...(Fields) > 0 && !__impl_enum::EnumDuplicate<Fields...>::result
-  );
+  crust_static_assert(sizeof...(Fields) < std::numeric_limits<u32>::max());
+  crust_static_assert(sizeof...(Fields) > 0);
+  crust_static_assert(!_impl_enum::EnumDuplicate<Fields...>::result);
+  crust_static_assert(All<!IsConstOrRef<Fields>::result...>::result);
 
-  using Inner = __impl_enum::EnumSelect<Fields...>;
+  using Inner = _impl_enum::EnumSelect<
+      _impl_enum::EnumIsTagOnly<Fields...>::result, Fields...
+  >;
 
   Inner inner;
 
   template<class, class ...>
-  friend struct __impl_enum::LetEnum;
+  friend struct _impl_enum::LetEnum;
 
 protected:
   template<class T>
@@ -665,53 +676,55 @@ protected:
   }
 
   template<class T>
-  CRUST_CXX14_CONSTEXPR Option<T> move_variant();
+  crust_cxx14_constexpr Option<T> move_variant();
 
 public:
   constexpr Enum() : inner{} {}
 
-  template<class T>
-  constexpr Enum(T &&value) noexcept : inner{forward<T>(value)} {
-    CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, Enum>::result);
-  }
+  template<class T, typename EnableIf<
+      !IsSame<typename RemoveConstOrRef<T>::Result, Enum>::result
+  >::Result * = nullptr>
+  constexpr Enum(T &&value) noexcept :
+      inner{forward<T>(value)}
+  {}
 
-  template<class T>
+  template<class T, typename EnableIf<!IsSame<
+      typename RemoveConstOrRef<T>::Result, Enum>::result
+  >::Result * = nullptr>
   Enum &operator=(T &&value) noexcept {
-    CRUST_STATIC_ASSERT(!IsSame<RemoveRef<T>, Enum>::result);
-
-    inner = forward<T>(value);
+    inner = Inner{forward<T>(value)};
     return *this;
   }
 
   template<class R = void, class... Ts>
-  CRUST_CXX14_CONSTEXPR R visit(Ts &&...ts) const {
-    return inner.template visit<R>(__impl_enum::overloaded(forward<Ts>(ts)...));
+  crust_cxx14_constexpr R visit(Ts &&...ts) const {
+    return inner.template visit<R>(_impl_enum::overloaded(forward<Ts>(ts)...));
   }
 
   template<class R = void, class... Ts>
-  CRUST_CXX14_CONSTEXPR R visit(Ts &&...ts) {
-    return inner.template visit<R>(__impl_enum::overloaded(forward<Ts>(ts)...));
+  crust_cxx14_constexpr R visit(Ts &&...ts) {
+    return inner.template visit<R>(_impl_enum::overloaded(forward<Ts>(ts)...));
   }
 
-  CRUST_CXX14_CONSTEXPR bool eq(const Enum &other) const {
+  crust_cxx14_constexpr bool eq(const Enum &other) const {
     return inner == other.inner;
   }
 
-  CRUST_CXX14_CONSTEXPR bool ne(const Enum &other) const {
+  crust_cxx14_constexpr bool ne(const Enum &other) const {
     return inner != other.inner;
   }
 };
 
 
-namespace __impl_enum {
+namespace _impl_enum {
 template<class T, class ...Fields>
 struct LetEnum {
-  __impl_tuple::TupleHolder<Fields &...> ref;
+  _impl_tuple::TupleHolder<Fields &...> ref;
 
   explicit constexpr LetEnum(Fields &...ref) : ref{ref...} {}
 
   template<class ...Vs>
-  CRUST_CXX14_CONSTEXPR bool operator=(Enum<Vs...> &&enum_) {
+  crust_cxx14_constexpr bool operator=(Enum<Vs...> &&enum_) {
     return enum_.inner.template let_helper<T>(ref);
   }
 };
@@ -719,11 +732,46 @@ struct LetEnum {
 
 
 template<class T, class ...Fields>
-CRUST_CXX14_CONSTEXPR __impl_enum::LetEnum<T, Fields...>
+crust_cxx14_constexpr _impl_enum::LetEnum<T, Fields...>
 let(Fields &...fields) {
-  return __impl_enum::LetEnum<T, Fields...>{fields...};
+  return _impl_enum::LetEnum<T, Fields...>{fields...};
 }
+
+#define CRUST_ENUM_USE_BASE(NAME, ...) \
+  template<class ...Args> \
+  constexpr NAME(Args &&...args) : \
+      __VA_ARGS__{::crust::forward<Args>(args)...} \
+  {} \
+  template<class = void> \
+  static void _detect_trait_partial_eq(const NAME &) { \
+    crust_static_assert( \
+        ::crust::Derive<__VA_ARGS__, ::crust::cmp::PartialEq>::result) \
+    ; \
+  } \
+  template<class = void> \
+  static void _detect_trait_eq() { \
+    crust_static_assert( \
+        ::crust::Derive<__VA_ARGS__, ::crust::cmp::Eq>::result \
+    ); \
+  }
+
+#define CRUST_ENUM_VARIANT(NAME, ...) \
+  struct NAME final : public ::crust::Tuple<__VA_ARGS__> { \
+    CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::Tuple<__VA_ARGS__>) \
+    template<class = void> \
+    static void _detect_trait_partial_eq(const NAME &) { \
+      crust_static_assert(::crust::Derive< \
+          ::crust::Tuple<__VA_ARGS__>, ::crust::cmp::PartialEq \
+      >::result); \
+    } \
+    template<class = void> \
+    static void _detect_trait_eq() { \
+      crust_static_assert(::crust::Derive< \
+          ::crust::Tuple<__VA_ARGS__>, ::crust::cmp::Eq \
+      >::result); \
+    } \
+  }
 }
 
 
-#endif //CRUST_ENUM_DECLARE_HPP
+#endif //_CRUST_INCLUDE_ENUM_DECL_HPP

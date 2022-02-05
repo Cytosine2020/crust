@@ -1,20 +1,22 @@
 #include "gtest/gtest.h"
 
 #include "utility.hpp"
-#include "enum_declare.hpp"
+#include "enum.hpp"
 #include "cmp.hpp"
 
 #include "raii_checker.hpp"
 
+
 using namespace crust;
+
 
 namespace {
 struct ClassA : test::RAIIChecker<ClassA> {
-  CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(ClassA, test::RAIIChecker<ClassA>);
+  CRUST_USE_BASE_CONSTRUCTORS(ClassA, test::RAIIChecker<ClassA>);
 };
 
-struct ClassB : test::RAIIChecker<ClassA> {
-  CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(ClassB, test::RAIIChecker<ClassA>);
+struct ClassB : test::RAIIChecker<ClassB> {
+  CRUST_USE_BASE_CONSTRUCTORS(ClassB, test::RAIIChecker<ClassB>);
 };
 
 template<class T>
@@ -30,12 +32,13 @@ struct VisitType {
 GTEST_TEST(enum_, enum_) {
   using Enumerate = Enum<ClassA, ClassB>;
 
-  CRUST_STATIC_ASSERT(!Derive<Enumerate, cmp::PartialEq>::result);
-  CRUST_STATIC_ASSERT(!Derive<Enumerate, cmp::Eq>::result);
+  crust_static_assert(!Derive<Enumerate, cmp::PartialEq>::result);
+  crust_static_assert(!Derive<Enumerate, cmp::Eq>::result);
 
   auto recorder = std::make_shared<test::RAIIRecorder>(test::RAIIRecorder{});
 
-  Enumerate a{ClassA{recorder}};
+  Enumerate a;
+  a = Enumerate{ClassA{recorder}};
   EXPECT_TRUE(a.visit<bool>(VisitType<ClassA>{}));
   a = Enumerate{ClassB{recorder}};
   EXPECT_TRUE(a.visit<bool>(VisitType<ClassB>{}));
@@ -43,6 +46,16 @@ GTEST_TEST(enum_, enum_) {
   EXPECT_TRUE(a.visit<bool>(VisitType<ClassA>{}));
   a = ClassB{recorder};
   EXPECT_TRUE(a.visit<bool>(VisitType<ClassB>{}));
+
+  Enumerate b;
+  b = a;
+  EXPECT_TRUE(b.visit<bool>(VisitType<ClassB>{}));
+  b = move(a);
+
+  Enumerate c{b};
+  Enumerate d{move(c)};
+
+  EXPECT_TRUE(d.visit<bool>(VisitType<ClassB>{}));
 }
 
 
@@ -68,16 +81,16 @@ struct F {
 
 
 GTEST_TEST(enum_, tag_only) {
-  CRUST_STATIC_ASSERT(sizeof(Enum<A, B>) == sizeof(u32));
-  CRUST_STATIC_ASSERT(sizeof(Enum<A, B, C, D, E, F>) > sizeof(u32));
+  crust_static_assert(sizeof(Enum<A, B>) == sizeof(u32));
+  crust_static_assert(sizeof(Enum<A, B, C, D, E, F>) > sizeof(u32));
 }
 
 GTEST_TEST(enum_, raii) {
   using Enumerate = Enum<A, B, C, D, E, F>;
 
-  CRUST_STATIC_ASSERT(std::is_trivially_copyable<Enumerate>::value);
-  CRUST_STATIC_ASSERT(std::is_standard_layout<Enumerate>::value);
-  CRUST_STATIC_ASSERT(std::is_literal_type<Enumerate>::value);
+  crust_static_assert(std::is_trivially_copyable<Enumerate>::value);
+  crust_static_assert(std::is_standard_layout<Enumerate>::value);
+  crust_static_assert(std::is_literal_type<Enumerate>::value);
 
   Enumerate a{A{}};
   EXPECT_TRUE(a.visit<bool>(VisitType<A>{}));

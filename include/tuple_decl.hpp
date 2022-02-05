@@ -1,23 +1,23 @@
-#ifndef CRUST_TUPLE_DECLARE_HPP
-#define CRUST_TUPLE_DECLARE_HPP
+#ifndef _CRUST_INCLUDE_TUPLE_DECL_HPP
+#define _CRUST_INCLUDE_TUPLE_DECL_HPP
 
 
 #include <utility>
 
 #include "utility.hpp"
-#include "cmp_declare.hpp"
+#include "cmp_decl.hpp"
 
 
 namespace crust {
 template<class T>
 class Option;
 
-namespace __impl_tuple {
+namespace _impl_tuple {
 template<class ...Fields>
 struct TupleHolder;
 
 template<class Field, class ...Fields>
-struct CRUST_EBCO TupleHolder<Field, Fields...> : public Impl<
+struct crust_ebco TupleHolder<Field, Fields...> : public Impl<
     cmp::PartialEq<TupleHolder<Field, Fields...>>,
     Derive<Field, cmp::PartialEq>::result,
     Derive<TupleHolder<Fields...>, cmp::PartialEq>::result
@@ -87,7 +87,7 @@ struct CRUST_EBCO TupleHolder<Field, Fields...> : public Impl<
 };
 
 template<class Field>
-struct CRUST_EBCO TupleHolder<Field> : public Impl<
+struct crust_ebco TupleHolder<Field> : public Impl<
         cmp::PartialEq<TupleHolder<Field>>,
         Derive<Field, cmp::PartialEq>::result
     >, public Impl<
@@ -145,7 +145,7 @@ struct CRUST_EBCO TupleHolder<Field> : public Impl<
 };
 
 template<>
-struct CRUST_EBCO TupleHolder<> :
+struct crust_ebco TupleHolder<> :
     public cmp::PartialEq<TupleHolder<>>, public cmp::Eq<TupleHolder<>>,
     public cmp::PartialOrd<TupleHolder<>>, public cmp::Ord<TupleHolder<>> {
   /// impl PartialEq
@@ -194,31 +194,35 @@ class Option;
 
 // todo: zero sized type optimization
 template<class ...Fields>
-class CRUST_EBCO Tuple : public Impl<
+class crust_ebco Tuple : public Impl<
     cmp::PartialEq<Tuple<Fields...>>,
-    Derive<__impl_tuple::TupleHolder<Fields...>, cmp::PartialEq>::result
+    Derive<_impl_tuple::TupleHolder<Fields...>, cmp::PartialEq>::result
 >, public Impl<
     cmp::Eq<Tuple<Fields...>>,
-    Derive<__impl_tuple::TupleHolder<Fields...>, cmp::Eq>::result
+    Derive<_impl_tuple::TupleHolder<Fields...>, cmp::Eq>::result
 >, public Impl<
     cmp::PartialOrd<Tuple<Fields...>>,
-    Derive<__impl_tuple::TupleHolder<Fields...>, cmp::PartialOrd>::result
+    Derive<_impl_tuple::TupleHolder<Fields...>, cmp::PartialOrd>::result
 >, public Impl<
     cmp::Ord<Tuple<Fields...>>,
-    Derive<__impl_tuple::TupleHolder<Fields...>, cmp::Ord>::result
+    Derive<_impl_tuple::TupleHolder<Fields...>, cmp::Ord>::result
 >, public Impl<MonoStateTag, sizeof...(Fields) == 0> {
 private:
-  using __Holder =
-      __impl_tuple::TupleHolder<typename RemoveRef<Fields>::Result...>;
-  template<usize index>
-  using __Getter = __impl_tuple::TupleGetter<index, Fields...>;
+  crust_static_assert(All<!IsConstOrRef<Fields>::result...>::result);
 
-  __Holder holder;
+  using Holder =
+      _impl_tuple::TupleHolder<typename RemoveRef<Fields>::Result...>;
+
+  template<usize index>
+  using Getter = _impl_tuple::TupleGetter<index, Fields...>;
+
+  Holder holder;
 
 public:
-  template<usize index> using __Result = typename __Getter<index>::Result;
+  // todo: find a way to hide these two
+  template<usize index> using Result = typename Getter<index>::Result;
 
-  static constexpr usize __size = sizeof...(Fields);
+  static constexpr usize size = sizeof...(Fields);
 
   constexpr Tuple() noexcept : holder{} {}
 
@@ -228,13 +232,13 @@ public:
   {}
 
   template<usize index>
-  constexpr const __Result<index> &get() const {
-    return __Getter<index>::inner(holder);
+  constexpr const Result<index> &get() const {
+    return Getter<index>::inner(holder);
   }
 
   template<usize index>
-  CRUST_CXX14_CONSTEXPR __Result<index> &get() {
-    return __Getter<index>::inner(holder);
+  crust_cxx14_constexpr Result<index> &get() {
+    return Getter<index>::inner(holder);
   }
 
   /// impl PartialEq
@@ -278,12 +282,15 @@ struct IsMonoState<Tuple<>> {
 };
 
 template<class ...Fields>
-constexpr Tuple<Fields...> make_tuple(Fields &&...fields) {
-  return Tuple<Fields...>{forward<Fields>(fields)...};
+constexpr Tuple<typename RemoveConstOrRef<Fields>::Result...>
+make_tuple(Fields &&...fields) {
+  return Tuple<typename RemoveConstOrRef<Fields>::Result...>{
+    forward<Fields>(fields)...
+  };
 }
 
 
-namespace __impl_tuple {
+namespace _impl_tuple {
 template<usize index, class ...Fields>
 struct TupleEqHelper {
   static constexpr bool
@@ -296,7 +303,7 @@ struct TupleEqHelper {
 
 template<class ...Fields>
 struct TupleEqHelper<0, Fields...> {
-  static CRUST_CXX14_CONSTEXPR bool
+  static crust_cxx14_constexpr bool
   inner(TupleHolder<const Fields &...>, const Tuple<Fields...> &) {
     return true;
   }
@@ -305,7 +312,7 @@ struct TupleEqHelper<0, Fields...> {
 
 template<usize index, class ...Fields>
 struct LetTupleHelper {
-  static CRUST_CXX14_CONSTEXPR void
+  static crust_cxx14_constexpr void
   inner(TupleHolder<Fields &...> &ref, Tuple<Fields...> &&tuple) {
     TupleGetter<index - 1, Fields &...>::inner(ref) =
         move(tuple.template get<index - 1>());
@@ -315,7 +322,7 @@ struct LetTupleHelper {
 
 template<class ...Fields>
 struct LetTupleHelper<0, Fields...> {
-  static CRUST_CXX14_CONSTEXPR void
+  static crust_cxx14_constexpr void
       inner(TupleHolder<Fields &...> &, Tuple<Fields...> &&) {}
 };
 
@@ -326,17 +333,17 @@ struct LetTuple {
 
   explicit constexpr LetTuple(Fields &...fields) : ref{fields...} {}
 
-  CRUST_CXX14_CONSTEXPR void operator=(Tuple<Fields...> &&tuple) {
+  crust_cxx14_constexpr void operator=(Tuple<Fields...> &&tuple) {
     LetTupleHelper<sizeof...(Fields), Fields...>::inner(ref, move(tuple));
   }
 };
 }
 
 template<class ...Fields>
-CRUST_CXX14_CONSTEXPR
-__impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>
+crust_cxx14_constexpr
+_impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>
 let(Fields &&...fields) {
-  return __impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>{
+  return _impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>{
       forward<Fields>(fields)...
   };
 }
@@ -349,12 +356,12 @@ namespace std {
 
 template<class ...Fields>
 struct tuple_size<crust::Tuple<Fields...>> :
-    public integral_constant<crust::usize, crust::Tuple<Fields...>::__size> {
-};
+    public integral_constant<crust::usize, crust::Tuple<Fields...>::size>
+{};
 
 template<crust::usize index, class ...Fields>
 struct tuple_element<index, crust::Tuple<Fields...>> {
-  using type = typename crust::Tuple<Fields...>::template __Result<index>;
+  using type = typename crust::Tuple<Fields...>::template Result<index>;
 };
 
 template<crust::usize index, class ...Fields>
@@ -371,4 +378,4 @@ get(crust::Tuple<Fields...> &object) noexcept {
 }
 
 
-#endif //CRUST_TUPLE_DECLARE_HPP
+#endif //_CRUST_INCLUDE_TUPLE_DECL_HPP

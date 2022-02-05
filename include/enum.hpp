@@ -1,38 +1,38 @@
-#ifndef CRUST_ENUM_HPP
-#define CRUST_ENUM_HPP
+#ifndef _CRUST_INCLUDE_ENUM_HPP
+#define _CRUST_INCLUDE_ENUM_HPP
 
 
-#include "enum_declare.hpp"
+#include "enum_decl.hpp"
 
 #include "utility.hpp"
 #include "option.hpp"
 
 
 namespace crust {
-namespace __impl_enum {
+namespace _impl_enum {
 template<class... Fields>
 template<class T>
-CRUST_CXX14_CONSTEXPR Option<T> EnumTagUnion<Fields...>::move_variant() {
-  constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
+crust_cxx14_constexpr Option<T> EnumTagUnion<Fields...>::move_variant() {
+  constexpr usize i = IndexGetter<typename RemoveConstOrRef<T>::Result>::result;
   return index == i ?
-      make_some(EnumGetter<i, __trivial, Fields...>::inner(holder)) :
+      make_some(EnumGetter<i, _trivial, Fields...>::inner(holder)) :
       None{};
 }
 
 template<class... Fields>
 template<class T>
-CRUST_CXX14_CONSTEXPR Option<T> EnumTagOnly<Fields...>::move_variant() {
-  constexpr usize i = __IndexGetter<typename RemoveRef<T>::Result>::result;
+crust_cxx14_constexpr Option<T> EnumTagOnly<Fields...>::move_variant() {
+  constexpr usize i = IndexGetter<typename RemoveConstOrRef<T>::Result>::result;
   return index == i ? make_some(T{}) : None{};
 }
 }
 
 template<class... Fields>
 template<class T>
-CRUST_CXX14_CONSTEXPR Option<T> Enum<Fields...>::move_variant() {
+crust_cxx14_constexpr Option<T> Enum<Fields...>::move_variant() {
   return inner.template move_variant<T>();
 }
 }
 
 
-#endif //CRUST_ENUM_HPP
+#endif //_CRUST_INCLUDE_ENUM_HPP

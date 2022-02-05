@@ -11,7 +11,7 @@ using namespace crust;
 
 namespace {
 struct A : test::RAIIChecker<A> {
-  CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(A, test::RAIIChecker<A>);
+  CRUST_USE_BASE_CONSTRUCTORS(A, test::RAIIChecker<A>);
 
   i32 operator()() { return 1; }
 
@@ -44,30 +44,30 @@ i32 test_dyn_fn_mut(DynFnMut<i32()> fn) { return fn(); }
 GTEST_TEST(function, raii) {
   auto recorder = std::make_shared<test::RAIIRecorder>();
 
-  GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&fn_d))(11), 11);
-  GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&fn_f))(13), 13);
+  GTEST_ASSERT_EQ(bind(crust_tmpl_arg(&fn_d))(11), 11);
+  GTEST_ASSERT_EQ(bind(crust_tmpl_arg(&fn_f))(13), 13);
 
   int i = 14;
-  GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&fn_d))(i), 14);
-  GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&fn_e))(i), 14);
+  GTEST_ASSERT_EQ(bind(crust_tmpl_arg(&fn_d))(i), 14);
+  GTEST_ASSERT_EQ(bind(crust_tmpl_arg(&fn_e))(i), 14);
 
   A a{recorder};
-  GTEST_ASSERT_EQ(bind(CRUST_TMPL_ARG(&A::fn_b))(a), 4);
-  GTEST_ASSERT_EQ(bind_mut(CRUST_TMPL_ARG(&A::fn_a))(a), 3);
+  GTEST_ASSERT_EQ(bind(crust_tmpl_arg(&A::fn_b))(a), 4);
+  GTEST_ASSERT_EQ(bind_mut(crust_tmpl_arg(&A::fn_a))(a), 3);
 
-  GTEST_ASSERT_EQ(test_fn(bind(CRUST_TMPL_ARG(&fn_c))), 5);
+  GTEST_ASSERT_EQ(test_fn(bind(crust_tmpl_arg(&fn_c))), 5);
   GTEST_ASSERT_EQ(test_fn(bind<i32()>(A{recorder})), 2);
   GTEST_ASSERT_EQ(test_fn(bind([]() { return 7; })), 7);
 
-  GTEST_ASSERT_EQ(test_fn_mut(bind_mut(CRUST_TMPL_ARG(&fn_c))), 5);
+  GTEST_ASSERT_EQ(test_fn_mut(bind_mut(crust_tmpl_arg(&fn_c))), 5);
   GTEST_ASSERT_EQ(test_fn_mut(bind_mut<i32()>(A{recorder})), 1);
   GTEST_ASSERT_EQ(test_fn_mut(bind_mut([]() mutable { return 6; })), 6);
 
-  GTEST_ASSERT_EQ(test_dyn_fn(CRUST_TMPL_ARG(&fn_c)), 5);
+  GTEST_ASSERT_EQ(test_dyn_fn(crust_tmpl_arg(&fn_c)), 5);
   GTEST_ASSERT_EQ(test_dyn_fn(A{recorder}), 2);
   GTEST_ASSERT_EQ(test_dyn_fn([]() { return 9; }), 9);
 
-  GTEST_ASSERT_EQ(test_dyn_fn_mut(CRUST_TMPL_ARG(&fn_c)), 5);
+  GTEST_ASSERT_EQ(test_dyn_fn_mut(crust_tmpl_arg(&fn_c)), 5);
   GTEST_ASSERT_EQ(test_dyn_fn_mut(A{recorder}), 1);
   GTEST_ASSERT_EQ(test_dyn_fn_mut([]() mutable { return 8; }), 8);
 }

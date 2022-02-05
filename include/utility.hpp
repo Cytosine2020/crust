@@ -1,5 +1,5 @@
-#ifndef CRUST_UTILITY_HPP
-#define CRUST_UTILITY_HPP
+#ifndef _CRUST_INCLUDE_UTILITY_HPP
+#define _CRUST_INCLUDE_UTILITY_HPP
 
 
 #include <cstdio>
@@ -10,25 +10,25 @@
 
 namespace crust {
 #if __cplusplus > 201103L
-#define CRUST_CXX14_CONSTEXPR constexpr
+#define crust_cxx14_constexpr constexpr
 #else
-#define CRUST_CXX14_CONSTEXPR
+#define crust_cxx14_constexpr
 #endif
 
-#define CRUST_STATIC_ASSERT(...) static_assert(__VA_ARGS__, #__VA_ARGS__)
+#define crust_static_assert(...) static_assert(__VA_ARGS__, #__VA_ARGS__)
 
 #if defined(__GNUC__) || defined(__clang__)
-#define CRUST_DEFAULT_UNREACHABLE default: __builtin_unreachable()
+#define crust_unreachable() __builtin_unreachable()
 #elif defined(_MSC_VER)
-#define CRUST_DEFAULT_UNREACHABLE default: __assume(false)
+#define crust_unreachable() __assume(false)
 #else
-#define CRUST_DEFAULT_UNREACHABLE
+#define crust_unreachable()
 #endif
 
 #if defined(_MSC_VER)
-#define CRUST_EBCO __declspec(empty_bases)
+#define crust_ebco __declspec(empty_bases)
 #else
-#define CRUST_EBCO
+#define crust_ebco
 #endif
 
 #if INTPTR_MAX == INT32_MAX
@@ -41,22 +41,22 @@ namespace crust {
 
 
 [[noreturn]] static inline void
-__panic(const char *file, int line, const char *msg) {
+_panic(const char *file, int line, const char *msg) {
   fprintf(stderr, "Abort at file %s, line %d: %s\n", file, line, msg);
 
   abort();
 }
 
-#define CRUST_PANIC(msg) ::crust::__panic(__FILE__, __LINE__, msg)
+#define crust_panic(msg) ::crust::_panic(__FILE__, __LINE__, msg)
 
-static inline CRUST_CXX14_CONSTEXPR void
+static inline crust_cxx14_constexpr void
 _assert(const char *file, int line, const char *msg, bool condition) {
   if (!condition) {
-    __panic(file, line, msg);
+    _panic(file, line, msg);
   }
 }
 
-#define CRUST_ASSERT(...) \
+#define crust_assert(...) \
     ::crust::_assert(__FILE__, __LINE__, #__VA_ARGS__, __VA_ARGS__)
 
 using i8 = int8_t;
@@ -77,6 +77,13 @@ using usize = u64;
 #error "Unsupported bit width."
 #endif
 
+template<bool enable>
+struct EnableIf {};
+
+template<>
+struct EnableIf<true> {
+    using Result = void;
+};
 
 template<class A, class B>
 struct IsSame {
@@ -127,7 +134,7 @@ struct RemoveConst<const T> {
 };
 
 template<class T>
-struct RemoveConstRef {
+struct RemoveConstOrRef {
   using Result = typename RemoveRef<typename RemoveConst<T>::Result>::Result;
 };
 
@@ -152,9 +159,25 @@ struct IsRValueRef<T &&> {
 };
 
 template<class T>
+struct IsConst {
+  static constexpr bool result = false;
+};
+
+template<class T>
+struct IsConst<const T> {
+    static constexpr bool result = false;
+};
+
+template<class T>
 struct IsRef {
   static constexpr bool result
       = IsLValueRef<T>::result || IsRValueRef<T>::result;
+};
+
+template<class T>
+struct IsConstOrRef {
+    static constexpr bool result
+        = IsRef<T>::result || IsConst<T>::result;
 };
 
 template<class T>
@@ -169,11 +192,11 @@ constexpr T &&forward(typename RemoveRef<T>::Result &t) noexcept {
 
 template<class T>
 constexpr T &&forward(typename RemoveRef<T>::Result &&t) noexcept {
-  CRUST_STATIC_ASSERT(!IsLValueRef<T>::result);
+  crust_static_assert(!IsLValueRef<T>::result);
   return static_cast<T &&>(t);
 }
 
-namespace __impl_impl {
+namespace _impl_impl {
 template<class T, bool condition>
 struct Impl;
 
@@ -188,7 +211,7 @@ struct Impl<T, false> {
 
 
 template<class T, bool ...conditions>
-using Impl = __impl_impl::Impl<T, All<conditions...>::result>;
+using Impl = _impl_impl::Impl<T, All<conditions...>::result>;
 
 template<
     class Struct,
@@ -214,62 +237,29 @@ struct IsTransparent {
   static constexpr bool result = std::is_base_of<TransparentTag, T>::value;
 };
 
-
-#define CRUST_DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...) \
-  struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> { \
-    static constexpr bool result = true; \
-  }
-
 #define CRUST_TRAIT(TRAIT, ...) \
   template<class Self, ##__VA_ARGS__> \
   struct TRAIT
 
 #define CRUST_TRAIT_REQUIRE(TRAIT, ...) \
   protected: \
-  constexpr TRAIT() { \
-    CRUST_STATIC_ASSERT(std::is_base_of<TRAIT, Self>::value); \
-    CRUST_STATIC_ASSERT(::crust::All<__VA_ARGS__>::result); \
-  } \
-  constexpr const Self &self() const { \
-    return *static_cast<const Self *>(this); \
-  } \
-  CRUST_CXX14_CONSTEXPR Self &self() { \
-    return *static_cast<Self *>(this); \
-  } \
+    constexpr TRAIT() { \
+      crust_static_assert(::std::is_base_of<TRAIT, Self>::value); \
+      crust_static_assert(::crust::All<__VA_ARGS__>::result); \
+    } \
+    constexpr const Self &self() const { \
+      return *static_cast<const Self *>(this); \
+    } \
+    crust_cxx14_constexpr Self &self() { \
+      return *static_cast<Self *>(this); \
+    } \
   public:
 
 #define CRUST_USE_BASE_CONSTRUCTORS(NAME, ...) \
   template<class ...Args> \
-  constexpr NAME(Args &&...args) : \
-      __VA_ARGS__{::crust::forward<Args>(args)...} \
-  {}
-
-#define CRUST_USE_BASE_CONSTRUCTORS_EXPLICIT(NAME, ...) \
-  template<class ...Args> \
   explicit constexpr NAME(Args &&...args) : \
       __VA_ARGS__{::crust::forward<Args>(args)...} \
   {}
-
-#define CRUST_USE_BASE_TRAIT_EQ(NAME, ...) \
-  template<class = void> \
-  static void __detect_trait_partial_eq(const NAME &) { \
-    CRUST_STATIC_ASSERT(Derive<__VA_ARGS__, ::crust::cmp::PartialEq>::result); \
-  } \
-  template<class = void> \
-  static void __detect_trait_eq() { \
-    CRUST_STATIC_ASSERT(Derive<__VA_ARGS__, ::crust::cmp::Eq>::result); \
-  }
-
-#define CRUST_ENUM_USE_BASE(NAME, ...) \
-  CRUST_USE_BASE_CONSTRUCTORS(NAME, __VA_ARGS__) \
-  CRUST_USE_BASE_TRAIT_EQ(NAME, __VA_ARGS__)
-
-#define CRUST_ENUM_VARIANT(NAME, ...) \
-  struct NAME final : public Tuple<__VA_ARGS__> { \
-    using Inner = Tuple<__VA_ARGS__>; \
-    CRUST_USE_BASE_CONSTRUCTORS(NAME, Tuple<__VA_ARGS__>) \
-    CRUST_USE_BASE_TRAIT_EQ(NAME, Tuple<__VA_ARGS__>) \
-  }
 
 #define CRUST_MACRO_REPEAT_1(FN) FN(0)
 #define CRUST_MACRO_REPEAT_2(FN) CRUST_MACRO_REPEAT_1(FN); FN(1)
@@ -292,8 +282,8 @@ struct IsTransparent {
 template<class Type, Type obj>
 struct TmplArg {};
 
-#define CRUST_TMPL_ARG(obj) ::crust::TmplArg<decltype(obj), (obj)>{}
+#define crust_tmpl_arg(obj) ::crust::TmplArg<decltype(obj), (obj)>{}
 }
 
 
-#endif //CRUST_UTILITY_HPP
+#endif //_CRUST_INCLUDE_UTILITY_HPP

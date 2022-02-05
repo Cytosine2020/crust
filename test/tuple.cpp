@@ -19,13 +19,13 @@ class B {
 
 
 GTEST_TEST(tuple, size_zero) {
-  CRUST_STATIC_ASSERT(IsMonoState<Tuple<>>::result);
+  crust_static_assert(IsMonoState<Tuple<>>::result);
 
-  CRUST_STATIC_ASSERT(Derive<Tuple<>, PartialEq>::result);
-  CRUST_STATIC_ASSERT(Derive<Tuple<>, Eq>::result);
+  crust_static_assert(Derive<Tuple<>, PartialEq>::result);
+  crust_static_assert(Derive<Tuple<>, Eq>::result);
 
-  CRUST_STATIC_ASSERT(std::is_trivially_copyable<Tuple<>>::value);
-  CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<>>::value);
+  crust_static_assert(std::is_trivially_copyable<Tuple<>>::value);
+  crust_static_assert(std::is_literal_type<Tuple<>>::value);
 
   EXPECT_TRUE(make_tuple() == make_tuple());
   EXPECT_FALSE(make_tuple() != make_tuple());
@@ -41,16 +41,16 @@ GTEST_TEST(tuple, size_zero) {
 }
 
 GTEST_TEST(tuple, size_one) {
-  CRUST_STATIC_ASSERT(!IsMonoState<Tuple<A>>::result);
+  crust_static_assert(!IsMonoState<Tuple<A>>::result);
 
-  CRUST_STATIC_ASSERT(!Derive<Tuple<A>, PartialEq>::result);
-  CRUST_STATIC_ASSERT(!Derive<Tuple<A>, Eq>::result);
+  crust_static_assert(!Derive<Tuple<A>, PartialEq>::result);
+  crust_static_assert(!Derive<Tuple<A>, Eq>::result);
 
-  CRUST_STATIC_ASSERT(std::is_trivially_copyable<Tuple<A>>::value);
-  CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<A>>::value);
+  crust_static_assert(std::is_trivially_copyable<Tuple<A>>::value);
+  crust_static_assert(std::is_literal_type<Tuple<A>>::value);
 
-  CRUST_STATIC_ASSERT(Derive<Tuple<i32>, PartialEq>::result);
-  CRUST_STATIC_ASSERT(Derive<Tuple<i32>, Eq>::result);
+  crust_static_assert(Derive<Tuple<i32>, PartialEq>::result);
+  crust_static_assert(Derive<Tuple<i32>, Eq>::result);
 
   EXPECT_TRUE(make_tuple(0) == make_tuple(0));
   EXPECT_FALSE(make_tuple(0) != make_tuple(0));
@@ -74,16 +74,16 @@ GTEST_TEST(tuple, size_one) {
 }
 
 GTEST_TEST(tuple, size_two) {
-  CRUST_STATIC_ASSERT(!IsMonoState<Tuple<A, B>>::result);
+  crust_static_assert(!IsMonoState<Tuple<A, B>>::result);
 
-  CRUST_STATIC_ASSERT(!Derive<Tuple<A, B>, PartialEq>::result);
-  CRUST_STATIC_ASSERT(!Derive<Tuple<A, B>, Eq>::result);
+  crust_static_assert(!Derive<Tuple<A, B>, PartialEq>::result);
+  crust_static_assert(!Derive<Tuple<A, B>, Eq>::result);
 
-  CRUST_STATIC_ASSERT(std::is_trivially_copyable<Tuple<A, B>>::value);
-  CRUST_STATIC_ASSERT(std::is_literal_type<Tuple<A, B>>::value);
+  crust_static_assert(std::is_trivially_copyable<Tuple<A, B>>::value);
+  crust_static_assert(std::is_literal_type<Tuple<A, B>>::value);
 
-  CRUST_STATIC_ASSERT(Derive<Tuple<i32, char>, PartialEq>::result);
-  CRUST_STATIC_ASSERT(Derive<Tuple<i32, char>, Eq>::result);
+  crust_static_assert(Derive<Tuple<i32, char>, PartialEq>::result);
+  crust_static_assert(Derive<Tuple<i32, char>, Eq>::result);
 
   auto tuple = make_tuple(0, 'a');
 

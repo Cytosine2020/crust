@@ -1,5 +1,5 @@
-#ifndef CRUST_CRUST_HPP
-#define CRUST_CRUST_HPP
+#ifndef _CRUST_INCLUDE_CRUST_HPP
+#define _CRUST_INCLUDE_CRUST_HPP
 
 
 #include "utility.hpp"
@@ -15,4 +15,4 @@ namespace crust {
 }
 
 
-#endif //CRUST_CRUST_HPP
+#endif //_CRUST_INCLUDE_CRUST_HPP

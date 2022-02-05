@@ -1,5 +1,5 @@
-#ifndef CRUST_SLICE_HPP
-#define CRUST_SLICE_HPP
+#ifndef _CRUST_INCLUDE_SLICE_HPP
+#define _CRUST_INCLUDE_SLICE_HPP
 
 
 #include "utility.hpp"
@@ -35,16 +35,16 @@ public:
   T *as_ptr() { return inner; }
 
   const T &index(usize index) const {
-    if (index >= len()) { CRUST_PANIC("index out of boundary!"); }
+    if (index >= len()) { crust_panic("index out of boundary!"); }
     return as_ptr()[index];
   }
 
   T &index_mut(usize index) {
-    if (index >= len()) { CRUST_PANIC("index_mut out of boundary!"); }
+    if (index >= len()) { crust_panic("index_mut out of boundary!"); }
     return as_ptr()[index];
   }
 };
 }
 
 
-#endif //CRUST_SLICE_HPP
+#endif //_CRUST_INCLUDE_SLICE_HPP

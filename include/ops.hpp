@@ -1,5 +1,5 @@
-#ifndef CRUST_OPS_HPP
-#define CRUST_OPS_HPP
+#ifndef _CRUST_INCLUDE_OPS_HPP
+#define _CRUST_INCLUDE_OPS_HPP
 
 
 #include "utility.hpp"
@@ -22,4 +22,4 @@ CRUST_TRAIT(Index, class Idx, class T) {
 }
 
 
-#endif //CRUST_OPS_HPP
+#endif //_CRUST_INCLUDE_OPS_HPP

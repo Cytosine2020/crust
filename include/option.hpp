@@ -1,8 +1,8 @@
-#ifndef CRUST_OPTION_HPP
-#define CRUST_OPTION_HPP
+#ifndef _CRUST_INCLUDE_OPTION_HPP
+#define _CRUST_INCLUDE_OPTION_HPP
 
 
-#include "option_declare.hpp"
+#include "option_decl.hpp"
 
 
 namespace crust {
@@ -12,16 +12,18 @@ CRUST_ENUM_VARIANT(Some, T);
 CRUST_ENUM_VARIANT(None);
 
 template<class T>
-constexpr Option<T> make_some(T &&value) {
-  return Some<typename RemoveRef<T>::Result>{forward<T>(value)};
+constexpr Option<typename RemoveConstOrRef<T>::Result> make_some(T &&value) {
+  return Some<typename RemoveConstOrRef<T>::Result>{forward<T>(value)};
 }
 
 template<class T>
-constexpr Option<T> make_none() { return None{}; }
+constexpr Option<typename RemoveConstOrRef<T>::Result> make_none() {
+  return None{};
+}
 
 template<class T>
 template<class U, class F>
-CRUST_CXX14_CONSTEXPR Option<U>
+crust_cxx14_constexpr Option<U>
 Option<T>::map(Fn<F, U(const T &)> f) const {
   return this->template visit<Option<U>>(
       [&](const Some<T> &value) {
@@ -32,7 +34,7 @@ Option<T>::map(Fn<F, U(const T &)> f) const {
 }
 
 template<class T>
-CRUST_CXX14_CONSTEXPR Option<T> Option<T>::take() {
+crust_cxx14_constexpr Option<T> Option<T>::take() {
   auto tmp = this->template move_variant<Option<T>>();
   *this = None{};
   return tmp;
@@ -40,4 +42,4 @@ CRUST_CXX14_CONSTEXPR Option<T> Option<T>::take() {
 }
 
 
-#endif //CRUST_OPTION_HPP
+#endif //_CRUST_INCLUDE_OPTION_HPP
