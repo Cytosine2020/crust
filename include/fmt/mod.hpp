@@ -6,6 +6,7 @@
 
 
 namespace crust {
+namespace fmt {
 class Formatter {
 
 };
@@ -21,6 +22,7 @@ CRUST_TRAIT(Display) {
 
   bool fmt_display(Formatter &fmt);
 };
+}
 }
 
 

@@ -1,12 +1,14 @@
 #include "gtest/gtest.h"
 
 #include "utility.hpp"
-#include "function.hpp"
+#include "ops/function.hpp"
 
 #include "raii_checker.hpp"
 
 
 using namespace crust;
+using ops::bind;
+using ops::bind_mut;
 
 
 namespace {
@@ -31,14 +33,14 @@ i32 fn_e(int &a) { return a; }
 i32 fn_f(int &&a) { return a; }
 
 template<class F>
-i32 test_fn(Fn<F, i32()> fn) { return fn(); }
+i32 test_fn(ops::Fn<F, i32()> fn) { return fn(); }
 
 template<class F>
-i32 test_fn_mut(FnMut<F, i32()> fn) { return fn(); }
+i32 test_fn_mut(ops::FnMut<F, i32()> fn) { return fn(); }
 
-i32 test_dyn_fn(DynFn<i32()> fn) { return fn(); }
+i32 test_dyn_fn(ops::DynFn<i32()> fn) { return fn(); }
 
-i32 test_dyn_fn_mut(DynFnMut<i32()> fn) { return fn(); }
+i32 test_dyn_fn_mut(ops::DynFnMut<i32()> fn) { return fn(); }
 }
 
 GTEST_TEST(function, raii) {

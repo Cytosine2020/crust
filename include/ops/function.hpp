@@ -3,10 +3,10 @@
 
 
 #include "utility.hpp"
-#include "tuple_decl.hpp"
 
 
 namespace crust {
+namespace ops {
 namespace _impl_fn {
 template<
     class Self, class F = decltype(&Self::operator()), F f = &Self::operator()
@@ -305,6 +305,7 @@ public:
 
   ~DynFnMut() { if (self != nullptr) { drop(); }}
 };
+}
 }
 
 

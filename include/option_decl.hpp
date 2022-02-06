@@ -3,13 +3,12 @@
 
 
 #include "utility.hpp"
-#include "function.hpp"
 #include "enum_decl.hpp"
-#include "cmp_decl.hpp"
-#include "tuple_decl.hpp"
+#include "ops/function.hpp"
 
 
 namespace crust {
+namespace option {
 template<class T>
 struct Some;
 
@@ -33,7 +32,7 @@ public:
   }
 
   crust_cxx14_constexpr Option<const T *> as_ptr() const {
-    return map(bind([](const T &value) { return &value; }));
+    return map(ops::bind([](const T &value) { return &value; }));
   }
 
   crust_cxx14_constexpr Option<T *> as_mut_ptr() {
@@ -57,10 +56,10 @@ public:
   }
 
   template<class U, class F>
-  crust_cxx14_constexpr Option<U> map(Fn<F, U(const T &)> f) const;
+  crust_cxx14_constexpr Option<U> map(ops::Fn<F, U(const T &)> f) const;
 
   template<class U, class F>
-  crust_cxx14_constexpr U map_or(U &&d, Fn<F, U(const T &)> f) const {
+  crust_cxx14_constexpr U map_or(U &&d, ops::Fn<F, U(const T &)> f) const {
     return this->template visit<U>(
         [&](const Some<T> &value) { return f(value.template get<0>()); },
         [&](const None &) { return move<U>(d); }
@@ -69,7 +68,7 @@ public:
 
   template<class U, class D, class F>
   crust_cxx14_constexpr U
-  map_or_else(Fn<D, U()> d, Fn<F, U(const T &)> f) const {
+  map_or_else(ops::Fn<D, U()> d, ops::Fn<F, U(const T &)> f) const {
     return this->template visit<U>(
         [&](const Some<T> &value) { return f(value.template get<0>()); },
         [&](const None &) { return d(); }
@@ -78,6 +77,11 @@ public:
 
   crust_cxx14_constexpr Option<T> take();
 };
+}
+
+using option::Option;
+using option::Some;
+using option::None;
 }
 
 

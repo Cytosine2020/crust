@@ -11,8 +11,10 @@
 
 
 namespace crust {
+namespace option {
 template<class T>
 class Option;
+}
 
 namespace _impl_enum {
 template<class T, class ...Fields>
@@ -59,12 +61,12 @@ union EnumHolder<true, Field, Fields...> {
   Field field;
   Remains remains;
 
-  constexpr explicit EnumHolder(Field &&field) noexcept : field{move(field)} {}
+  explicit constexpr EnumHolder(Field &&field) noexcept : field{move(field)} {}
 
-  constexpr explicit EnumHolder(const Field &field) noexcept : field{field} {}
+  explicit constexpr EnumHolder(const Field &field) noexcept : field{field} {}
 
   template<class T>
-  constexpr explicit EnumHolder(T &&field) noexcept :
+  explicit constexpr EnumHolder(T &&field) noexcept :
       remains{forward<T>(field)}
   {
     crust_static_assert(
@@ -82,12 +84,12 @@ union EnumHolder<false, Field, Fields...> {
 
   constexpr EnumHolder() noexcept : remains{} {}
 
-  constexpr explicit EnumHolder(Field &&field) noexcept : field{move(field)} {}
+  explicit constexpr EnumHolder(Field &&field) noexcept : field{move(field)} {}
 
-  constexpr explicit EnumHolder(const Field &field) noexcept : field{field} {}
+  explicit constexpr EnumHolder(const Field &field) noexcept : field{field} {}
 
   template<class T>
-  constexpr explicit EnumHolder(T &&field) noexcept :
+  explicit constexpr EnumHolder(T &&field) noexcept :
       remains{forward<T>(field)}
   {
     crust_static_assert(
@@ -642,6 +644,7 @@ Overloaded<Ts...> overloaded(Ts &&...ts) {
 }
 }
 
+// todo: implement PartialOrd and Ord
 template<class ...Fields>
 class crust_ebco Enum :
     public Impl<
@@ -687,8 +690,8 @@ public:
       inner{forward<T>(value)}
   {}
 
-  template<class T, typename EnableIf<!IsSame<
-      typename RemoveConstOrRef<T>::Result, Enum>::result
+  template<class T, typename EnableIf<
+      !IsSame<typename RemoveConstOrRef<T>::Result, Enum>::result
   >::Result * = nullptr>
   Enum &operator=(T &&value) noexcept {
     inner = Inner{forward<T>(value)};
@@ -713,28 +716,6 @@ public:
     return inner != other.inner;
   }
 };
-
-
-namespace _impl_enum {
-template<class T, class ...Fields>
-struct LetEnum {
-  _impl_tuple::TupleHolder<Fields &...> ref;
-
-  explicit constexpr LetEnum(Fields &...ref) : ref{ref...} {}
-
-  template<class ...Vs>
-  crust_cxx14_constexpr bool operator=(Enum<Vs...> &&enum_) {
-    return enum_.inner.template let_helper<T>(ref);
-  }
-};
-}
-
-
-template<class T, class ...Fields>
-crust_cxx14_constexpr _impl_enum::LetEnum<T, Fields...>
-let(Fields &...fields) {
-  return _impl_enum::LetEnum<T, Fields...>{fields...};
-}
 
 #define CRUST_ENUM_USE_BASE(NAME, ...) \
   template<class ...Args> \

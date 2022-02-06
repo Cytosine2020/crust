@@ -2,15 +2,17 @@
 #define _CRUST_INCLUDE_TUPLE_DECL_HPP
 
 
-#include <utility>
-
 #include "utility.hpp"
 #include "cmp_decl.hpp"
 
 
 namespace crust {
+namespace option {
 template<class T>
 class Option;
+}
+
+using option::Option;
 
 namespace _impl_tuple {
 template<class ...Fields>
@@ -40,7 +42,7 @@ struct crust_ebco TupleHolder<Field, Fields...> : public Impl<
   constexpr TupleHolder() noexcept : field{}, remains{} {}
 
   template<class T, class ...Ts>
-  explicit constexpr TupleHolder(T &&field, Ts &&...fields) noexcept:
+  explicit constexpr TupleHolder(T &&field, Ts &&...fields) noexcept :
       field{forward<T>(field)}, remains{forward<Ts>(fields)...} {}
 
   /// impl PartialEq
@@ -189,9 +191,6 @@ struct TupleGetter<0, Field, Fields...> {
 };
 }
 
-template<class T>
-class Option;
-
 // todo: zero sized type optimization
 template<class ...Fields>
 class crust_ebco Tuple : public Impl<
@@ -216,14 +215,13 @@ private:
   template<usize index>
   using Getter = _impl_tuple::TupleGetter<index, Fields...>;
 
-  Holder holder;
-
-public:
-  // todo: find a way to hide these two
   template<usize index> using Result = typename Getter<index>::Result;
 
   static constexpr usize size = sizeof...(Fields);
 
+  Holder holder;
+
+public:
   constexpr Tuple() noexcept : holder{} {}
 
   template<class ...Ts>
@@ -281,15 +279,6 @@ struct IsMonoState<Tuple<>> {
   static constexpr bool result = true;
 };
 
-template<class ...Fields>
-constexpr Tuple<typename RemoveConstOrRef<Fields>::Result...>
-make_tuple(Fields &&...fields) {
-  return Tuple<typename RemoveConstOrRef<Fields>::Result...>{
-    forward<Fields>(fields)...
-  };
-}
-
-
 namespace _impl_tuple {
 template<usize index, class ...Fields>
 struct TupleEqHelper {
@@ -325,55 +314,6 @@ struct LetTupleHelper<0, Fields...> {
   static crust_cxx14_constexpr void
       inner(TupleHolder<Fields &...> &, Tuple<Fields...> &&) {}
 };
-
-
-template<class ...Fields>
-struct LetTuple {
-  TupleHolder<Fields &...> ref;
-
-  explicit constexpr LetTuple(Fields &...fields) : ref{fields...} {}
-
-  crust_cxx14_constexpr void operator=(Tuple<Fields...> &&tuple) {
-    LetTupleHelper<sizeof...(Fields), Fields...>::inner(ref, move(tuple));
-  }
-};
-}
-
-template<class ...Fields>
-crust_cxx14_constexpr
-_impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>
-let(Fields &&...fields) {
-  return _impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>{
-      forward<Fields>(fields)...
-  };
-}
-}
-
-
-namespace std {
-
-/// c++ std bindings
-
-template<class ...Fields>
-struct tuple_size<crust::Tuple<Fields...>> :
-    public integral_constant<crust::usize, crust::Tuple<Fields...>::size>
-{};
-
-template<crust::usize index, class ...Fields>
-struct tuple_element<index, crust::Tuple<Fields...>> {
-  using type = typename crust::Tuple<Fields...>::template Result<index>;
-};
-
-template<crust::usize index, class ...Fields>
-constexpr const typename tuple_element<index, crust::Tuple<Fields...>>::type &
-get(const crust::Tuple<Fields...> &object) noexcept {
-  return object.template get<index>();
-}
-
-template<crust::usize index, class ...Fields>
-constexpr typename tuple_element<index, crust::Tuple<Fields...>>::type &
-get(crust::Tuple<Fields...> &object) noexcept {
-  return object.template get<index>();
 }
 }
 

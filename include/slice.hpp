@@ -3,7 +3,7 @@
 
 
 #include "utility.hpp"
-#include "ops.hpp"
+#include "ops/mod.hpp"
 
 
 namespace crust {

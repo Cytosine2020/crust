@@ -45,7 +45,8 @@ private:
 
 public:
   explicit RAIIChecker(std::shared_ptr<RAIIRecorder> recorder) noexcept :
-      recorder{std::move(recorder)} {
+      recorder{std::move(recorder)}
+  {
     this->recorder->construct(&TYPE_INFO, this);
   }
 

@@ -2,10 +2,13 @@
 
 #include "utility.hpp"
 #include "cmp.hpp"
+#include "tuple.hpp"
 
 
 using namespace crust;
 using namespace cmp;
+using ops::bind;
+using ops::bind_mut;
 
 
 GTEST_TEST(cmp, derive) {

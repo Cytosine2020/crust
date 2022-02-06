@@ -5,10 +5,10 @@
 #include "cmp_decl.hpp"
 
 #include "utility.hpp"
-#include "option.hpp"
-#include "function.hpp"
 #include "tuple_decl.hpp"
-#include "enum.hpp"
+#include "enum_decl.hpp"
+#include "option.hpp"
+#include "ops/function.hpp"
 
 
 namespace crust {
@@ -53,7 +53,7 @@ public:
   }
 
   template<class F>
-  crust_cxx14_constexpr Ordering then_with(Fn<F, Ordering()> f) const {
+  crust_cxx14_constexpr Ordering then_with(ops::Fn<F, Ordering()> f) const {
     return this->template visit<Ordering>(
         [](const Less &) { return Less{}; },
         [&](const Equal &) { return f(); },
@@ -85,8 +85,8 @@ constexpr Option<Ordering> operator_partial_cmp(const T &v1, const U &v2) {
   return v1.partial_cmp(v2);
 }
 
-template<class T, class U>
-constexpr Ordering operator_cmp(const T &v1, const U &v2) {
+template<class T>
+constexpr Ordering operator_cmp(const T &v1, const T &v2) {
   return v1.cmp(v2);
 }
 
@@ -157,18 +157,18 @@ constexpr T min(T &&v1, T &&v2) {
 
 template<class T, class F>
 constexpr T
-min_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> compare) {
+min_by(T &&v1, T &&v2, ops::Fn<F, Ordering(const T &, const T &)> compare) {
   crust_static_assert(Derive<T, Ord>::result);
   return compare(v1, v2) == make_greater() ? forward<T>(v2) : forward<T>(v1);
 }
 
 template<class T, class F, class K>
-constexpr T min_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> f) {
+constexpr T min_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
   crust_static_assert(Derive<T, Ord>::result);
   return min_by(
       forward<T>(v1),
       forward<T>(v2),
-      bind([&](const T &v1, const T &v2) {
+      ops::bind([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
       })
   );
@@ -182,18 +182,18 @@ constexpr T max(T &&v1, T &&v2) {
 
 template<class T, class F>
 constexpr T
-max_by(T &&v1, T &&v2, Fn<F, Ordering(const T &, const T &)> compare) {
+max_by(T &&v1, T &&v2, ops::Fn<F, Ordering(const T &, const T &)> compare) {
   crust_static_assert(Derive<T, Ord>::result);
   return compare(v1, v2) == make_greater() ? forward<T>(v1) : forward<T>(v2);
 }
 
 template<class T, class F, class K>
-constexpr T max_by_key(T &&v1, T &&v2, Fn<F, K(const T &)> f) {
+constexpr T max_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
   crust_static_assert(Derive<T, Ord>::result);
   return max_by(
       forward<T>(v1),
       forward<T>(v2),
-      bind([&](const T &v1, const T &v2) {
+      ops::bind([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
       })
   );

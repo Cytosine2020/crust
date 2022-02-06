@@ -6,6 +6,7 @@
 
 
 namespace crust {
+namespace option {
 template<class T>
 CRUST_ENUM_VARIANT(Some, T);
 
@@ -24,7 +25,7 @@ constexpr Option<typename RemoveConstOrRef<T>::Result> make_none() {
 template<class T>
 template<class U, class F>
 crust_cxx14_constexpr Option<U>
-Option<T>::map(Fn<F, U(const T &)> f) const {
+Option<T>::map(ops::Fn<F, U(const T &)> f) const {
   return this->template visit<Option<U>>(
       [&](const Some<T> &value) {
         return make_some(f(value.template get<0>()));
@@ -39,6 +40,10 @@ crust_cxx14_constexpr Option<T> Option<T>::take() {
   *this = None{};
   return tmp;
 }
+}
+
+using option::make_some;
+using option::make_none;
 }
 
 

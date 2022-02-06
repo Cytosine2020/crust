@@ -9,6 +9,7 @@
 
 
 namespace crust {
+namespace result {
 template<class T>
 CRUST_ENUM_VARIANT(Ok, T);
 
@@ -50,6 +51,9 @@ public:
     return this->template move_variant<Option<E>>();
   }
 };
+}
+
+using result::Result;
 }
 
 

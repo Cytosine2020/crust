@@ -6,10 +6,16 @@
 
 
 namespace crust {
+namespace option {
 template<class T>
 class Option;
+}
+
+using option::Option;
 
 namespace cmp {
+class Ordering;
+
 CRUST_TRAIT(PartialEq, class Rhs = Self) {
   CRUST_TRAIT_REQUIRE(PartialEq);
 

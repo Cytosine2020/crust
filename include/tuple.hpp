@@ -4,8 +4,10 @@
 
 #include "tuple_decl.hpp"
 
-#include "option.hpp"
+#include <utility>
+
 #include "cmp.hpp"
+#include "option.hpp"
 
 
 namespace crust {
@@ -61,6 +63,64 @@ Tuple<Fields...>::partial_cmp(const Tuple &other) const {
 template<class ...Fields>
 constexpr cmp::Ordering Tuple<Fields...>::cmp(const Tuple &other) const {
   return this->holder.cmp(other.holder);
+}
+
+template<class ...Fields>
+constexpr Tuple<typename RemoveConstOrRef<Fields>::Result...>
+make_tuple(Fields &&...fields) {
+  return Tuple<typename RemoveConstOrRef<Fields>::Result...>{
+    forward<Fields>(fields)...
+  };
+}
+
+namespace _impl_tuple {
+template<class ...Fields>
+struct LetTuple {
+  TupleHolder<Fields &...> ref;
+
+  explicit constexpr LetTuple(Fields &...fields) : ref{fields...} {}
+
+  crust_cxx14_constexpr void operator=(Tuple<Fields...> &&tuple) {
+    LetTupleHelper<sizeof...(Fields), Fields...>::inner(ref, move(tuple));
+  }
+};
+}
+
+template<class ...Fields>
+crust_cxx14_constexpr
+_impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>
+let(Fields &&...fields) {
+  return _impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>{
+      forward<Fields>(fields)...
+  };
+}
+}
+
+namespace std {
+
+/// c++ std bindings
+
+template<class ...Fields>
+struct tuple_size<crust::Tuple<Fields...>> :
+    public integral_constant<crust::usize, sizeof...(Fields)>
+{};
+
+template<crust::usize index, class ...Fields>
+struct tuple_element<index, crust::Tuple<Fields...>> {
+  using type =
+      typename crust::_impl_tuple::TupleGetter<index, Fields...>::Result;
+};
+
+template<crust::usize index, class ...Fields>
+constexpr const typename tuple_element<index, crust::Tuple<Fields...>>::type &
+get(const crust::Tuple<Fields...> &object) noexcept {
+  return object.template get<index>();
+}
+
+template<crust::usize index, class ...Fields>
+constexpr typename tuple_element<index, crust::Tuple<Fields...>>::type &
+get(crust::Tuple<Fields...> &object) noexcept {
+  return object.template get<index>();
 }
 }
 

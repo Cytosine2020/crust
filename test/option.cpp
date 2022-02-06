@@ -2,10 +2,13 @@
 
 #include "utility.hpp"
 #include "cmp.hpp"
+#include "enum.hpp"
 #include "option.hpp"
 
 
 using namespace crust;
+using ops::bind;
+using ops::bind_mut;
 
 
 GTEST_TEST(option, option) {
