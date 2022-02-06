@@ -181,17 +181,17 @@ struct IsConstOrRef {
 };
 
 template<class T>
-constexpr typename RemoveRef<T>::Result &&move(T &&t) noexcept {
+constexpr typename RemoveRef<T>::Result &&move(T &&t) {
   return static_cast<typename RemoveRef<T>::Result &&>(t);
 }
 
 template<class T>
-constexpr T &&forward(typename RemoveRef<T>::Result &t) noexcept {
+constexpr T &&forward(typename RemoveRef<T>::Result &t) {
   return static_cast<T &&>(t);
 }
 
 template<class T>
-constexpr T &&forward(typename RemoveRef<T>::Result &&t) noexcept {
+constexpr T &&forward(typename RemoveRef<T>::Result &&t) {
   crust_static_assert(!IsLValueRef<T>::result);
   return static_cast<T &&>(t);
 }
@@ -201,7 +201,7 @@ template<class T, bool condition>
 struct Impl;
 
 template<class T>
-struct Impl<T, true> : public T {};
+struct crust_ebco Impl<T, true> : public T {};
 
 template<class T>
 struct Impl<T, false> {};
@@ -221,18 +221,14 @@ struct Derive {
       std::is_base_of<Trait<Struct, Args...>, Struct>::value;
 };
 
-struct MonoStateTag {}; /// this tag is used for enum optimization
+/// this is used by Tuple, Enum and Slice for zero sized type optimization
+/// forign type can inherit ZeroSizedType to be treated as mono state.
+
+struct ZeroSizedType {};
 
 template<class T>
-struct IsMonoState {
-  static constexpr bool result = std::is_base_of<MonoStateTag, T>::value;
-};
-
-struct TransparentTag {}; /// this tag is used for enum optimization
-
-template<class T>
-struct IsTransparent {
-  static constexpr bool result = std::is_base_of<TransparentTag, T>::value;
+struct IsZeroSizedType {
+  static constexpr bool result = std::is_base_of<ZeroSizedType, T>::value;
 };
 
 #define CRUST_TRAIT(TRAIT, ...) \

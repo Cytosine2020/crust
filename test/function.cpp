@@ -26,11 +26,11 @@ struct A : test::RAIIChecker<A> {
 
 i32 fn_c() { return 5; }
 
-i32 fn_d(int a) { return a; }
+i32 fn_d(i32 a) { return a; }
 
-i32 fn_e(int &a) { return a; }
+i32 fn_e(i32 &a) { return a; }
 
-i32 fn_f(int &&a) { return a; }
+i32 fn_f(i32 &&a) { return a; }
 
 template<class F>
 i32 test_fn(ops::Fn<F, i32()> fn) { return fn(); }
@@ -49,7 +49,7 @@ GTEST_TEST(function, raii) {
   GTEST_ASSERT_EQ(bind(crust_tmpl_arg(&fn_d))(11), 11);
   GTEST_ASSERT_EQ(bind(crust_tmpl_arg(&fn_f))(13), 13);
 
-  int i = 14;
+  i32 i = 14;
   GTEST_ASSERT_EQ(bind(crust_tmpl_arg(&fn_d))(i), 14);
   GTEST_ASSERT_EQ(bind(crust_tmpl_arg(&fn_e))(i), 14);
 

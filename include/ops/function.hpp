@@ -220,15 +220,13 @@ private:
 
 public:
   template<class Self>
-  constexpr DynFn(Self &&self) noexcept :
+  constexpr DynFn(Self &&self) :
       self{new Self{forward<Self>(self)}},
       vtable{&_impl_fn::StaticFnVTable<Self, Ret, Args...>::vtable}
   {}
 
   template<class F, F *f>
-  constexpr DynFn(TmplArg<F *, f>) noexcept :
-      DynFn{_impl_fn::RawFn<F, f>{}}
-  {}
+  constexpr DynFn(TmplArg<F *, f>) : DynFn{_impl_fn::RawFn<F, f>{}} {}
 
   DynFn(DynFn &&other) noexcept {
     if (this != &other) {
@@ -270,15 +268,13 @@ private:
 
 public:
   template<class Self>
-  constexpr DynFnMut(Self &&self) noexcept :
+  constexpr DynFnMut(Self &&self) :
       self{new Self{forward<Self>(self)}},
       vtable{&_impl_fn::StaticFnMutVTable<Self, Ret, Args...>::vtable}
   {}
 
   template<class F, F *f>
-  constexpr DynFnMut(TmplArg<F *, f>) noexcept :
-      DynFnMut{_impl_fn::RawFn<F, f>{}}
-  {}
+  constexpr DynFnMut(TmplArg<F *, f>) : DynFnMut{_impl_fn::RawFn<F, f>{}} {}
 
   DynFnMut(DynFnMut &&other) noexcept {
     if (this != &other) {

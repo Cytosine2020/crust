@@ -15,7 +15,7 @@ struct Some;
 struct None;
 
 template<class T>
-class Option : public Enum<Some<T>, None> {
+class crust_ebco Option : public Enum<Some<T>, None> {
 public:
   CRUST_ENUM_USE_BASE(Option, Enum<Some<T>, None>);
 

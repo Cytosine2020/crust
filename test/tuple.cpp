@@ -17,7 +17,20 @@ class B {};
 
 
 GTEST_TEST(tuple, size_zero) {
-  crust_static_assert(IsMonoState<Tuple<>>::result);
+  crust_static_assert(IsZeroSizedType<Tuple<>>::result);
+  crust_static_assert(IsZeroSizedType<Tuple<Tuple<>>>::result);
+  crust_static_assert(IsZeroSizedType<Tuple<Tuple<>, Tuple<>>>::result);
+  crust_static_assert(
+      IsZeroSizedType<Tuple<Tuple<>, Tuple<>, Tuple<>>>::result
+  );
+
+  crust_static_assert(sizeof(Tuple<>) == 1);
+  crust_static_assert(sizeof(Tuple<Tuple<>>) == 1);
+  crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>>) == 1);
+  crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, Tuple<>>) == 1);
+  crust_static_assert(sizeof(Tuple<i32, Tuple<>, Tuple<>>) == sizeof(i32));
+  crust_static_assert(sizeof(Tuple<Tuple<>, i32, Tuple<>>) == sizeof(i32));
+  crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, i32>) == sizeof(i32));
 
   crust_static_assert(Derive<Tuple<>, PartialEq>::result);
   crust_static_assert(Derive<Tuple<>, Eq>::result);
@@ -39,7 +52,7 @@ GTEST_TEST(tuple, size_zero) {
 }
 
 GTEST_TEST(tuple, size_one) {
-  crust_static_assert(!IsMonoState<Tuple<A>>::result);
+  crust_static_assert(!IsZeroSizedType<Tuple<A>>::result);
 
   crust_static_assert(!Derive<Tuple<A>, PartialEq>::result);
   crust_static_assert(!Derive<Tuple<A>, Eq>::result);
@@ -72,7 +85,7 @@ GTEST_TEST(tuple, size_one) {
 }
 
 GTEST_TEST(tuple, size_two) {
-  crust_static_assert(!IsMonoState<Tuple<A, B>>::result);
+  crust_static_assert(!IsZeroSizedType<Tuple<A, B>>::result);
 
   crust_static_assert(!Derive<Tuple<A, B>, PartialEq>::result);
   crust_static_assert(!Derive<Tuple<A, B>, Eq>::result);

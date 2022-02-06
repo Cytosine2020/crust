@@ -20,7 +20,7 @@ private:
   std::unordered_map<void *, Record> record;
 
 public:
-  RAIIRecorder() noexcept : record{} {}
+  RAIIRecorder() : record{} {}
 
   void construct(const RAIITypeInfo *type_info, void *self) {
     crust_assert(record.find(self) == record.end());
@@ -44,13 +44,13 @@ private:
   std::shared_ptr<RAIIRecorder> recorder;
 
 public:
-  explicit RAIIChecker(std::shared_ptr<RAIIRecorder> recorder) noexcept :
+  explicit RAIIChecker(std::shared_ptr<RAIIRecorder> recorder) :
       recorder{std::move(recorder)}
   {
     this->recorder->construct(&TYPE_INFO, this);
   }
 
-  RAIIChecker(const RAIIChecker &other) noexcept : recorder{other.recorder} {
+  RAIIChecker(const RAIIChecker &other) : recorder{other.recorder} {
     this->recorder->construct(&TYPE_INFO, this);
   }
 
@@ -63,7 +63,7 @@ public:
     return *this;
   }
 
-  RAIIChecker &operator=(RAIIChecker &&other) {
+  RAIIChecker &operator=(RAIIChecker &&other) noexcept {
     crust_assert(recorder == other.recorder);
     return *this;
   }

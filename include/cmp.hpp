@@ -17,7 +17,7 @@ CRUST_ENUM_VARIANT(Less);
 CRUST_ENUM_VARIANT(Equal);
 CRUST_ENUM_VARIANT(Greater);
 
-class crust_ebco Ordering :
+class Ordering :
     public Enum<Less, Equal, Greater>,
     public PartialOrd<Ordering>,
     public Ord<Ordering>
@@ -27,7 +27,6 @@ public:
 
 private:
   crust_cxx14_constexpr i32 to_i32() const {
-    // todo: allow assigning number
     return this->template visit<i32>(
         [](const Less &) { return -1; },
         [](const Equal &) { return 0; },
@@ -200,7 +199,7 @@ constexpr T max_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
 }
 
 template<class T>
-class Reverse :
+class crust_ebco Reverse :
     public Impl<PartialEq<Reverse<T>>, Derive<T, PartialEq>::result>,
     public Impl<Eq<Reverse<T>>, Derive<T, Eq>::result>,
     public Impl<PartialOrd<Reverse<T>>, Derive<T, PartialOrd>::result>,

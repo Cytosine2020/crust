@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
 #include "utility.hpp"
-#include "enum.hpp"
 #include "cmp.hpp"
+#include "enum.hpp"
 
 #include "raii_checker.hpp"
 
@@ -60,33 +60,32 @@ GTEST_TEST(enum_, enum_) {
 
 
 namespace {
-struct A : public MonoStateTag {};
+CRUST_ENUM_VARIANT(A);
+CRUST_ENUM_VARIANT(B);
+CRUST_ENUM_VARIANT(C, i32);
+CRUST_ENUM_VARIANT(D, i32);
+CRUST_ENUM_VARIANT(E, i32);
+CRUST_ENUM_VARIANT(F, i32);
 
-struct B : public MonoStateTag {};
-
-struct C {};
-
-struct D {};
-
-struct E {};
-
-struct F {};
+class Enumerate : public Enum<A, B, C, D, E, F> {
+public:
+  CRUST_ENUM_USE_BASE(Enumerate, Enum<A, B, C, D, E, F>);
+};
 }
 
 
 GTEST_TEST(enum_, tag_only) {
   crust_static_assert(sizeof(Enum<A, B>) == sizeof(u32));
-  crust_static_assert(sizeof(Enum<A, B, C, D, E, F>) > sizeof(u32));
+  crust_static_assert(sizeof(Enum<A, B, C, D, E, F>) == 2 * sizeof(u32));
 }
 
 GTEST_TEST(enum_, raii) {
-  using Enumerate = Enum<A, B, C, D, E, F>;
-
   crust_static_assert(std::is_trivially_copyable<Enumerate>::value);
   crust_static_assert(std::is_standard_layout<Enumerate>::value);
   crust_static_assert(std::is_literal_type<Enumerate>::value);
 
-  Enumerate a{A{}};
+  Enumerate a;
+  a = A{};
   EXPECT_TRUE(a.visit<bool>(VisitType<A>{}));
   a = B{};
   EXPECT_TRUE(a.visit<bool>(VisitType<B>{}));
@@ -98,6 +97,8 @@ GTEST_TEST(enum_, raii) {
   EXPECT_TRUE(a.visit<bool>(VisitType<E>{}));
   a = F{};
   EXPECT_TRUE(a.visit<bool>(VisitType<F>{}));
+  i32 var;
+  EXPECT_TRUE(let<F>(var) = move(a));
 }
 
 GTEST_TEST(enum_, cmp) {

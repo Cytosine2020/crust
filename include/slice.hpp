@@ -8,12 +8,12 @@
 
 namespace crust {
 template<class T>
-class Slice : public index::Index<Slice<T>, usize, T> {
+class crust_ebco Slice : public index::Index<Slice<T>, usize, T> {
 private:
   T *inner;
   usize size;
 
-  Slice() noexcept : inner{nullptr}, size{0} {}
+  Slice() : inner{nullptr}, size{0} {}
 
   Slice(T *inner, usize size) : inner{inner}, size{size} {}
 

@@ -127,8 +127,10 @@ GTEST_TEST(cmp, min_max) {
 }
 
 GTEST_TEST(cmp, reverse) {
-  cmp::Reverse<int> a{0};
-  cmp::Reverse<int> b{1};
+  crust_static_assert(sizeof(cmp::Reverse<i32>) == sizeof(i32));
+
+  cmp::Reverse<i32> a{0};
+  cmp::Reverse<i32> b{1};
 
   EXPECT_TRUE(a > b);
 }

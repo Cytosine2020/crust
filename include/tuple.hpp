@@ -14,7 +14,9 @@ namespace crust {
 namespace _impl_tuple {
 template<class Field, class ...Fields>
 constexpr Option<cmp::Ordering>
-TupleHolder<Field, Fields...>::partial_cmp(const TupleHolder &other) const {
+TupleHolderImpl<false, false, Field, Fields...>::partial_cmp(
+    const TupleHolderImpl &other
+) const {
   return cmp::operator_partial_cmp(this->field, other.field).map(bind(
       [&](cmp::Ordering value) {
         return value.then(
@@ -26,30 +28,41 @@ TupleHolder<Field, Fields...>::partial_cmp(const TupleHolder &other) const {
 
 template<class Field, class ...Fields>
 constexpr cmp::Ordering
-TupleHolder<Field, Fields...>::cmp(const TupleHolder &other) const {
+TupleHolderImpl<false, false, Field, Fields...>::cmp(
+    const TupleHolderImpl &other
+) const {
   return cmp::operator_cmp(this->field, other.field).then(
       cmp::operator_cmp(this->remains, other.remains)
   );
 }
 
-template<class Field>
+template<class Field, class ...Fields>
 constexpr Option<cmp::Ordering>
-TupleHolder<Field>::partial_cmp(const TupleHolder &other) const {
+TupleHolderImpl<false, true, Field, Fields...>::partial_cmp(
+    const TupleHolderImpl &other
+) const {
   return cmp::operator_partial_cmp(this->field, other.field);
 }
 
-template<class Field>
+template<class Field, class ...Fields>
 constexpr cmp::Ordering
-TupleHolder<Field>::cmp(const TupleHolder &other) const {
+TupleHolderImpl<false, true, Field, Fields...>::cmp(
+    const TupleHolderImpl &other
+) const {
   return cmp::operator_cmp(this->field, other.field);
 }
 
-inline constexpr Option<cmp::Ordering>
-TupleHolder<>::partial_cmp(const TupleHolder &) const {
+template<class ...Fields>
+constexpr Option<cmp::Ordering>
+TupleHolderImpl<true, true, Fields...>::partial_cmp(
+    const TupleHolderImpl &
+) const {
   return make_some(cmp::make_equal());
 }
 
-inline constexpr cmp::Ordering TupleHolder<>::cmp(const TupleHolder &) const {
+template<class ...Fields>
+inline constexpr cmp::Ordering
+TupleHolderImpl<true, true, Fields...>::cmp(const TupleHolderImpl &) const {
   return cmp::make_equal();
 }
 }
@@ -113,13 +126,13 @@ struct tuple_element<index, crust::Tuple<Fields...>> {
 
 template<crust::usize index, class ...Fields>
 constexpr const typename tuple_element<index, crust::Tuple<Fields...>>::type &
-get(const crust::Tuple<Fields...> &object) noexcept {
+get(const crust::Tuple<Fields...> &object) {
   return object.template get<index>();
 }
 
 template<crust::usize index, class ...Fields>
 constexpr typename tuple_element<index, crust::Tuple<Fields...>>::type &
-get(crust::Tuple<Fields...> &object) noexcept {
+get(crust::Tuple<Fields...> &object) {
   return object.template get<index>();
 }
 }

@@ -61,18 +61,14 @@ union EnumHolder<true, Field, Fields...> {
   Field field;
   Remains remains;
 
-  explicit constexpr EnumHolder(Field &&field) noexcept : field{move(field)} {}
+  constexpr EnumHolder() : remains{} {}
 
-  explicit constexpr EnumHolder(const Field &field) noexcept : field{field} {}
+  explicit constexpr EnumHolder(Field &&field) : field{move(field)} {}
+
+  explicit constexpr EnumHolder(const Field &field) : field{field} {}
 
   template<class T>
-  explicit constexpr EnumHolder(T &&field) noexcept :
-      remains{forward<T>(field)}
-  {
-    crust_static_assert(
-        !IsSame<typename RemoveConstOrRef<T>::Result, Field>::result
-    );
-  }
+  explicit constexpr EnumHolder(T &&field) : remains{forward<T>(field)} {}
 };
 
 template<class Field, class ...Fields>
@@ -82,26 +78,20 @@ union EnumHolder<false, Field, Fields...> {
   Field field;
   Remains remains;
 
-  constexpr EnumHolder() noexcept : remains{} {}
+  constexpr EnumHolder() : remains{} {}
 
-  explicit constexpr EnumHolder(Field &&field) noexcept : field{move(field)} {}
+  explicit constexpr EnumHolder(Field &&field) : field{move(field)} {}
 
-  explicit constexpr EnumHolder(const Field &field) noexcept : field{field} {}
+  explicit constexpr EnumHolder(const Field &field) : field{field} {}
 
   template<class T>
-  explicit constexpr EnumHolder(T &&field) noexcept :
-      remains{forward<T>(field)}
-  {
-    crust_static_assert(
-        !IsSame<typename RemoveConstOrRef<T>::Result, Field>::result
-    );
-  }
+  explicit constexpr EnumHolder(T &&field) : remains{forward<T>(field)} {}
 
-  EnumHolder(const EnumHolder &) noexcept {}
+  EnumHolder(const EnumHolder &) {}
 
   EnumHolder(EnumHolder &&) noexcept {}
 
-  EnumHolder &operator=(const EnumHolder &) noexcept { return *this; }
+  EnumHolder &operator=(const EnumHolder &) { return *this; }
 
   EnumHolder &operator=(EnumHolder &&) noexcept { return *this; }
 
@@ -157,8 +147,6 @@ struct EnumGetter<0, trivial, Field, Fields...> {
 template<usize offset, usize size, bool trivial, class ...Fields>
 struct EnumVisitor {
 private:
-  crust_static_assert(offset + size <= sizeof...(Fields));
-
   static constexpr usize cut = size / 2;
 
   using LowerGetter = EnumVisitor<offset, cut, trivial, Fields...>;
@@ -190,7 +178,6 @@ public:
 #define _ENUM_VISITOR_IMPL(len) \
   template<usize offset, bool trivial, class ...Fields> \
   struct EnumVisitor<offset, len, trivial, Fields...> { \
-    crust_static_assert(offset + len <= sizeof...(Fields)); \
     template<class R, class V> \
     static crust_cxx14_constexpr R \
     inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
@@ -235,8 +222,6 @@ _ENUM_VISITOR_IMPL(1);
 template<usize offset, usize size, class ...Fields>
 struct TagVisitor {
 private:
-  crust_static_assert(offset + size <= sizeof...(Fields));
-
   static constexpr usize cut = size / 2;
 
   using LowerGetter = TagVisitor<offset, cut, Fields...>;
@@ -258,7 +243,6 @@ public:
 #define _TAG_VISITOR_IMPL(len) \
   template<usize offset, class ...Fields> \
   struct TagVisitor<offset, len, Fields...> { \
-    crust_static_assert(offset + len <= sizeof...(Fields)); \
     template<class R, class V> \
     static crust_cxx14_constexpr R inner(V &&impl, usize index) { \
       switch (index) { \
@@ -313,9 +297,7 @@ struct EnumTrivial<Self, true> {
 
 template<class Self>
 struct EnumTrivial<Self, false> {
-  constexpr EnumTrivial() {
-    crust_static_assert(std::is_base_of<EnumTrivial, Self>::value);
-  }
+  constexpr EnumTrivial() {}
 
   constexpr const Self &self() const {
     return *static_cast<const Self *>(this);
@@ -329,7 +311,7 @@ struct EnumTrivial<Self, false> {
     if (self().index != 0) { self().visit(typename Self::Drop{}); }
   }
 
-  EnumTrivial(const EnumTrivial &other) noexcept {
+  EnumTrivial(const EnumTrivial &other) {
     if (this != &other) {
       other.self().visit(typename Self::Copy{&self().holder});
     }
@@ -341,7 +323,7 @@ struct EnumTrivial<Self, false> {
     }
   }
 
-  EnumTrivial &operator=(const EnumTrivial &other) noexcept {
+  EnumTrivial &operator=(const EnumTrivial &other) {
     if (this != &other) {
       drop();
       other.self().visit(typename Self::Copy{&self().holder});
@@ -368,18 +350,15 @@ struct EnumIsTrivial :
 {};
 
 template<class ...Fields>
-struct EnumIsTagOnly : public All<IsMonoState<Fields>::result...> {};
+struct EnumIsTagOnly : public All<IsZeroSizedType<Fields>::result...>{};
 
 
 template<class ...Fields>
-struct crust_ebco EnumTagUnion :
-    public EnumTrivial<
-        EnumTagUnion<Fields...>,
-        EnumIsTrivial<Fields...>::result
-    >,
-    public cmp::PartialEq<EnumTagUnion<Fields...>>,
-    public cmp::Eq<EnumTagUnion<Fields...>>
-{
+struct EnumTagUnion :
+public EnumTrivial<
+    EnumTagUnion<Fields...>,
+    EnumIsTrivial<Fields...>::result
+> {
   static constexpr bool _trivial = EnumIsTrivial<Fields...>::result;
 
   friend EnumTrivial<EnumTagUnion, _trivial>;
@@ -392,17 +371,13 @@ struct crust_ebco EnumTagUnion :
   Holder holder;
   u32 index;
 
-  constexpr EnumTagUnion() noexcept : holder{}, index{0} {}
+  constexpr EnumTagUnion() : holder{}, index{0} {}
 
   template<class T>
-  explicit constexpr EnumTagUnion(T &&value) noexcept :
+  explicit constexpr EnumTagUnion(T &&value) :
       holder{forward<T>(value)},
       index{IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1}
-  {
-    crust_static_assert(
-        !IsSame<typename RemoveConstOrRef<T>::Result, EnumTagUnion>::result
-    );
-  }
+  {}
 
   struct Drop {
     template<class T>
@@ -424,11 +399,7 @@ struct crust_ebco EnumTagUnion :
   };
 
   template<class T>
-  EnumTagUnion &operator=(T &&value) noexcept {
-    crust_static_assert(
-        !IsSame<typename RemoveConstOrRef<T>::Result, EnumTagUnion>::result
-    );
-
+  EnumTagUnion &operator=(T &&value) {
     this->drop();
 
     ::new(&holder) Holder{forward<T>(value)};
@@ -535,29 +506,23 @@ struct crust_ebco EnumTagUnion :
   }
 };
 
-
+// todo: allow assigning number
 template<class ...Fields>
-struct crust_ebco EnumTagOnly :
-    public cmp::PartialEq<EnumTagOnly<Fields...>>,
-    public cmp::Eq<EnumTagOnly<Fields...>> {
+struct EnumTagOnly {
   template<class T> using IndexGetter = EnumTypeToIndex<T, Fields...>;
   using Getter = TagVisitor<0, sizeof...(Fields), Fields...>;
 
   u32 index;
 
-  constexpr EnumTagOnly() noexcept : index{0} {}
+  constexpr EnumTagOnly() : index{0} {}
 
   template<class T>
-  explicit constexpr EnumTagOnly(T &&) noexcept :
+  explicit constexpr EnumTagOnly(T &&) :
       index{IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1}
-  {
-    crust_static_assert(!IsSame<RemoveConstOrRef<T>, EnumTagOnly>::result);
-  }
+  {}
 
   template<class T>
-  EnumTagOnly &operator=(T &&) noexcept {
-    crust_static_assert(!IsSame<RemoveConstOrRef<T>, EnumTagOnly>::result);
-
+  EnumTagOnly &operator=(T &&) {
     index = IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1;
 
     return *this;
@@ -623,7 +588,9 @@ template<class... Ts>
 struct Overloaded;
 
 template<class T, class... Ts>
-struct Overloaded<T, Ts...> : public T, public Overloaded<Ts ...> {
+struct crust_ebco Overloaded<T, Ts...> :
+    public T, public Overloaded<Ts ...>
+{
   using T::operator();
   using Overloaded<Ts ...>::operator();
 
@@ -632,7 +599,7 @@ struct Overloaded<T, Ts...> : public T, public Overloaded<Ts ...> {
 };
 
 template<class T>
-struct Overloaded<T> : public T {
+struct crust_ebco Overloaded<T> : public T {
   using T::operator();
 
   explicit Overloaded(T t) : T{forward<T>(t)} {}
@@ -646,13 +613,13 @@ Overloaded<Ts...> overloaded(Ts &&...ts) {
 
 // todo: implement PartialOrd and Ord
 template<class ...Fields>
-class crust_ebco Enum :
-    public Impl<
-        cmp::PartialEq<Enum<Fields...>>,
-        Derive<Fields, cmp::PartialEq>::result...
-    >,
-    public Impl<cmp::Eq<Enum<Fields...>>, Derive<Fields, cmp::Eq>::result...>
-{
+class Enum : public Impl<
+    cmp::PartialEq<Enum<Fields...>>,
+    All<Derive<Fields, cmp::PartialEq>::result...>::result
+>, public Impl<
+    cmp::Eq<Tuple<Fields...>>,
+    All<Derive<Fields, cmp::Eq>::result...>::result
+> {
 private:
   crust_static_assert(sizeof...(Fields) < std::numeric_limits<u32>::max());
   crust_static_assert(sizeof...(Fields) > 0);
@@ -668,7 +635,7 @@ private:
   template<class, class ...>
   friend struct _impl_enum::LetEnum;
 
-protected:
+protected: // todo: optimize for constexpr
   template<class T>
   constexpr bool is_variant() const { return inner.template is_variant<T>(); }
 
@@ -686,14 +653,14 @@ public:
   template<class T, typename EnableIf<
       !IsSame<typename RemoveConstOrRef<T>::Result, Enum>::result
   >::Result * = nullptr>
-  constexpr Enum(T &&value) noexcept :
+  constexpr Enum(T &&value) :
       inner{forward<T>(value)}
   {}
 
   template<class T, typename EnableIf<
       !IsSame<typename RemoveConstOrRef<T>::Result, Enum>::result
   >::Result * = nullptr>
-  Enum &operator=(T &&value) noexcept {
+  Enum &operator=(T &&value) {
     inner = Inner{forward<T>(value)};
     return *this;
   }
@@ -709,11 +676,11 @@ public:
   }
 
   crust_cxx14_constexpr bool eq(const Enum &other) const {
-    return inner == other.inner;
+    return inner.eq(other.inner);
   }
 
   crust_cxx14_constexpr bool ne(const Enum &other) const {
-    return inner != other.inner;
+    return inner.ne(other.inner);
   }
 };
 
@@ -736,7 +703,7 @@ public:
   }
 
 #define CRUST_ENUM_VARIANT(NAME, ...) \
-  struct NAME final : public ::crust::Tuple<__VA_ARGS__> { \
+  struct crust_ebco NAME final : public ::crust::Tuple<__VA_ARGS__> { \
     CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::Tuple<__VA_ARGS__>) \
     template<class = void> \
     static void _detect_trait_partial_eq(const NAME &) { \
