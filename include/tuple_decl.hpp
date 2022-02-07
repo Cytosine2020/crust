@@ -30,7 +30,8 @@ struct TupleHolderImpl<false, false, Field, Fields...> {
 
   template<class T, class ...Ts>
   explicit constexpr TupleHolderImpl(T &&field, Ts &&...fields) :
-      field{forward<T>(field)}, remains{forward<Ts>(fields)...} {}
+      field{forward<T>(field)}, remains{forward<Ts>(fields)...}
+  {}
 
   constexpr bool eq(const TupleHolderImpl &other) const {
     return field == other.field && remains.eq(other.remains);

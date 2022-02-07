@@ -16,6 +16,8 @@ template<class T>
 class Option;
 }
 
+using option::Option;
+
 namespace _impl_enum {
 template<class T, class ...Fields>
 struct EnumInclude;
@@ -168,8 +170,9 @@ public:
   template<usize offset, bool trivial, class ...Fields> \
   struct EnumVisitor<offset, len, trivial, Fields...> { \
     template<class R, class V> \
-    static crust_cxx14_constexpr R \
-    inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) { \
+    static crust_cxx14_constexpr R inner( \
+        const EnumHolder<trivial, Fields...> &self, V &&impl, usize index \
+    ) { \
       switch (index) { \
         default: \
           crust_unreachable(); \
@@ -342,10 +345,7 @@ struct EnumIsTagOnly : public AllType<IsZeroSizedType<Fields>...> {};
 
 template<class ...Fields>
 struct EnumTagUnion :
-public EnumTrivial<
-    EnumTagUnion<Fields...>,
-    EnumIsTrivial<Fields...>::result
-> {
+public EnumTrivial<EnumTagUnion<Fields...>, EnumIsTrivial<Fields...>::result> {
   static constexpr bool _trivial = EnumIsTrivial<Fields...>::result;
 
   friend EnumTrivial<EnumTagUnion, _trivial>;
@@ -575,9 +575,7 @@ template<class... Ts>
 struct Overloaded;
 
 template<class T, class... Ts>
-struct crust_ebco Overloaded<T, Ts...> :
-    public T, public Overloaded<Ts ...>
-{
+struct crust_ebco Overloaded<T, Ts...> : public T, public Overloaded<Ts ...> {
   using T::operator();
   using Overloaded<Ts ...>::operator();
 
@@ -600,8 +598,9 @@ Overloaded<Ts...> overloaded(Ts &&...ts) {
 
 // todo: implement PartialOrd and Ord
 template<class ...Fields>
-class Enum : public Impl<
-    cmp::PartialEq<Enum<Fields...>>, AllType<Derive<Fields, cmp::PartialEq>...>
+class crust_ebco Enum : public Impl<
+    cmp::PartialEq<Enum<Fields...>>,
+    AllType<Derive<Fields, cmp::PartialEq>...>
 >, public Impl<
     cmp::Eq<Tuple<Fields...>>, AllType<Derive<Fields, cmp::Eq>...>
 > {

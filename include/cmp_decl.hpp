@@ -125,7 +125,8 @@ template<class T, class Rhs>
 struct DerivePartialEq {
   template<class U>
   static u32 check(decltype(static_cast<void (*)(const Rhs &)>(
-      &U::template _detect_trait_partial_eq<>)));
+      &U::template _detect_trait_partial_eq<>
+  )));
 
   template<class>
   static void check(...);
@@ -138,7 +139,8 @@ template<class T>
 struct DeriveEq {
   template<class U>
   static u32 check(decltype(static_cast<void (*)()>(
-      &U::template _detect_trait_eq<>)));
+      &U::template _detect_trait_eq<>
+  )));
 
   template<class>
   static void check(...);

@@ -125,19 +125,19 @@ constexpr bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
   template<> FN(i64, ##__VA_ARGS__)
 
 #define _IMPL_OPERATOR_CMP(type, ...) \
-inline constexpr Ordering operator_cmp(const type &v1, const type &v2) { \
-  return v1 < v2 ? make_less() : v1 > v2 ? make_greater() : make_equal(); \
-}
+  inline constexpr Ordering operator_cmp(const type &v1, const type &v2) { \
+    return v1 < v2 ? make_less() : v1 > v2 ? make_greater() : make_equal(); \
+  }
 
 _IMPL_PRIMITIVE(_IMPL_OPERATOR_CMP)
 
 #undef _IMPL_OPERATOR_CMP
 
 #define _IMPL_OPERATOR_PARTIAL_CMP(type, ...) \
-inline constexpr Option<Ordering> \
-operator_partial_cmp(const type &v1, const type &v2) { \
-  return make_some(operator_cmp(v1, v2)); \
-}
+  inline constexpr Option<Ordering> \
+  operator_partial_cmp(const type &v1, const type &v2) { \
+    return make_some(operator_cmp(v1, v2)); \
+  }
 
 _IMPL_PRIMITIVE(_IMPL_OPERATOR_PARTIAL_CMP)
 
@@ -203,7 +203,8 @@ class crust_ebco Reverse :
     public Impl<PartialEq<Reverse<T>>, Derive<T, PartialEq>>,
     public Impl<Eq<Reverse<T>>, Derive<T, Eq>>,
     public Impl<PartialOrd<Reverse<T>>, Derive<T, PartialOrd>>,
-    public Impl<Ord<Reverse<T>>, Derive<T, Ord>> {
+    public Impl<Ord<Reverse<T>>, Derive<T, Ord>>
+{
 public:
   CRUST_USE_BASE_CONSTRUCTORS(Reverse, inner);
 

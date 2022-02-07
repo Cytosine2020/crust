@@ -51,9 +51,7 @@ _panic(const char *file, int line, const char *msg) {
 
 static inline crust_cxx14_constexpr void
 _assert(const char *file, int line, const char *msg, bool condition) {
-  if (!condition) {
-    _panic(file, line, msg);
-  }
+  if (!condition) { _panic(file, line, msg); }
 }
 
 #define crust_assert(...) \

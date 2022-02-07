@@ -17,7 +17,7 @@ constexpr Option<cmp::Ordering>
 TupleHolderImpl<false, false, Field, Fields...>::partial_cmp(
     const TupleHolderImpl &other
 ) const {
-  return cmp::operator_partial_cmp(this->field, other.field).map(bind(
+  return cmp::operator_partial_cmp(this->field, other.field).map(ops::bind(
       [&](cmp::Ordering value) {
         return value.then(
             cmp::operator_partial_cmp(this->remains, other.remains)

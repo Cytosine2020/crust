@@ -21,13 +21,9 @@ class Result : public Enum<Ok<T>, Err<E>> {
 public:
   CRUST_ENUM_USE_BASE(Result, Enum<Ok<T>, Err<E>>);
 
-  constexpr bool is_ok() const {
-    return this->template is_variant<Ok<T>>();
-  }
+  constexpr bool is_ok() const { return this->template is_variant<Ok<T>>(); }
 
-  constexpr bool is_err() const {
-    return this->template is_variant<Err<E>>();
-  }
+  constexpr bool is_err() const { return this->template is_variant<Err<E>>(); }
 
   constexpr bool contains(const T &other) const {
     return this->template visit<bool>(

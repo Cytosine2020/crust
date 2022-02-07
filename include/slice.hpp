@@ -18,9 +18,7 @@ private:
   Slice(T *inner, usize size) : inner{inner}, size{size} {}
 
 public:
-  static Slice from_ptr(T *inner) {
-    return Slice{inner, 1};
-  }
+  static Slice from_ptr(T *inner) { return Slice{inner, 1}; }
 
   static Slice from_raw_parts(T *inner, usize size) {
     return Slice{inner, size};

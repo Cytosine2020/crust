@@ -36,7 +36,7 @@ public:
   }
 
   crust_cxx14_constexpr Option<T *> as_mut_ptr() {
-    return map(bind([](T &value) { return &value; }));
+    return map(ops::bind([](T &value) { return &value; }));
   }
 
   crust_cxx14_constexpr T unwrap() {

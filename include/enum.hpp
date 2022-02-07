@@ -15,7 +15,8 @@ namespace _impl_enum {
 template<class... Fields>
 template<class T>
 crust_cxx14_constexpr Option<T> EnumTagUnion<Fields...>::move_variant() {
-  constexpr usize i = IndexGetter<typename RemoveConstOrRef<T>::Result>::result;
+  constexpr usize i =
+      IndexGetter<typename RemoveConstOrRef<T>::Result>::result;
   return index == i ?
       make_some(EnumGetter<i, _trivial, Fields...>::inner(holder)) :
       None{};
@@ -24,7 +25,8 @@ crust_cxx14_constexpr Option<T> EnumTagUnion<Fields...>::move_variant() {
 template<class ...Fields>
 template<class T>
 crust_cxx14_constexpr Option<T> EnumTagOnly<Fields...>::move_variant() {
-  constexpr usize i = IndexGetter<typename RemoveConstOrRef<T>::Result>::result;
+  constexpr usize i =
+      IndexGetter<typename RemoveConstOrRef<T>::Result>::result;
   return index == i ? make_some(T{}) : None{};
 }
 }
