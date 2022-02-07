@@ -200,10 +200,10 @@ constexpr T max_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
 
 template<class T>
 class crust_ebco Reverse :
-    public Impl<PartialEq<Reverse<T>>, Derive<T, PartialEq>::result>,
-    public Impl<Eq<Reverse<T>>, Derive<T, Eq>::result>,
-    public Impl<PartialOrd<Reverse<T>>, Derive<T, PartialOrd>::result>,
-    public Impl<Ord<Reverse<T>>, Derive<T, Ord>::result> {
+    public Impl<PartialEq<Reverse<T>>, Derive<T, PartialEq>>,
+    public Impl<Eq<Reverse<T>>, Derive<T, Eq>>,
+    public Impl<PartialOrd<Reverse<T>>, Derive<T, PartialOrd>>,
+    public Impl<Ord<Reverse<T>>, Derive<T, Ord>> {
 public:
   CRUST_USE_BASE_CONSTRUCTORS(Reverse, inner);
 
@@ -258,9 +258,7 @@ public:
 }
 
 #define _DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...) \
-  struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> { \
-    static constexpr bool result = true; \
-  }
+  struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> : public TrueType {}
 
 _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::PartialEq);
 _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::Eq);

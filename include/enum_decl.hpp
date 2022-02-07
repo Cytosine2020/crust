@@ -21,35 +21,24 @@ template<class T, class ...Fields>
 struct EnumInclude;
 
 template<class T, class Field, class ...Fields>
-struct EnumInclude<T, Field, Fields...> {
-  static constexpr bool result = EnumInclude<T, Fields...>::result;
-};
+struct EnumInclude<T, Field, Fields...> : EnumInclude<T, Fields...> {};
 
 template<class T, class ...Fields>
-struct EnumInclude<T, T, Fields...> {
-  static constexpr bool result = true;
-};
+struct EnumInclude<T, T, Fields...> : public TrueType {};
 
 template<class T>
-struct EnumInclude<T> {
-  static constexpr bool result = false;
-};
+struct EnumInclude<T> : public FalseType {};
 
 template<class ...Fields>
 struct EnumDuplicate;
 
 template<class Field, class ...Fields>
-struct EnumDuplicate<Field, Fields...> {
-  static constexpr bool result =
-      EnumInclude<Field, Fields...>::result ||
-      EnumDuplicate<Fields...>::result;
-};
+struct EnumDuplicate<Field, Fields...> :
+    public AnyType<EnumInclude<Field, Fields...>, EnumDuplicate<Fields...>>
+{};
 
 template<>
-struct EnumDuplicate<> {
-  static constexpr bool result = false;
-};
-
+struct EnumDuplicate<> : public FalseType {};
 
 template<bool trivial, class ...Fields>
 union EnumHolder;
@@ -345,12 +334,10 @@ struct EnumTrivial<Self, false> {
 };
 
 template<class ...Fields>
-struct EnumIsTrivial :
-    public All<std::is_trivially_copyable<Fields>::value...>
-{};
+struct EnumIsTrivial : public AllType<IsTriviallyCopyableType<Fields>...> {};
 
 template<class ...Fields>
-struct EnumIsTagOnly : public All<IsZeroSizedType<Fields>::result...>{};
+struct EnumIsTagOnly : public AllType<IsZeroSizedType<Fields>...> {};
 
 
 template<class ...Fields>
@@ -614,17 +601,15 @@ Overloaded<Ts...> overloaded(Ts &&...ts) {
 // todo: implement PartialOrd and Ord
 template<class ...Fields>
 class Enum : public Impl<
-    cmp::PartialEq<Enum<Fields...>>,
-    All<Derive<Fields, cmp::PartialEq>::result...>::result
+    cmp::PartialEq<Enum<Fields...>>, AllType<Derive<Fields, cmp::PartialEq>...>
 >, public Impl<
-    cmp::Eq<Tuple<Fields...>>,
-    All<Derive<Fields, cmp::Eq>::result...>::result
+    cmp::Eq<Tuple<Fields...>>, AllType<Derive<Fields, cmp::Eq>...>
 > {
 private:
   crust_static_assert(sizeof...(Fields) < std::numeric_limits<u32>::max());
   crust_static_assert(sizeof...(Fields) > 0);
-  crust_static_assert(!_impl_enum::EnumDuplicate<Fields...>::result);
-  crust_static_assert(All<!IsConstOrRef<Fields>::result...>::result);
+  crust_static_assert(NotType<_impl_enum::EnumDuplicate<Fields...>>::result);
+  crust_static_assert(AllType<NotType<IsConstOrRef<Fields>>...>::result);
 
   using Inner = _impl_enum::EnumSelect<
       _impl_enum::EnumIsTagOnly<Fields...>::result, Fields...

@@ -40,7 +40,7 @@ CRUST_TRAIT(PartialEq, class Rhs = Self) {
 };
 
 CRUST_TRAIT(Eq) {
-  CRUST_TRAIT_REQUIRE(Eq, Derive<Self, PartialEq>::result);
+  CRUST_TRAIT_REQUIRE(Eq, Derive<Self, PartialEq>);
 
   /// Used for detecting `Eq', part of the workaround below.
   /// Should never be implemented by hand.
@@ -51,7 +51,7 @@ CRUST_TRAIT(Eq) {
 class Ordering;
 
 CRUST_TRAIT(PartialOrd, class Rhs = Self) {
-  CRUST_TRAIT_REQUIRE(PartialOrd, Derive<Self, PartialEq>::result);
+  CRUST_TRAIT_REQUIRE(PartialOrd, Derive<Self, PartialEq>);
 
   Option<Ordering> partial_cmp(const Rhs &other) const;
 
@@ -82,9 +82,9 @@ CRUST_TRAIT(PartialOrd, class Rhs = Self) {
 
 CRUST_TRAIT(Ord) {
   CRUST_TRAIT_REQUIRE(Ord,
-    Derive<Self, PartialEq>::result,
-    Derive<Self, Eq>::result,
-    Derive<Self, PartialOrd>::result
+    Derive<Self, PartialEq>,
+    Derive<Self, Eq>,
+    Derive<Self, PartialOrd>
   );
 
   Ordering cmp(const Self &other) const;
@@ -150,25 +150,17 @@ struct DeriveEq {
 
 
 template<class Self, class Rhs>
-struct Derive<Self, cmp::PartialEq, Rhs> {
-  static constexpr bool result =
-      std::is_base_of<cmp::PartialEq<Self, Rhs>, Self>::value ||
-      _impl_derive_eq::DerivePartialEq<Self, Rhs>::result;
-};
+struct Derive<Self, cmp::PartialEq, Rhs> :
+    public _impl_derive_eq::DerivePartialEq<Self, Rhs>
+{};
 
 template<class Self>
-struct Derive<Self, cmp::PartialEq> {
-  static constexpr bool result =
-      std::is_base_of<cmp::PartialEq<Self, Self>, Self>::value ||
-      _impl_derive_eq::DerivePartialEq<Self, Self>::result;
-};
+struct Derive<Self, cmp::PartialEq> :
+    public _impl_derive_eq::DerivePartialEq<Self, Self>
+{};
 
 template<class Self>
-struct Derive<Self, cmp::Eq> {
-  static constexpr bool result =
-      std::is_base_of<cmp::PartialEq<Self>, Self>::value ||
-      _impl_derive_eq::DeriveEq<Self>::result;
-};
+struct Derive<Self, cmp::Eq> : public _impl_derive_eq::DeriveEq<Self> {};
 }
 
 

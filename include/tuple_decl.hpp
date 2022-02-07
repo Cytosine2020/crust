@@ -133,13 +133,13 @@ template<class Field, class ...Fields>
 struct crust_ebco TupleHolder<Field, Fields...> :
     public TupleHolderImpl<
         IsZeroSizedType<Field>::result,
-        All<IsZeroSizedType<Fields>::result...>::result,
+        AllType<IsZeroSizedType<Fields>...>::result,
         Field, Fields...
     >
 {
   CRUST_USE_BASE_CONSTRUCTORS(TupleHolder, TupleHolderImpl<
       IsZeroSizedType<Field>::result,
-      All<IsZeroSizedType<Fields>::result...>::result,
+      AllType<IsZeroSizedType<Fields>...>::result,
       Field, Fields...
   >);
 };
@@ -186,23 +186,18 @@ struct TupleGetter<0, Field, Fields...> {
 
 template<class ...Fields>
 class crust_ebco Tuple : public Impl<
-    cmp::PartialEq<Tuple<Fields...>>,
-    All<Derive<Fields, cmp::PartialEq>::result...>::result
+    cmp::PartialEq<Tuple<Fields...>>, Derive<Fields, cmp::PartialEq>...
 >, public Impl<
-    cmp::Eq<Tuple<Fields...>>,
-    All<Derive<Fields, cmp::Eq>::result...>::result
+    cmp::Eq<Tuple<Fields...>>, Derive<Fields, cmp::Eq>...
 >, public Impl<
-    cmp::PartialOrd<Tuple<Fields...>>,
-    All<Derive<Fields, cmp::PartialOrd>::result...>::result
+    cmp::PartialOrd<Tuple<Fields...>>, Derive<Fields, cmp::PartialOrd>...
 >, public Impl<
-    cmp::Ord<Tuple<Fields...>>,
-    All<Derive<Fields, cmp::Ord>::result...>::result
+    cmp::Ord<Tuple<Fields...>>, Derive<Fields, cmp::Ord>...
 >, public Impl<
-    ZeroSizedType,
-    All<IsZeroSizedType<Fields>::result...>::result
+    ZeroSizedType, IsZeroSizedType<Fields>...
 > {
 private:
-  crust_static_assert(All<!IsConstOrRef<Fields>::result...>::result);
+  crust_static_assert(AllType<NotType<IsConstOrRef<Fields>>...>::result);
 
   using Holder =
       _impl_tuple::TupleHolder<typename RemoveRef<Fields>::Result...>;

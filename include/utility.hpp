@@ -85,28 +85,48 @@ struct EnableIf<true> {
     using Result = void;
 };
 
-template<class A, class B>
-struct IsSame {
+struct TrueType {
+  static constexpr bool result = true;
+};
+
+struct FalseType {
   static constexpr bool result = false;
 };
 
-template<class A>
-struct IsSame<A, A> {
-  static constexpr bool result = true;
+template<class Condition>
+struct NotType {
+  static constexpr bool result = !Condition::result;
 };
 
-template<bool ...conditions>
-struct All;
+template<class ...Conditions>
+struct AllType;
 
-template<bool condition, bool ...conditions>
-struct All<condition, conditions...> {
-  static constexpr bool result = condition && All<conditions...>::result;
+template<class Condition, class ...Conditions>
+struct AllType<Condition, Conditions...> {
+  static constexpr bool result = Condition::result &&
+      AllType<Conditions...>::result;
 };
 
 template<>
-struct All<> {
-  static constexpr bool result = true;
+struct AllType<> : public TrueType {};
+
+template<class ...Conditions>
+struct AnyType;
+
+template<class Condition, class ...Conditions>
+struct AnyType<Condition, Conditions...> {
+  static constexpr bool result = Condition::result ||
+      AnyType<Conditions...>::result;
 };
+
+template<>
+struct AnyType<> : public FalseType {};
+
+template<class A, class B>
+struct IsSame : public FalseType {};
+
+template<class A>
+struct IsSame<A, A> : public TrueType {};
 
 template<class T>
 struct RemoveRef {
@@ -139,45 +159,37 @@ struct RemoveConstOrRef {
 };
 
 template<class T>
-struct IsLValueRef {
-  static constexpr bool result = false;
+struct IsLValueRef : public FalseType {};
+
+template<class T>
+struct IsLValueRef<T &> : public TrueType {};
+
+template<class T>
+struct IsRValueRef : public FalseType {};
+
+template<class T>
+struct IsRValueRef<T &&> : public TrueType {};
+
+template<class T>
+struct IsConst : public FalseType {};
+
+template<class T>
+struct IsConst<const T> : public TrueType {};
+
+template<class T>
+struct IsRef : public AnyType<IsLValueRef<T>, IsRValueRef<T>> {};
+
+template<class T>
+struct IsConstOrRef : public AnyType<IsRef<T>, IsConst<T>> {};
+
+template<class B, class T>
+struct IsBaseOfType {
+  static constexpr bool result = std::is_base_of<B, T>::value;
 };
 
 template<class T>
-struct IsLValueRef<T &> {
-  static constexpr bool result = true;
-};
-
-template<class T>
-struct IsRValueRef {
-  static constexpr bool result = false;
-};
-
-template<class T>
-struct IsRValueRef<T &&> {
-  static constexpr bool result = true;
-};
-
-template<class T>
-struct IsConst {
-  static constexpr bool result = false;
-};
-
-template<class T>
-struct IsConst<const T> {
-    static constexpr bool result = false;
-};
-
-template<class T>
-struct IsRef {
-  static constexpr bool result
-      = IsLValueRef<T>::result || IsRValueRef<T>::result;
-};
-
-template<class T>
-struct IsConstOrRef {
-    static constexpr bool result
-        = IsRef<T>::result || IsConst<T>::result;
+struct IsTriviallyCopyableType {
+  static constexpr bool result = std::is_trivially_copyable<T>::value;
 };
 
 template<class T>
@@ -207,19 +219,15 @@ template<class T>
 struct Impl<T, false> {};
 }
 
-
-template<class T, bool ...conditions>
-using Impl = _impl_impl::Impl<T, All<conditions...>::result>;
+template<class T, class ...Conditions>
+using Impl = _impl_impl::Impl<T, AllType<Conditions...>::result>;
 
 template<
     class Struct,
     template<class Self, class ...Args> class Trait,
     class ...Args
 >
-struct Derive {
-  static constexpr bool result =
-      std::is_base_of<Trait<Struct, Args...>, Struct>::value;
-};
+struct Derive : public IsBaseOfType<Trait<Struct, Args...>, Struct> {};
 
 /// this is used by Tuple, Enum and Slice for zero sized type optimization
 /// forign type can inherit ZeroSizedType to be treated as mono state.
@@ -227,9 +235,7 @@ struct Derive {
 struct ZeroSizedType {};
 
 template<class T>
-struct IsZeroSizedType {
-  static constexpr bool result = std::is_base_of<ZeroSizedType, T>::value;
-};
+struct IsZeroSizedType : public IsBaseOfType<ZeroSizedType, T> {};
 
 #define CRUST_TRAIT(TRAIT, ...) \
   template<class Self, ##__VA_ARGS__> \
@@ -238,8 +244,8 @@ struct IsZeroSizedType {
 #define CRUST_TRAIT_REQUIRE(TRAIT, ...) \
   protected: \
     constexpr TRAIT() { \
-      crust_static_assert(::std::is_base_of<TRAIT, Self>::value); \
-      crust_static_assert(::crust::All<__VA_ARGS__>::result); \
+      crust_static_assert(::crust::IsBaseOfType<TRAIT, Self>::result); \
+      crust_static_assert(::crust::AllType<__VA_ARGS__>::result); \
     } \
     constexpr const Self &self() const { \
       return *static_cast<const Self *>(this); \
