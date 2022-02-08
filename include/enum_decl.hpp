@@ -14,7 +14,7 @@ namespace crust {
 namespace option {
 template <class T>
 class Option;
-}
+} // namespace option
 
 using option::Option;
 
@@ -343,15 +343,15 @@ struct EnumTagUnion :
     public EnumTrivial<
         EnumTagUnion<Fields...>,
         EnumIsTrivial<Fields...>::result> {
-  static constexpr bool _trivial = EnumIsTrivial<Fields...>::result;
+  static constexpr bool trivial = EnumIsTrivial<Fields...>::result;
 
-  friend EnumTrivial<EnumTagUnion, _trivial>;
+  friend EnumTrivial<EnumTagUnion, trivial>;
 
   using Holder =
-      EnumHolder<_trivial, typename RemoveConstOrRef<Fields>::Result...>;
+      EnumHolder<trivial, typename RemoveConstOrRef<Fields>::Result...>;
   template <class T>
   using IndexGetter = EnumTypeToIndex<T, Fields...>;
-  using Getter = EnumVisitor<0, sizeof...(Fields), _trivial, Fields...>;
+  using Getter = EnumVisitor<0, sizeof...(Fields), trivial, Fields...>;
 
   Holder holder;
   u32 index;
@@ -414,7 +414,7 @@ struct EnumTagUnion :
   constexpr bool visit_variant(V &&visitor) const {
     using Index = IndexGetter<typename RemoveConstOrRef<T>::Result>;
     return index == Index::result + 1 ?
-        visitor(EnumGetter<Index::result, _trivial, Fields...>::inner(holder)) :
+        visitor(EnumGetter<Index::result, trivial, Fields...>::inner(holder)) :
         visitor();
   }
 
@@ -430,7 +430,7 @@ struct EnumTagUnion :
     return index == Index::result + 1 &&
         _impl_tuple::TupleEqHelper<sizeof...(Fs), Fs...>::inner(
                _impl_tuple::TupleHolder<const Fs &...>{other...},
-               EnumGetter<Index::result, _trivial, Fields...>::inner(holder));
+               EnumGetter<Index::result, trivial, Fields...>::inner(holder));
   }
 
   template <class T>
@@ -443,7 +443,7 @@ struct EnumTagUnion :
           ref,
           move(EnumGetter<
                IndexGetter<typename RemoveConstOrRef<T>::Result>::result,
-               _trivial,
+               trivial,
                Fields...>::inner(holder)));
       return true;
     } else {
@@ -461,7 +461,7 @@ struct EnumTagUnion :
       return value ==
           EnumGetter<
                  IndexGetter<typename RemoveConstOrRef<T>::Result>::result,
-                 _trivial,
+                 trivial,
                  Fields...>::inner(*other);
     };
   };
@@ -478,7 +478,7 @@ struct EnumTagUnion :
       return value !=
           EnumGetter<
                  IndexGetter<typename RemoveConstOrRef<T>::Result>::result,
-                 _trivial,
+                 trivial,
                  Fields...>::inner(*other);
     };
   };

@@ -9,7 +9,7 @@ namespace crust {
 namespace option {
 template <class T>
 class Option;
-}
+} // namespace option
 
 using option::Option;
 
@@ -73,19 +73,11 @@ CRUST_TRAIT(Ord) {
   Ordering cmp(const Self &other) const;
 
   crust_cxx14_constexpr Self max(Self && other) {
-    if (self() > other) {
-      return move(self());
-    } else {
-      return move(other);
-    }
+    return self() > other ? move(self()) : move(other);
   }
 
   crust_cxx14_constexpr Self min(Self && other) {
-    if (self() > other) {
-      return move(other);
-    } else {
-      return move(self());
-    }
+    return self() > other ? move(other) : move(self());
   }
 
   crust_cxx14_constexpr Self clamp(Self && min, Self && max) {

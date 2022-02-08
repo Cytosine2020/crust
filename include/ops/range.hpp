@@ -6,7 +6,8 @@
 #include "utility.hpp"
 
 
-namespace crust { namespace range {
+namespace crust {
+namespace range {
 class RangeFull {};
 
 template <class T>
@@ -35,7 +36,8 @@ public:
 
   explicit constexpr RangeTo(T end) : end{end} {}
 };
-}} // namespace crust::range
+} // namespace range
+} // namespace crust
 
 
 #endif //_CRUST_INCLUDE_RANGE_HPP

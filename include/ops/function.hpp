@@ -5,7 +5,8 @@
 #include "utility.hpp"
 
 
-namespace crust { namespace ops {
+namespace crust {
+namespace ops {
 namespace _impl_fn {
 template <
     class Self,
@@ -319,7 +320,8 @@ public:
     }
   }
 };
-}} // namespace crust::ops
+} // namespace ops
+} // namespace crust
 
 
 #endif //_CRUST_INCLUDE_FUNCTION_HPP

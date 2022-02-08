@@ -78,8 +78,10 @@ make_tuple(Fields &&...fields) {
 namespace _impl_tuple {
 template <class... Fields>
 struct LetTuple {
+private:
   TupleHolder<Fields &...> ref;
 
+public:
   explicit constexpr LetTuple(Fields &...fields) : ref{fields...} {}
 
   crust_cxx14_constexpr void operator=(Tuple<Fields...> &&tuple) {

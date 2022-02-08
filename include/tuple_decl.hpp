@@ -10,7 +10,7 @@ namespace crust {
 namespace option {
 template <class T>
 class Option;
-}
+} // namespace option
 
 using option::Option;
 

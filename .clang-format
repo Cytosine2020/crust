@@ -10,7 +10,7 @@ ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
 
 NamespaceIndentation: None
-CompactNamespaces: true
+CompactNamespaces: false
 
 AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveMacros: false

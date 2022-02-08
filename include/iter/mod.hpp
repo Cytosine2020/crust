@@ -8,7 +8,8 @@
 #include "tuple.hpp"
 
 
-namespace crust { namespace iter {
+namespace crust {
+namespace iter {
 CRUST_TRAIT(Iterator, class Item) {
   CRUST_TRAIT_REQUIRE(Iterator);
 
@@ -30,7 +31,8 @@ CRUST_TRAIT(Iterator, class Item) {
     return accum;
   }
 };
-}} // namespace crust::iter
+} // namespace iter
+} // namespace crust
 
 
 #endif //_CRUST_INCLUDE_ITER_HPP

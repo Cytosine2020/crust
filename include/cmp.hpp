@@ -205,10 +205,11 @@ class crust_ebco Reverse :
     public Impl<Eq<Reverse<T>>, Derive<T, Eq>>,
     public Impl<PartialOrd<Reverse<T>>, Derive<T, PartialOrd>>,
     public Impl<Ord<Reverse<T>>, Derive<T, Ord>> {
+private:
+  T inner;
+
 public:
   CRUST_USE_BASE_CONSTRUCTORS(Reverse, inner);
-
-  T inner;
 
   /// impl PartialEq
 
