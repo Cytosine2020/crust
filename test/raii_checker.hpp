@@ -2,8 +2,8 @@
 #define _CRUST_TEST_RAII_CHECKER_HPP
 
 
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
 
 #include "utility.hpp"
 
@@ -36,7 +36,7 @@ public:
   ~RAIIRecorder() { crust_assert(record.empty()); }
 };
 
-template<class Self>
+template <class Self>
 class RAIIChecker {
 private:
   static const RAIITypeInfo TYPE_INFO;
@@ -45,8 +45,7 @@ private:
 
 public:
   explicit RAIIChecker(std::shared_ptr<RAIIRecorder> recorder) :
-      recorder{std::move(recorder)}
-  {
+      recorder{std::move(recorder)} {
     this->recorder->construct(&TYPE_INFO, this);
   }
 
@@ -71,9 +70,9 @@ public:
   ~RAIIChecker() { recorder->deconstruct(&TYPE_INFO, this); }
 };
 
-template<class Self>
+template <class Self>
 const RAIITypeInfo RAIIChecker<Self>::TYPE_INFO{};
-}
+} // namespace test
 
 
 #endif //_CRUST_TEST_RAII_CHECKER_HPP

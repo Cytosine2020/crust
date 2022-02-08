@@ -2,9 +2,9 @@
 #define _CRUST_INCLUDE_UTILITY_HPP
 
 
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <cstdint>
 #include <type_traits>
 
 
@@ -51,11 +51,13 @@ _panic(const char *file, int line, const char *msg) {
 
 static inline crust_cxx14_constexpr void
 _assert(const char *file, int line, const char *msg, bool condition) {
-  if (!condition) { _panic(file, line, msg); }
+  if (!condition) {
+    _panic(file, line, msg);
+  }
 }
 
-#define crust_assert(...) \
-    ::crust::_assert(__FILE__, __LINE__, #__VA_ARGS__, __VA_ARGS__)
+#define crust_assert(...)                                                      \
+  ::crust::_assert(__FILE__, __LINE__, #__VA_ARGS__, __VA_ARGS__)
 
 using i8 = int8_t;
 using u8 = uint8_t;
@@ -75,12 +77,12 @@ using usize = u64;
 #error "Unsupported bit width."
 #endif
 
-template<bool enable>
+template <bool enable>
 struct EnableIf {};
 
-template<>
+template <>
 struct EnableIf<true> {
-    using Result = void;
+  using Result = void;
 };
 
 struct TrueType {
@@ -91,140 +93,140 @@ struct FalseType {
   static constexpr bool result = false;
 };
 
-template<class Condition>
+template <class Condition>
 struct NotType {
   static constexpr bool result = !Condition::result;
 };
 
-template<class ...Conditions>
+template <class... Conditions>
 struct AllType;
 
-template<class Condition, class ...Conditions>
+template <class Condition, class... Conditions>
 struct AllType<Condition, Conditions...> {
-  static constexpr bool result = Condition::result &&
-      AllType<Conditions...>::result;
+  static constexpr bool result =
+      Condition::result && AllType<Conditions...>::result;
 };
 
-template<>
+template <>
 struct AllType<> : public TrueType {};
 
-template<class ...Conditions>
+template <class... Conditions>
 struct AnyType;
 
-template<class Condition, class ...Conditions>
+template <class Condition, class... Conditions>
 struct AnyType<Condition, Conditions...> {
-  static constexpr bool result = Condition::result ||
-      AnyType<Conditions...>::result;
+  static constexpr bool result =
+      Condition::result || AnyType<Conditions...>::result;
 };
 
-template<>
+template <>
 struct AnyType<> : public FalseType {};
 
-template<class A, class B>
+template <class A, class B>
 struct IsSame : public FalseType {};
 
-template<class A>
+template <class A>
 struct IsSame<A, A> : public TrueType {};
 
-template<class T>
+template <class T>
 struct RemoveRef {
   using Result = T;
 };
 
-template<class T>
+template <class T>
 struct RemoveRef<T &> {
   using Result = T;
 };
 
-template<class T>
+template <class T>
 struct RemoveRef<T &&> {
   using Result = T;
 };
 
-template<class T>
+template <class T>
 struct RemoveConst {
   using Result = T;
 };
 
-template<class T>
+template <class T>
 struct RemoveConst<const T> {
   using Result = T;
 };
 
-template<class T>
+template <class T>
 struct RemoveConstOrRef {
   using Result = typename RemoveRef<typename RemoveConst<T>::Result>::Result;
 };
 
-template<class T>
+template <class T>
 struct IsLValueRef : public FalseType {};
 
-template<class T>
+template <class T>
 struct IsLValueRef<T &> : public TrueType {};
 
-template<class T>
+template <class T>
 struct IsRValueRef : public FalseType {};
 
-template<class T>
+template <class T>
 struct IsRValueRef<T &&> : public TrueType {};
 
-template<class T>
+template <class T>
 struct IsConst : public FalseType {};
 
-template<class T>
+template <class T>
 struct IsConst<const T> : public TrueType {};
 
-template<class T>
+template <class T>
 struct IsRef : public AnyType<IsLValueRef<T>, IsRValueRef<T>> {};
 
-template<class T>
+template <class T>
 struct IsConstOrRef : public AnyType<IsRef<T>, IsConst<T>> {};
 
-template<class B, class T>
+template <class B, class T>
 struct IsBaseOfType {
   static constexpr bool result = std::is_base_of<B, T>::value;
 };
 
-template<class T>
+template <class T>
 struct IsTriviallyCopyableType {
   static constexpr bool result = std::is_trivially_copyable<T>::value;
 };
 
-template<class T>
+template <class T>
 constexpr typename RemoveRef<T>::Result &&move(T &&t) {
   return static_cast<typename RemoveRef<T>::Result &&>(t);
 }
 
-template<class T>
+template <class T>
 constexpr T &&forward(typename RemoveRef<T>::Result &t) {
   return static_cast<T &&>(t);
 }
 
-template<class T>
+template <class T>
 constexpr T &&forward(typename RemoveRef<T>::Result &&t) {
   crust_static_assert(!IsLValueRef<T>::result);
   return static_cast<T &&>(t);
 }
 
 namespace _impl_impl {
-template<class T, bool condition>
+template <class T, bool condition>
 struct Impl;
 
-template<class T>
-struct crust_ebco Impl<T, true> : public T {};
+template <class T>
+struct Impl<T, true> : public T {};
 
-template<class T>
+template <class T>
 struct Impl<T, false> {};
-}
+} // namespace _impl_impl
 
-template<class T, class ...Conditions>
+template <class T, class... Conditions>
 using Impl = _impl_impl::Impl<T, AllType<Conditions...>::result>;
 
-template<
+template <
     class Struct,
-    template<class Self, class ...Args> class Trait,
-    class ...Args
->
+    template <class Self, class... Args>
+    class Trait,
+    class... Args>
 struct Derive : public IsBaseOfType<Trait<Struct, Args...>, Struct> {};
 
 /// this is used by Tuple, Enum and Slice for zero sized type optimization
@@ -232,56 +234,85 @@ struct Derive : public IsBaseOfType<Trait<Struct, Args...>, Struct> {};
 
 struct ZeroSizedType {};
 
-template<class T>
+template <class T>
 struct IsZeroSizedType : public IsBaseOfType<ZeroSizedType, T> {};
 
-#define CRUST_TRAIT(TRAIT, ...) \
-  template<class Self, ##__VA_ARGS__> \
+#define CRUST_TRAIT(TRAIT, ...)                                                \
+  template <class Self, ##__VA_ARGS__>                                         \
   struct TRAIT
 
-#define CRUST_TRAIT_REQUIRE(TRAIT, ...) \
-  protected: \
-    constexpr TRAIT() { \
-      crust_static_assert(::crust::IsBaseOfType<TRAIT, Self>::result); \
-      crust_static_assert(::crust::AllType<__VA_ARGS__>::result); \
-    } \
-    constexpr const Self &self() const { \
-      return *static_cast<const Self *>(this); \
-    } \
-    crust_cxx14_constexpr Self &self() { \
-      return *static_cast<Self *>(this); \
-    } \
-  public:
+#define CRUST_TRAIT_REQUIRE(TRAIT, ...)                                        \
+protected:                                                                     \
+  constexpr TRAIT() {                                                          \
+    crust_static_assert(::crust::IsBaseOfType<TRAIT, Self>::result);           \
+    crust_static_assert(::crust::AllType<__VA_ARGS__>::result);                \
+  }                                                                            \
+  constexpr const Self &self() const {                                         \
+    return *static_cast<const Self *>(this);                                   \
+  }                                                                            \
+  crust_cxx14_constexpr Self &self() { return *static_cast<Self *>(this); }    \
+                                                                               \
+public:
 
-#define CRUST_USE_BASE_CONSTRUCTORS(NAME, ...) \
-  template<class ...Args> \
-  explicit constexpr NAME(Args &&...args) : \
-      __VA_ARGS__{::crust::forward<Args>(args)...} \
-  {}
+#define CRUST_USE_BASE_CONSTRUCTORS(NAME, ...)                                 \
+  template <class... Args>                                                     \
+  explicit constexpr NAME(Args &&...args) :                                    \
+      __VA_ARGS__{::crust::forward<Args>(args)...} {}
 
 #define CRUST_MACRO_REPEAT_1(FN) FN(0)
-#define CRUST_MACRO_REPEAT_2(FN) CRUST_MACRO_REPEAT_1(FN); FN(1)
-#define CRUST_MACRO_REPEAT_3(FN) CRUST_MACRO_REPEAT_2(FN); FN(2)
-#define CRUST_MACRO_REPEAT_4(FN) CRUST_MACRO_REPEAT_3(FN); FN(3)
-#define CRUST_MACRO_REPEAT_5(FN) CRUST_MACRO_REPEAT_4(FN); FN(4)
-#define CRUST_MACRO_REPEAT_6(FN) CRUST_MACRO_REPEAT_5(FN); FN(5)
-#define CRUST_MACRO_REPEAT_7(FN) CRUST_MACRO_REPEAT_6(FN); FN(6)
-#define CRUST_MACRO_REPEAT_8(FN) CRUST_MACRO_REPEAT_7(FN); FN(7)
-#define CRUST_MACRO_REPEAT_9(FN) CRUST_MACRO_REPEAT_8(FN); FN(8)
-#define CRUST_MACRO_REPEAT_10(FN) CRUST_MACRO_REPEAT_9(FN); FN(9)
-#define CRUST_MACRO_REPEAT_11(FN) CRUST_MACRO_REPEAT_10(FN); FN(10)
-#define CRUST_MACRO_REPEAT_12(FN) CRUST_MACRO_REPEAT_11(FN); FN(11)
-#define CRUST_MACRO_REPEAT_13(FN) CRUST_MACRO_REPEAT_12(FN); FN(12)
-#define CRUST_MACRO_REPEAT_14(FN) CRUST_MACRO_REPEAT_13(FN); FN(13)
-#define CRUST_MACRO_REPEAT_15(FN) CRUST_MACRO_REPEAT_14(FN); FN(14)
-#define CRUST_MACRO_REPEAT_16(FN) CRUST_MACRO_REPEAT_15(FN); FN(15)
+#define CRUST_MACRO_REPEAT_2(FN)                                               \
+  CRUST_MACRO_REPEAT_1(FN);                                                    \
+  FN(1)
+#define CRUST_MACRO_REPEAT_3(FN)                                               \
+  CRUST_MACRO_REPEAT_2(FN);                                                    \
+  FN(2)
+#define CRUST_MACRO_REPEAT_4(FN)                                               \
+  CRUST_MACRO_REPEAT_3(FN);                                                    \
+  FN(3)
+#define CRUST_MACRO_REPEAT_5(FN)                                               \
+  CRUST_MACRO_REPEAT_4(FN);                                                    \
+  FN(4)
+#define CRUST_MACRO_REPEAT_6(FN)                                               \
+  CRUST_MACRO_REPEAT_5(FN);                                                    \
+  FN(5)
+#define CRUST_MACRO_REPEAT_7(FN)                                               \
+  CRUST_MACRO_REPEAT_6(FN);                                                    \
+  FN(6)
+#define CRUST_MACRO_REPEAT_8(FN)                                               \
+  CRUST_MACRO_REPEAT_7(FN);                                                    \
+  FN(7)
+#define CRUST_MACRO_REPEAT_9(FN)                                               \
+  CRUST_MACRO_REPEAT_8(FN);                                                    \
+  FN(8)
+#define CRUST_MACRO_REPEAT_10(FN)                                              \
+  CRUST_MACRO_REPEAT_9(FN);                                                    \
+  FN(9)
+#define CRUST_MACRO_REPEAT_11(FN)                                              \
+  CRUST_MACRO_REPEAT_10(FN);                                                   \
+  FN(10)
+#define CRUST_MACRO_REPEAT_12(FN)                                              \
+  CRUST_MACRO_REPEAT_11(FN);                                                   \
+  FN(11)
+#define CRUST_MACRO_REPEAT_13(FN)                                              \
+  CRUST_MACRO_REPEAT_12(FN);                                                   \
+  FN(12)
+#define CRUST_MACRO_REPEAT_14(FN)                                              \
+  CRUST_MACRO_REPEAT_13(FN);                                                   \
+  FN(13)
+#define CRUST_MACRO_REPEAT_15(FN)                                              \
+  CRUST_MACRO_REPEAT_14(FN);                                                   \
+  FN(14)
+#define CRUST_MACRO_REPEAT_16(FN)                                              \
+  CRUST_MACRO_REPEAT_15(FN);                                                   \
+  FN(15)
 #define CRUST_MACRO_REPEAT(N, FN) CRUST_MACRO_REPEAT_##N(FN)
 
-template<class Type, Type obj>
+template <class Type, Type obj>
 struct TmplArg {};
 
-#define crust_tmpl_arg(obj) ::crust::TmplArg<decltype(obj), (obj)>{}
-}
+#define crust_tmpl_arg(obj)                                                    \
+  ::crust::TmplArg<decltype(obj), (obj)> {}
+} // namespace crust
 
 
 #endif //_CRUST_INCLUDE_UTILITY_HPP

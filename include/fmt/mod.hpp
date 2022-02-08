@@ -5,25 +5,21 @@
 #include "utility.hpp"
 
 
-namespace crust {
-namespace fmt {
-class Formatter {
-
-};
+namespace crust { namespace fmt {
+class Formatter {};
 
 CRUST_TRAIT(Debug) {
   CRUST_TRAIT_REQUIRE(Debug);
 
-  bool fmt_debug(Formatter &fmt);
+  bool fmt_debug(Formatter & fmt);
 };
 
 CRUST_TRAIT(Display) {
   CRUST_TRAIT_REQUIRE(Display);
 
-  bool fmt_display(Formatter &fmt);
+  bool fmt_display(Formatter & fmt);
 };
-}
-}
+}} // namespace crust::fmt
 
 
 #endif //_CRUST_INCLUDE_FMT_HPP

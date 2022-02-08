@@ -2,15 +2,14 @@
 #define _CRUST_INCLUDE_RANGE_HPP
 
 
-#include "utility.hpp"
 #include "enum.hpp"
+#include "utility.hpp"
 
 
-namespace crust {
-namespace range {
+namespace crust { namespace range {
 class RangeFull {};
 
-template<class T>
+template <class T>
 class Range {
 public:
   T start;
@@ -21,7 +20,7 @@ public:
   constexpr bool is_empty() const { return start >= end; }
 };
 
-template<class T>
+template <class T>
 class RangeFrom {
 public:
   T start;
@@ -29,15 +28,14 @@ public:
   explicit constexpr RangeFrom(T start) : start{start} {}
 };
 
-template<class T>
+template <class T>
 class RangeTo {
 public:
   T end;
 
   explicit constexpr RangeTo(T end) : end{end} {}
 };
-}
-}
+}} // namespace crust::range
 
 
 #endif //_CRUST_INCLUDE_RANGE_HPP

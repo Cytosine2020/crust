@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
-#include "utility.hpp"
 #include "ops/function.hpp"
+#include "utility.hpp"
 
 #include "raii_checker.hpp"
 
@@ -32,16 +32,20 @@ i32 fn_e(i32 &a) { return a; }
 
 i32 fn_f(i32 &&a) { return a; }
 
-template<class F>
-i32 test_fn(ops::Fn<F, i32()> fn) { return fn(); }
+template <class F>
+i32 test_fn(ops::Fn<F, i32()> fn) {
+  return fn();
+}
 
-template<class F>
-i32 test_fn_mut(ops::FnMut<F, i32()> fn) { return fn(); }
+template <class F>
+i32 test_fn_mut(ops::FnMut<F, i32()> fn) {
+  return fn();
+}
 
 i32 test_dyn_fn(ops::DynFn<i32()> fn) { return fn(); }
 
 i32 test_dyn_fn_mut(ops::DynFnMut<i32()> fn) { return fn(); }
-}
+} // namespace
 
 GTEST_TEST(function, raii) {
   auto recorder = std::make_shared<test::RAIIRecorder>();

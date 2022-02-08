@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 
-#include "utility.hpp"
 #include "cmp.hpp"
 #include "enum.hpp"
 #include "option.hpp"
+#include "utility.hpp"
 
 
 using namespace crust;
@@ -36,7 +36,8 @@ GTEST_TEST(option, option) {
   }
 
   EXPECT_TRUE(*make_some(1234).as_ptr().unwrap_or(0) == 1234);
-  EXPECT_TRUE(*make_some(1234).map(bind(
-      [](const i32 &value) { return &value; }
-  )).unwrap_or(0) == 1234);
+  EXPECT_TRUE(
+      *make_some(1234)
+           .map(bind([](const i32 &value) { return &value; }))
+           .unwrap_or(0) == 1234);
 }

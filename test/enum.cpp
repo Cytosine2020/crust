@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "utility.hpp"
 #include "cmp.hpp"
 #include "enum.hpp"
+#include "utility.hpp"
 
 #include "raii_checker.hpp"
 
@@ -19,14 +19,16 @@ struct ClassB : test::RAIIChecker<ClassB> {
   CRUST_USE_BASE_CONSTRUCTORS(ClassB, test::RAIIChecker<ClassB>);
 };
 
-template<class T>
+template <class T>
 struct VisitType {
   bool operator()(const T &) { return true; }
 
-  template<class U>
-  bool operator()(const U &) { return false; }
+  template <class U>
+  bool operator()(const U &) {
+    return false;
+  }
 };
-}
+} // namespace
 
 
 GTEST_TEST(enum_, enum_) {
@@ -71,7 +73,7 @@ class Enumerate : public Enum<A, B, C, D, E, F> {
 public:
   CRUST_ENUM_USE_BASE(Enumerate, Enum<A, B, C, D, E, F>);
 };
-}
+} // namespace
 
 
 GTEST_TEST(enum_, tag_only) {

@@ -8,8 +8,7 @@
 #include "tuple.hpp"
 
 
-namespace crust {
-namespace iter {
+namespace crust { namespace iter {
 CRUST_TRAIT(Iterator, class Item) {
   CRUST_TRAIT_REQUIRE(Iterator);
 
@@ -19,8 +18,8 @@ CRUST_TRAIT(Iterator, class Item) {
     return make_tuple<usize, Option<usize>>(0, None{});
   }
 
-  template<class B, class F>
-  B fold(B &&init, ops::Fn<F, B(B &&, Item &&)> f) {
+  template <class B, class F>
+  B fold(B && init, ops::Fn<F, B(B &&, Item &&)> f) {
     B accum = forward(init);
 
     Item x;
@@ -31,8 +30,7 @@ CRUST_TRAIT(Iterator, class Item) {
     return accum;
   }
 };
-}
-}
+}} // namespace crust::iter
 
 
 #endif //_CRUST_INCLUDE_ITER_HPP

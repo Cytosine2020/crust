@@ -5,6 +5,4 @@
 using namespace crust;
 
 
-GTEST_TEST(range, range) {
-
-}
+GTEST_TEST(range, range) {}

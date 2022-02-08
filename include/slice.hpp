@@ -2,12 +2,12 @@
 #define _CRUST_INCLUDE_SLICE_HPP
 
 
-#include "utility.hpp"
 #include "ops/mod.hpp"
+#include "utility.hpp"
 
 
 namespace crust {
-template<class T>
+template <class T>
 class crust_ebco Slice : public index::Index<Slice<T>, usize, T> {
 private:
   T *inner;
@@ -33,16 +33,20 @@ public:
   T *as_ptr() { return inner; }
 
   const T &index(usize index) const {
-    if (index >= len()) { crust_panic("index out of boundary!"); }
+    if (index >= len()) {
+      crust_panic("index out of boundary!");
+    }
     return as_ptr()[index];
   }
 
   T &index_mut(usize index) {
-    if (index >= len()) { crust_panic("index_mut out of boundary!"); }
+    if (index >= len()) {
+      crust_panic("index_mut out of boundary!");
+    }
     return as_ptr()[index];
   }
 };
-}
+} // namespace crust
 
 
 #endif //_CRUST_INCLUDE_SLICE_HPP

@@ -7,7 +7,7 @@
 
 namespace crust {
 namespace option {
-template<class T>
+template <class T>
 class Option;
 }
 
@@ -21,22 +21,16 @@ CRUST_TRAIT(PartialEq, class Rhs = Self) {
 
   /// Used for detecting `PartialEq', part of the workaround below.
   /// Should never be implemented by hand.
-  template<class = void>
+  template <class = void>
   static void _detect_trait_partial_eq(const Rhs &) {}
 
   bool eq(const Rhs &other) const;
 
-  constexpr bool ne(const Rhs &other) const {
-    return !self().eq(other);
-  }
+  constexpr bool ne(const Rhs &other) const { return !self().eq(other); }
 
-  constexpr bool operator==(const Rhs &other) const {
-    return self().eq(other);
-  }
+  constexpr bool operator==(const Rhs &other) const { return self().eq(other); }
 
-  constexpr bool operator!=(const Rhs &other) const {
-    return self().ne(other);
-  }
+  constexpr bool operator!=(const Rhs &other) const { return self().ne(other); }
 };
 
 CRUST_TRAIT(Eq) {
@@ -44,7 +38,7 @@ CRUST_TRAIT(Eq) {
 
   /// Used for detecting `Eq', part of the workaround below.
   /// Should never be implemented by hand.
-  template<class = void>
+  template <class = void>
   static void _detect_trait_eq() {}
 };
 
@@ -63,33 +57,22 @@ CRUST_TRAIT(PartialOrd, class Rhs = Self) {
 
   constexpr bool ge(const Rhs &other) const;
 
-  constexpr bool operator<(const Rhs &other) const {
-    return self().lt(other);
-  }
+  constexpr bool operator<(const Rhs &other) const { return self().lt(other); }
 
-  constexpr bool operator<=(const Rhs &other) const {
-    return self().le(other);
-  }
+  constexpr bool operator<=(const Rhs &other) const { return self().le(other); }
 
-  constexpr bool operator>(const Rhs &other) const {
-    return self().gt(other);
-  }
+  constexpr bool operator>(const Rhs &other) const { return self().gt(other); }
 
-  constexpr bool operator>=(const Rhs &other) const {
-    return self().ge(other);
-  }
+  constexpr bool operator>=(const Rhs &other) const { return self().ge(other); }
 };
 
 CRUST_TRAIT(Ord) {
-  CRUST_TRAIT_REQUIRE(Ord,
-    Derive<Self, PartialEq>,
-    Derive<Self, Eq>,
-    Derive<Self, PartialOrd>
-  );
+  CRUST_TRAIT_REQUIRE(
+      Ord, Derive<Self, PartialEq>, Derive<Self, Eq>, Derive<Self, PartialOrd>);
 
   Ordering cmp(const Self &other) const;
 
-  crust_cxx14_constexpr Self max(Self &&other) {
+  crust_cxx14_constexpr Self max(Self && other) {
     if (self() > other) {
       return move(self());
     } else {
@@ -97,7 +80,7 @@ CRUST_TRAIT(Ord) {
     }
   }
 
-  crust_cxx14_constexpr Self min(Self &&other) {
+  crust_cxx14_constexpr Self min(Self && other) {
     if (self() > other) {
       return move(other);
     } else {
@@ -105,7 +88,7 @@ CRUST_TRAIT(Ord) {
     }
   }
 
-  crust_cxx14_constexpr Self clamp(Self &&min, Self &&max) {
+  crust_cxx14_constexpr Self clamp(Self && min, Self && max) {
     crust_assert(min <= max);
     if (self() < min) {
       return move(min);
@@ -116,54 +99,50 @@ CRUST_TRAIT(Ord) {
     }
   }
 };
-}
+} // namespace cmp
 
 namespace _impl_derive_eq {
 /// Ugly workaround for detecting `PartialEq' and `Eq' for classes inherits
 /// `Tuple' and `Enum'.
-template<class T, class Rhs>
+template <class T, class Rhs>
 struct DerivePartialEq {
-  template<class U>
+  template <class U>
   static u32 check(decltype(static_cast<void (*)(const Rhs &)>(
-      &U::template _detect_trait_partial_eq<>
-  )));
+      &U::template _detect_trait_partial_eq<>)));
 
-  template<class>
+  template <class>
   static void check(...);
 
   static constexpr bool result =
       IsSame<decltype(check<T>(nullptr)), u32>::result;
 };
 
-template<class T>
+template <class T>
 struct DeriveEq {
-  template<class U>
-  static u32 check(decltype(static_cast<void (*)()>(
-      &U::template _detect_trait_eq<>
-  )));
+  template <class U>
+  static u32
+  check(decltype(static_cast<void (*)()>(&U::template _detect_trait_eq<>)));
 
-  template<class>
+  template <class>
   static void check(...);
 
   static constexpr bool result =
       IsSame<decltype(check<T>(nullptr)), u32>::result;
 };
-}
+} // namespace _impl_derive_eq
 
 
-template<class Self, class Rhs>
+template <class Self, class Rhs>
 struct Derive<Self, cmp::PartialEq, Rhs> :
-    public _impl_derive_eq::DerivePartialEq<Self, Rhs>
-{};
+    public _impl_derive_eq::DerivePartialEq<Self, Rhs> {};
 
-template<class Self>
+template <class Self>
 struct Derive<Self, cmp::PartialEq> :
-    public _impl_derive_eq::DerivePartialEq<Self, Self>
-{};
+    public _impl_derive_eq::DerivePartialEq<Self, Self> {};
 
-template<class Self>
+template <class Self>
 struct Derive<Self, cmp::Eq> : public _impl_derive_eq::DeriveEq<Self> {};
-}
+} // namespace crust
 
 
 #endif //_CRUST_INCLUDE_CMP_DECL_HPP

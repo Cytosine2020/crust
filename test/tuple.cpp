@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "utility.hpp"
-#include "tuple.hpp"
 #include "cmp.hpp"
+#include "tuple.hpp"
+#include "utility.hpp"
 
 
 using namespace crust;
@@ -13,7 +13,7 @@ namespace {
 class A {};
 
 class B {};
-}
+} // namespace
 
 
 GTEST_TEST(tuple, size_zero) {
@@ -21,8 +21,7 @@ GTEST_TEST(tuple, size_zero) {
   crust_static_assert(IsZeroSizedType<Tuple<Tuple<>>>::result);
   crust_static_assert(IsZeroSizedType<Tuple<Tuple<>, Tuple<>>>::result);
   crust_static_assert(
-      IsZeroSizedType<Tuple<Tuple<>, Tuple<>, Tuple<>>>::result
-  );
+      IsZeroSizedType<Tuple<Tuple<>, Tuple<>, Tuple<>>>::result);
 
   crust_static_assert(sizeof(Tuple<>) == 1);
   crust_static_assert(sizeof(Tuple<Tuple<>>) == 1);
@@ -46,8 +45,7 @@ GTEST_TEST(tuple, size_zero) {
   EXPECT_TRUE(make_tuple() >= make_tuple());
   EXPECT_EQ(
       operator_partial_cmp(make_tuple(), make_tuple()),
-      make_some(make_equal())
-  );
+      make_some(make_equal()));
   EXPECT_EQ(operator_cmp(make_tuple(), make_tuple()), make_equal());
 }
 
@@ -71,8 +69,7 @@ GTEST_TEST(tuple, size_one) {
   EXPECT_TRUE(make_tuple(0) >= make_tuple(0));
   EXPECT_EQ(
       operator_partial_cmp(make_tuple(0), make_tuple(0)),
-      make_some(make_equal())
-  );
+      make_some(make_equal()));
   EXPECT_EQ(operator_cmp(make_tuple(0), make_tuple(0)), make_equal());
 
   auto tuple = make_tuple(0);

@@ -10,13 +10,13 @@
 
 namespace crust {
 namespace result {
-template<class T>
+template <class T>
 CRUST_ENUM_VARIANT(Ok, T);
 
-template<class E>
+template <class E>
 CRUST_ENUM_VARIANT(Err, E);
 
-template<class T, class E>
+template <class T, class E>
 class Result : public Enum<Ok<T>, Err<E>> {
 public:
   CRUST_ENUM_USE_BASE(Result, Enum<Ok<T>, Err<E>>);
@@ -28,15 +28,13 @@ public:
   constexpr bool contains(const T &other) const {
     return this->template visit<bool>(
         [&](const Ok<T> &value) { return value.template get<0>() == other; },
-        [](const Err<E> &) { return false; }
-    );
+        [](const Err<E> &) { return false; });
   }
 
   constexpr bool contains_err(const E &other) const {
     return this->template visit<bool>(
         [](const Ok<T> &) { return false; },
-        [&](const Err<E> &value) { return value.template get<0>() == other; }
-    );
+        [&](const Err<E> &value) { return value.template get<0>() == other; });
   }
 
   crust_cxx14_constexpr Option<T> ok() {
@@ -47,10 +45,10 @@ public:
     return this->template move_variant<Option<E>>();
   }
 };
-}
+} // namespace result
 
 using result::Result;
-}
+} // namespace crust
 
 
 #endif //_CRUST_INCLUDE_RESULT_HPP
