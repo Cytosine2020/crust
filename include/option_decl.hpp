@@ -29,7 +29,7 @@ public:
     return this->template eq_variant<Some<T>>(other);
   }
 
-  crust_cxx14_constexpr Option<const T *> as_ptr() const {
+  constexpr Option<const T *> as_ptr() const {
     return map(ops::bind([](const T &value) { return &value; }));
   }
 
@@ -52,18 +52,17 @@ public:
   }
 
   template <class U, class F>
-  crust_cxx14_constexpr Option<U> map(ops::Fn<F, U(const T &)> f) const;
+  constexpr Option<U> map(ops::Fn<F, U(const T &)> f) const;
 
   template <class U, class F>
-  crust_cxx14_constexpr U map_or(U &&d, ops::Fn<F, U(const T &)> f) const {
+  constexpr U map_or(U &&d, ops::Fn<F, U(const T &)> f) const {
     return this->template visit<U>(
         [&](const Some<T> &value) { return f(value.template get<0>()); },
         [&](const None &) { return move<U>(d); });
   }
 
   template <class U, class D, class F>
-  crust_cxx14_constexpr U
-  map_or_else(ops::Fn<D, U()> d, ops::Fn<F, U(const T &)> f) const {
+  constexpr U map_or_else(ops::Fn<D, U()> d, ops::Fn<F, U(const T &)> f) const {
     return this->template visit<U>(
         [&](const Some<T> &value) { return f(value.template get<0>()); },
         [&](const None &) { return d(); });

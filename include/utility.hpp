@@ -15,6 +15,12 @@ namespace crust {
 #define crust_cxx14_constexpr
 #endif
 
+#if __cplusplus > 201402L
+#define crust_cxx17_constexpr constexpr
+#else
+#define crust_cxx17_constexpr
+#endif
+
 #define crust_static_assert(...) static_assert(__VA_ARGS__, #__VA_ARGS__)
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -39,25 +45,61 @@ namespace crust {
 #error "Unsupported bit width."
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define no_return __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define no_return __declspec(noreturn)
+#else
+#define no_return
+#endif
 
-[[noreturn]] static inline void
-_panic(const char *file, int line, const char *msg) {
+#if defined(__GNUC__) || defined(__clang__)
+#define crust_likely(x) __builtin_expect(!!(x), 1)
+#define crust_unlikely(x) __builtin_expect(!!(x), 0)
+#else
+#define crust_likely(x) x
+#define crust_unlikely(x) x
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+#define always_inline inline __attribute__((always_inline))
+#elif defined(_MSC_VER)
+#define always_inline __forceinline
+#else
+#define always_inline inline
+#endif
+
+namespace _impl_utility {
+inline void warn(const char *file, int line, const char *msg) {
+  fprintf(stderr, "Warn at file %s, line %d: %s\n", file, line, msg);
+}
+
+#define crust_warn(msg) ::crust::_impl_utility::warn(__FILE__, __LINE__, msg)
+
+no_return inline void
+panic(const char *file, int line, const char *msg) noexcept {
   fprintf(stderr, "Abort at file %s, line %d: %s\n", file, line, msg);
-
-  abort();
+  exit(1);
 }
 
-#define crust_panic(msg) ::crust::_panic(__FILE__, __LINE__, msg)
+#define crust_panic(msg)                                                       \
+  ([](const char *f, int l, const char *m) {                                   \
+    fprintf(stderr, "Panic at file %s, line %d: %s\n", f, l, m);               \
+    exit(-1);                                                                  \
+  }(__FILE__, __LINE__, msg))
 
-static inline crust_cxx14_constexpr void
-_assert(const char *file, int line, const char *msg, bool condition) {
-  if (!condition) {
-    _panic(file, line, msg);
-  }
-}
+#define crust_assert(expr)                                                     \
+  (crust_likely(expr) ? void(0) : [](const char *f, int l, const char *m) {    \
+    fprintf(stderr, "Assert failed at file %s, line %d: %s\n", f, l, m);       \
+    exit(-1);                                                                  \
+  }(__FILE__, __LINE__, #expr))
 
-#define crust_assert(...)                                                      \
-  ::crust::_assert(__FILE__, __LINE__, #__VA_ARGS__, __VA_ARGS__)
+#if defined(NODEBUG)
+#define crust_debug_assert(expr)
+#else
+#define crust_debug_assert(expr) crust_assert(expr)
+#endif
+} // namespace _impl_utility
 
 using i8 = int8_t;
 using u8 = uint8_t;
@@ -77,120 +119,118 @@ using usize = u64;
 #error "Unsupported bit width."
 #endif
 
+template <class Value>
+struct TmplArg {
+  using Result = Value;
+};
+
+template <class Type, Type value>
+struct StaticTmplArg {
+  static constexpr Type result = value;
+};
+
+#define crust_tmpl_arg(obj)                                                    \
+  ::crust::StaticTmplArg<decltype(obj), (obj)> {}
+
 template <bool enable>
 struct EnableIf {};
 
 template <>
-struct EnableIf<true> {
-  using Result = void;
-};
+struct EnableIf<true> : TmplArg<void> {};
 
-struct TrueType {
-  static constexpr bool result = true;
-};
+template <bool value>
+struct BoolType : StaticTmplArg<bool, value> {};
 
-struct FalseType {
-  static constexpr bool result = false;
-};
+using TrueType = BoolType<true>;
+using FalseType = BoolType<false>;
 
 template <class Condition>
-struct NotType {
-  static constexpr bool result = !Condition::result;
-};
+struct NotType : BoolType<!Condition::result> {};
 
 template <class... Conditions>
 struct AllType;
 
 template <class Condition, class... Conditions>
-struct AllType<Condition, Conditions...> {
-  static constexpr bool result =
-      Condition::result && AllType<Conditions...>::result;
-};
+struct AllType<Condition, Conditions...> :
+    BoolType<Condition::result && AllType<Conditions...>::result> {};
 
 template <>
-struct AllType<> : public TrueType {};
+struct AllType<> : TrueType {};
 
 template <class... Conditions>
 struct AnyType;
 
 template <class Condition, class... Conditions>
-struct AnyType<Condition, Conditions...> {
-  static constexpr bool result =
-      Condition::result || AnyType<Conditions...>::result;
-};
+struct AnyType<Condition, Conditions...> :
+    BoolType<Condition::result || AnyType<Conditions...>::result> {};
 
 template <>
-struct AnyType<> : public FalseType {};
+struct AnyType<> : FalseType {};
+
+template <class T, template <class> class... Tmpls>
+struct CompositionTmpl;
+
+template <class T, template <class> class Tmpl, template <class> class... Tmpls>
+struct CompositionTmpl<T, Tmpl, Tmpls...> :
+    CompositionTmpl<typename Tmpl<T>::Result, Tmpls...> {};
+
+template <class T>
+struct CompositionTmpl<T> : TmplArg<T> {};
 
 template <class A, class B>
-struct IsSame : public FalseType {};
+struct IsSame : FalseType {};
 
 template <class A>
-struct IsSame<A, A> : public TrueType {};
+struct IsSame<A, A> : TrueType {};
 
 template <class T>
-struct RemoveRef {
-  using Result = T;
-};
+struct RemoveRef : TmplArg<T> {};
 
 template <class T>
-struct RemoveRef<T &> {
-  using Result = T;
-};
+struct RemoveRef<T &> : TmplArg<T> {};
 
 template <class T>
-struct RemoveRef<T &&> {
-  using Result = T;
-};
+struct RemoveRef<T &&> : TmplArg<T> {};
 
 template <class T>
-struct RemoveConst {
-  using Result = T;
-};
+struct RemoveConst : TmplArg<T> {};
 
 template <class T>
-struct RemoveConst<const T> {
-  using Result = T;
-};
+struct RemoveConst<T const> : TmplArg<T> {};
 
 template <class T>
-struct RemoveConstOrRef {
-  using Result = typename RemoveRef<typename RemoveConst<T>::Result>::Result;
-};
+struct RemoveConstOrRef : CompositionTmpl<T, RemoveRef, RemoveConst> {};
 
 template <class T>
-struct IsLValueRef : public FalseType {};
+struct IsLValueRef : FalseType {};
 
 template <class T>
-struct IsLValueRef<T &> : public TrueType {};
+struct IsLValueRef<T &> : TrueType {};
 
 template <class T>
-struct IsRValueRef : public FalseType {};
+struct IsRValueRef : FalseType {};
 
 template <class T>
-struct IsRValueRef<T &&> : public TrueType {};
+struct IsRValueRef<T &&> : TrueType {};
 
 template <class T>
-struct IsConst : public FalseType {};
+struct IsConst : FalseType {};
 
 template <class T>
-struct IsConst<const T> : public TrueType {};
+struct IsConst<const T> : TrueType {};
 
 template <class T>
-struct IsRef : public AnyType<IsLValueRef<T>, IsRValueRef<T>> {};
+struct IsRef : AnyType<IsLValueRef<T>, IsRValueRef<T>> {};
 
 template <class T>
-struct IsConstOrRef : public AnyType<IsRef<T>, IsConst<T>> {};
+struct IsConstOrRef : AnyType<IsRef<T>, IsConst<T>> {};
 
 template <class B, class T>
-struct IsBaseOfType {
-  static constexpr bool result = std::is_base_of<B, T>::value;
-};
+struct IsBaseOfType : BoolType<std::is_base_of<B, T>::value> {};
 
 template <class T>
-struct IsTriviallyCopyableType {
-  static constexpr bool result = std::is_trivially_copyable<T>::value;
-};
+struct IsTriviallyCopyableType :
+    BoolType<std::is_trivially_copyable<T>::value> {};
 
 template <class T>
 constexpr typename RemoveRef<T>::Result &&move(T &&t) {
@@ -208,26 +248,26 @@ constexpr T &&forward(typename RemoveRef<T>::Result &&t) {
   return static_cast<T &&>(t);
 }
 
-namespace _impl_impl {
+namespace _impl_utility {
 template <class T, bool condition>
 struct Impl;
 
 template <class T>
-struct Impl<T, true> : public T {};
+struct Impl<T, true> : T {};
 
 template <class T>
 struct Impl<T, false> {};
-} // namespace _impl_impl
+} // namespace _impl_utility
 
 template <class T, class... Conditions>
-using Impl = _impl_impl::Impl<T, AllType<Conditions...>::result>;
+using Impl = _impl_utility::Impl<T, AllType<Conditions...>::result>;
 
 template <
     class Struct,
     template <class Self, class... Args>
     class Trait,
     class... Args>
-struct Derive : public IsBaseOfType<Trait<Struct, Args...>, Struct> {};
+struct Derive : IsBaseOfType<Trait<Struct, Args...>, Struct> {};
 
 /// this is used by Tuple, Enum and Slice for zero sized type optimization
 /// forign type can inherit ZeroSizedType to be treated as mono state.
@@ -235,7 +275,7 @@ struct Derive : public IsBaseOfType<Trait<Struct, Args...>, Struct> {};
 struct ZeroSizedType {};
 
 template <class T>
-struct IsZeroSizedType : public IsBaseOfType<ZeroSizedType, T> {};
+struct IsZeroSizedType : IsBaseOfType<ZeroSizedType, T> {};
 
 #define CRUST_TRAIT(TRAIT, ...)                                                \
   template <class Self, ##__VA_ARGS__>                                         \
@@ -306,12 +346,6 @@ public:
   CRUST_MACRO_REPEAT_15(FN);                                                   \
   FN(15)
 #define CRUST_MACRO_REPEAT(N, FN) CRUST_MACRO_REPEAT_##N(FN)
-
-template <class Type, Type obj>
-struct TmplArg {};
-
-#define crust_tmpl_arg(obj)                                                    \
-  ::crust::TmplArg<decltype(obj), (obj)> {}
 } // namespace crust
 
 

@@ -21,11 +21,8 @@ class Ordering :
     public Enum<Less, Equal, Greater>,
     public PartialOrd<Ordering>,
     public Ord<Ordering> {
-public:
-  CRUST_ENUM_USE_BASE(Ordering, Enum<Less, Equal, Greater>);
-
 private:
-  crust_cxx14_constexpr i32 to_i32() const {
+  crust_cxx17_constexpr i32 to_i32() const {
     return this->template visit<i32>(
         [](const Less &) { return -1; },
         [](const Equal &) { return 0; },
@@ -33,14 +30,16 @@ private:
   }
 
 public:
-  crust_cxx14_constexpr Ordering reverse() const {
+  CRUST_ENUM_USE_BASE(Ordering, Enum<Less, Equal, Greater>);
+
+  crust_cxx17_constexpr Ordering reverse() const {
     return this->template visit<Ordering>(
         [](const Less &) { return Greater{}; },
         [](const Equal &) { return Equal{}; },
         [](const Greater &) { return Less{}; });
   }
 
-  crust_cxx14_constexpr Ordering then(const Ordering &other) const {
+  crust_cxx17_constexpr Ordering then(const Ordering &other) const {
     return this->template visit<Ordering>(
         [](const Less &) { return Less{}; },
         [&](const Equal &) { return other; },
@@ -48,7 +47,7 @@ public:
   }
 
   template <class F>
-  crust_cxx14_constexpr Ordering then_with(ops::Fn<F, Ordering()> f) const {
+  constexpr Ordering then_with(ops::Fn<F, Ordering()> f) const {
     return this->template visit<Ordering>(
         [](const Less &) { return Less{}; },
         [&](const Equal &) { return f(); },
@@ -57,21 +56,21 @@ public:
 
   /// impl PartialOrd
 
-  crust_cxx14_constexpr Option<Ordering>
+  crust_cxx17_constexpr Option<Ordering>
   partial_cmp(const Ordering &other) const {
     return make_some(cmp(other));
   }
 
   /// impl Ord
 
-  crust_cxx14_constexpr Ordering cmp(const Ordering &other) const;
+  crust_cxx17_constexpr Ordering cmp(const Ordering &other) const;
 };
 
-constexpr Ordering make_less() { return Less{}; }
+always_inline constexpr Ordering make_less() { return Less{}; }
 
-constexpr Ordering make_equal() { return Equal{}; }
+always_inline constexpr Ordering make_equal() { return Equal{}; }
 
-constexpr Ordering make_greater() { return Greater{}; }
+always_inline constexpr Ordering make_greater() { return Greater{}; }
 
 /// because c++ do not support add member function for primitive types,
 /// following two functions are used for invoking `partial_cmp' or `cmp' for
@@ -132,7 +131,8 @@ constexpr bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
   FN(i64, ##__VA_ARGS__)
 
 #define _IMPL_OPERATOR_CMP(type, ...)                                          \
-  inline constexpr Ordering operator_cmp(const type &v1, const type &v2) {     \
+  always_inline constexpr Ordering operator_cmp(                               \
+      const type &v1, const type &v2) {                                        \
     return v1 < v2 ? make_less() : v1 > v2 ? make_greater() : make_equal();    \
   }
 
@@ -141,7 +141,7 @@ _IMPL_PRIMITIVE(_IMPL_OPERATOR_CMP)
 #undef _IMPL_OPERATOR_CMP
 
 #define _IMPL_OPERATOR_PARTIAL_CMP(type, ...)                                  \
-  inline constexpr Option<Ordering> operator_partial_cmp(                      \
+  always_inline constexpr Option<Ordering> operator_partial_cmp(               \
       const type &v1, const type &v2) {                                        \
     return make_some(operator_cmp(v1, v2));                                    \
   }
@@ -150,7 +150,7 @@ _IMPL_PRIMITIVE(_IMPL_OPERATOR_PARTIAL_CMP)
 
 #undef _IMPL_OPERATOR_PARTIAL_CMP
 
-inline crust_cxx14_constexpr Ordering
+inline crust_cxx17_constexpr Ordering
 Ordering::cmp(const Ordering &other) const {
   return operator_cmp(to_i32(), other.to_i32());
 }
@@ -250,7 +250,7 @@ public:
 } // namespace cmp
 
 #define _DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...)                               \
-  struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> : public TrueType {}
+  struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> : TrueType {}
 
 _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::PartialEq);
 _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::Eq);

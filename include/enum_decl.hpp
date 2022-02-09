@@ -26,20 +26,20 @@ template <class T, class Field, class... Fields>
 struct EnumInclude<T, Field, Fields...> : EnumInclude<T, Fields...> {};
 
 template <class T, class... Fields>
-struct EnumInclude<T, T, Fields...> : public TrueType {};
+struct EnumInclude<T, T, Fields...> : TrueType {};
 
 template <class T>
-struct EnumInclude<T> : public FalseType {};
+struct EnumInclude<T> : FalseType {};
 
 template <class... Fields>
 struct EnumDuplicate;
 
 template <class Field, class... Fields>
 struct EnumDuplicate<Field, Fields...> :
-    public AnyType<EnumInclude<Field, Fields...>, EnumDuplicate<Fields...>> {};
+    AnyType<EnumInclude<Field, Fields...>, EnumDuplicate<Fields...>> {};
 
 template <>
-struct EnumDuplicate<> : public FalseType {};
+struct EnumDuplicate<> : FalseType {};
 
 template <bool trivial, class... Fields>
 union EnumHolder;
@@ -95,14 +95,10 @@ template <usize index, class... Fields>
 struct EnumType;
 
 template <usize index, class Field, class... Fields>
-struct EnumType<index, Field, Fields...> {
-  using Result = typename EnumType<index - 1, Fields...>::Result;
-};
+struct EnumType<index, Field, Fields...> : EnumType<index - 1, Fields...> {};
 
 template <class Field, class... Fields>
-struct EnumType<0, Field, Fields...> {
-  using Result = Field;
-};
+struct EnumType<0, Field, Fields...> : TmplArg<Field> {};
 
 template <usize index, bool trivial, class... Fields>
 struct EnumGetter;
@@ -134,15 +130,13 @@ struct EnumGetter<0, trivial, Field, Fields...> {
 
 template <usize offset, usize size, bool trivial, class... Fields>
 struct EnumVisitor {
-private:
   static constexpr usize cut = size / 2;
 
   using LowerGetter = EnumVisitor<offset, cut, trivial, Fields...>;
   using UpperGetter = EnumVisitor<offset + cut, size - cut, trivial, Fields...>;
 
-public:
   template <class R, class V>
-  static crust_cxx14_constexpr R
+  static constexpr R
   inner(const EnumHolder<trivial, Fields...> &self, V &&impl, usize index) {
     return index < cut ?
         LowerGetter::template inner<R, V>(self, forward<V>(impl), index) :
@@ -150,7 +144,7 @@ public:
   }
 
   template <class R, class V>
-  static crust_cxx14_constexpr R
+  static constexpr R
   inner(EnumHolder<trivial, Fields...> &self, V &&impl, usize index) {
     return index < cut ?
         LowerGetter::template inner<R, V>(self, forward<V>(impl), index) :
@@ -208,15 +202,13 @@ _ENUM_VISITOR_IMPL(1);
 
 template <usize offset, usize size, class... Fields>
 struct TagVisitor {
-private:
   static constexpr usize cut = size / 2;
 
   using LowerGetter = TagVisitor<offset, cut, Fields...>;
   using UpperGetter = TagVisitor<offset + cut, size - cut, Fields...>;
 
-public:
   template <class R, class V>
-  static crust_cxx14_constexpr R inner(V &&impl, usize index) {
+  static constexpr R inner(V &&impl, usize index) {
     return index < cut ?
         LowerGetter::template inner<R, V>(forward<V>(impl), index) :
         UpperGetter::template inner<R, V>(forward<V>(impl), index);
@@ -265,14 +257,11 @@ template <class T, class... Fields>
 struct EnumTypeToIndex;
 
 template <class T, class Field, class... Fields>
-struct EnumTypeToIndex<T, Field, Fields...> {
-  static constexpr u32 result = EnumTypeToIndex<T, Fields...>::result + 1;
-};
+struct EnumTypeToIndex<T, Field, Fields...> :
+    StaticTmplArg<u32, EnumTypeToIndex<T, Fields...>::result + 1> {};
 
 template <class T, class... Fields>
-struct EnumTypeToIndex<T, T, Fields...> {
-  static constexpr u32 result = 0;
-};
+struct EnumTypeToIndex<T, T, Fields...> : StaticTmplArg<u32, 0> {};
 
 template <class Self, bool flag>
 struct EnumTrivial;
@@ -332,17 +321,15 @@ struct EnumTrivial<Self, false> {
 };
 
 template <class... Fields>
-struct EnumIsTrivial : public AllType<IsTriviallyCopyableType<Fields>...> {};
+struct EnumIsTrivial : AllType<IsTriviallyCopyableType<Fields>...> {};
 
 template <class... Fields>
-struct EnumIsTagOnly : public AllType<IsZeroSizedType<Fields>...> {};
+struct EnumIsTagOnly : AllType<IsZeroSizedType<Fields>...> {};
 
 
 template <class... Fields>
 struct EnumTagUnion :
-    public EnumTrivial<
-        EnumTagUnion<Fields...>,
-        EnumIsTrivial<Fields...>::result> {
+    EnumTrivial<EnumTagUnion<Fields...>, EnumIsTrivial<Fields...>::result> {
   static constexpr bool trivial = EnumIsTrivial<Fields...>::result;
 
   friend EnumTrivial<EnumTagUnion, trivial>;
@@ -399,15 +386,15 @@ struct EnumTagUnion :
   }
 
   template <class R = void, class V>
-  crust_cxx14_constexpr R visit(V &&visitor) const {
-    crust_assert(index - 1 < sizeof...(Fields));
-    return Getter::template inner<R, V>(holder, forward<V>(visitor), index - 1);
+  constexpr R visit(V &&visitor) const {
+    return crust_debug_assert(index - 1 < sizeof...(Fields)),
+           Getter::template inner<R, V>(holder, forward<V>(visitor), index - 1);
   }
 
   template <class R = void, class V>
   crust_cxx14_constexpr R visit(V &&visitor) {
-    crust_assert(index - 1 < sizeof...(Fields));
-    return Getter::template inner<R, V>(holder, forward<V>(visitor), index - 1);
+    return crust_debug_assert(index - 1 < sizeof...(Fields)),
+           Getter::template inner<R, V>(holder, forward<V>(visitor), index - 1);
   }
 
   template <class T, class V>
@@ -466,8 +453,8 @@ struct EnumTagUnion :
     };
   };
 
-  crust_cxx14_constexpr bool eq(const EnumTagUnion &other) const {
-    return this->index == other.index && visit<bool>(Equal{&other.holder});
+  constexpr bool eq(const EnumTagUnion &other) const {
+    return index == other.index && visit<bool>(Equal{&other.holder});
   }
 
   struct NotEqual {
@@ -483,8 +470,8 @@ struct EnumTagUnion :
     };
   };
 
-  crust_cxx14_constexpr bool ne(const EnumTagUnion &other) const {
-    return this->index != other.index || visit<bool>(NotEqual{&other.holder});
+  constexpr bool ne(const EnumTagUnion &other) const {
+    return index != other.index || visit<bool>(NotEqual{&other.holder});
   }
 };
 
@@ -511,15 +498,15 @@ struct EnumTagOnly {
   }
 
   template <class R = void, class V>
-  crust_cxx14_constexpr R visit(V &&visitor) const {
-    crust_assert(index - 1 < sizeof...(Fields));
-    return Getter::template inner<R, V>(forward<V>(visitor), index - 1);
+  constexpr R visit(V &&visitor) const {
+    return crust_debug_assert(index - 1 < sizeof...(Fields)),
+           Getter::template inner<R, V>(forward<V>(visitor), index - 1);
   }
 
   template <class R = void, class V>
   crust_cxx14_constexpr R visit(V &&visitor) {
-    crust_assert(index - 1 < sizeof...(Fields));
-    return Getter::template inner<R, V>(forward<V>(visitor), index - 1);
+    return crust_debug_assert(index - 1 < sizeof...(Fields)),
+           Getter::template inner<R, V>(forward<V>(visitor), index - 1);
   }
 
   template <class T>
@@ -547,7 +534,7 @@ struct EnumTagOnly {
   }
 
   constexpr bool eq(const EnumTagOnly &other) const {
-    return this->index == other.index;
+    return index == other.index;
   }
 };
 
@@ -555,12 +542,12 @@ template <bool is_tag_only, class... Fields>
 struct EnumSelect;
 
 template <class... Fields>
-struct EnumSelect<false, Fields...> : public EnumTagUnion<Fields...> {
+struct EnumSelect<false, Fields...> : EnumTagUnion<Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(EnumSelect, EnumTagUnion<Fields...>);
 };
 
 template <class... Fields>
-struct EnumSelect<true, Fields...> : public EnumTagOnly<Fields...> {
+struct EnumSelect<true, Fields...> : EnumTagOnly<Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(EnumSelect, EnumTagOnly<Fields...>);
 };
 
@@ -571,23 +558,23 @@ template <class... Ts>
 struct Overloaded;
 
 template <class T, class... Ts>
-struct crust_ebco Overloaded<T, Ts...> : public T, public Overloaded<Ts...> {
+struct crust_ebco Overloaded<T, Ts...> : T, Overloaded<Ts...> {
   using T::operator();
   using Overloaded<Ts...>::operator();
 
-  explicit Overloaded(T t, Ts... ts) :
+  explicit constexpr Overloaded(T t, Ts... ts) :
       T{forward<T>(t)}, Overloaded<Ts...>{forward<Ts>(ts)...} {}
 };
 
 template <class T>
-struct crust_ebco Overloaded<T> : public T {
+struct crust_ebco Overloaded<T> : T {
   using T::operator();
 
-  explicit Overloaded(T t) : T{forward<T>(t)} {}
+  explicit constexpr Overloaded(T t) : T{forward<T>(t)} {}
 };
 
 template <class... Ts>
-Overloaded<Ts...> overloaded(Ts &&...ts) {
+constexpr Overloaded<Ts...> overloaded(Ts &&...ts) {
   return Overloaded<Ts...>{forward<Ts>(ts)...};
 }
 } // namespace _impl_enum
@@ -648,7 +635,7 @@ public:
   }
 
   template <class R = void, class... Ts>
-  crust_cxx14_constexpr R visit(Ts &&...ts) const {
+  constexpr R visit(Ts &&...ts) const {
     return inner.template visit<R>(_impl_enum::overloaded(forward<Ts>(ts)...));
   }
 
@@ -657,13 +644,9 @@ public:
     return inner.template visit<R>(_impl_enum::overloaded(forward<Ts>(ts)...));
   }
 
-  crust_cxx14_constexpr bool eq(const Enum &other) const {
-    return inner.eq(other.inner);
-  }
+  constexpr bool eq(const Enum &other) const { return inner.eq(other.inner); }
 
-  crust_cxx14_constexpr bool ne(const Enum &other) const {
-    return inner.ne(other.inner);
-  }
+  constexpr bool ne(const Enum &other) const { return inner.ne(other.inner); }
 };
 
 #define CRUST_ENUM_USE_BASE(NAME, ...)                                         \
@@ -682,7 +665,7 @@ public:
   }
 
 #define CRUST_ENUM_VARIANT(NAME, ...)                                          \
-  struct crust_ebco NAME final : public ::crust::Tuple<__VA_ARGS__> {          \
+  struct crust_ebco NAME final : ::crust::Tuple<__VA_ARGS__> {                 \
     CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::Tuple<__VA_ARGS__>)             \
     template <class = void>                                                    \
     static void _detect_trait_partial_eq(const NAME &) {                       \

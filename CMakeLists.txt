@@ -34,10 +34,10 @@ set(CMAKE_CXX_STANDARD 11)
 if (NOT MSVC)
   add_compile_options(-Wall -Wextra -fno-exceptions -fno-rtti)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
-    -ggdb -g3 -fno-omit-frame-pointer -D __DEBUG__")
+    -ggdb -g3 -fno-omit-frame-pointer")
 else ()
   add_compile_options(/W 3 /sdl /EHr /GR-)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Z7 /D__DEBUG__")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Z7")
 endif ()
 
 IF(CMAKE_BUILD_TYPE MATCHES RELEASE)

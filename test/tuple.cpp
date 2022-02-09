@@ -37,12 +37,12 @@ GTEST_TEST(tuple, size_zero) {
   crust_static_assert(std::is_trivially_copyable<Tuple<>>::value);
   crust_static_assert(std::is_literal_type<Tuple<>>::value);
 
-  EXPECT_TRUE(make_tuple() == make_tuple());
-  EXPECT_FALSE(make_tuple() != make_tuple());
-  EXPECT_FALSE(make_tuple() < make_tuple());
-  EXPECT_TRUE(make_tuple() <= make_tuple());
-  EXPECT_FALSE(make_tuple() > make_tuple());
-  EXPECT_TRUE(make_tuple() >= make_tuple());
+  crust_static_assert(make_tuple() == make_tuple());
+  crust_static_assert(!(make_tuple() != make_tuple()));
+  crust_static_assert(!(make_tuple() < make_tuple()));
+  crust_static_assert(make_tuple() <= make_tuple());
+  crust_static_assert(!(make_tuple() > make_tuple()));
+  crust_static_assert(make_tuple() >= make_tuple());
   EXPECT_EQ(
       operator_partial_cmp(make_tuple(), make_tuple()),
       make_some(make_equal()));
@@ -61,12 +61,12 @@ GTEST_TEST(tuple, size_one) {
   crust_static_assert(Derive<Tuple<i32>, PartialEq>::result);
   crust_static_assert(Derive<Tuple<i32>, Eq>::result);
 
-  EXPECT_TRUE(make_tuple(0) == make_tuple(0));
-  EXPECT_FALSE(make_tuple(0) != make_tuple(0));
-  EXPECT_FALSE(make_tuple(0) < make_tuple(0));
-  EXPECT_TRUE(make_tuple(0) <= make_tuple(0));
-  EXPECT_FALSE(make_tuple(0) > make_tuple(0));
-  EXPECT_TRUE(make_tuple(0) >= make_tuple(0));
+  crust_static_assert(make_tuple(0) == make_tuple(0));
+  crust_static_assert(!(make_tuple(0) != make_tuple(0)));
+  crust_static_assert(!(make_tuple(0) < make_tuple(0)));
+  crust_static_assert(make_tuple(0) <= make_tuple(0));
+  crust_static_assert(!(make_tuple(0) > make_tuple(0)));
+  crust_static_assert(make_tuple(0) >= make_tuple(0));
   EXPECT_EQ(
       operator_partial_cmp(make_tuple(0), make_tuple(0)),
       make_some(make_equal()));
@@ -112,9 +112,9 @@ GTEST_TEST(tuple, size_two) {
   EXPECT_EQ(a, 1);
   EXPECT_EQ(b, 'b');
 
-  EXPECT_TRUE(make_tuple(true) != make_tuple(false));
-  EXPECT_TRUE(make_tuple(1) > make_tuple(0));
-  EXPECT_TRUE(make_tuple(0, 'b') > make_tuple(0, 'a'));
+  crust_static_assert(make_tuple(true) != make_tuple(false));
+  crust_static_assert(make_tuple(1) > make_tuple(0));
+  crust_static_assert(make_tuple(0, 'b') > make_tuple(0, 'a'));
 
   EXPECT_TRUE(make_tuple(0, 1).cmp(make_tuple(0, 0)) == make_greater());
 }

@@ -77,7 +77,7 @@ make_tuple(Fields &&...fields) {
 
 namespace _impl_tuple {
 template <class... Fields>
-struct LetTuple {
+class LetTuple {
 private:
   TupleHolder<Fields &...> ref;
 
@@ -105,7 +105,7 @@ namespace std {
 
 template <class... Fields>
 struct tuple_size<crust::Tuple<Fields...>> :
-    public integral_constant<crust::usize, sizeof...(Fields)> {};
+    integral_constant<crust::usize, sizeof...(Fields)> {};
 
 template <crust::usize index, class... Fields>
 struct tuple_element<index, crust::Tuple<Fields...>> {

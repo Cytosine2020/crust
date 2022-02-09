@@ -15,14 +15,11 @@ template <
 struct MemFnClosure;
 
 template <class Self, class Ret, class... Args, Ret (Self::*f)(Args...) const>
-struct MemFnClosure<Self, Ret (Self::*)(Args...) const, f> {
-  using Inner = Ret(Args...);
-};
+struct MemFnClosure<Self, Ret (Self::*)(Args...) const, f> :
+    TmplArg<Ret(Args...)> {};
 
 template <class Self, class Ret, class... Args, Ret (Self::*f)(Args...)>
-struct MemFnClosure<Self, Ret (Self::*)(Args...), f> {
-  using Inner = Ret(Args...);
-};
+struct MemFnClosure<Self, Ret (Self::*)(Args...), f> : TmplArg<Ret(Args...)> {};
 
 template <class F, F f>
 struct RawMemFn;
@@ -52,7 +49,7 @@ struct RawFn<Ret(Args...), f> {
 };
 } // namespace _impl_fn
 
-template <class Self, class F = typename _impl_fn::MemFnClosure<Self>::Inner>
+template <class Self, class F = typename _impl_fn::MemFnClosure<Self>::Result>
 class Fn;
 
 template <class Self, class Ret, class... Args>
@@ -65,42 +62,42 @@ private:
 public:
   constexpr Fn(Self &&self) : self{move(self)} {}
 
-  crust_cxx14_constexpr Ret operator()(Args... args) const {
+  constexpr Ret operator()(Args... args) const {
     return self(forward<Args>(args)...);
   }
 };
 
 template <class F, F *f>
-Fn<_impl_fn::RawFn<F, f>> bind(TmplArg<F *, f>) {
+always_inline Fn<_impl_fn::RawFn<F, f>> bind(StaticTmplArg<F *, f>) {
   return Fn<_impl_fn::RawFn<F, f>>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class T, class F, F *f>
-Fn<_impl_fn::RawFn<F, f>, T> bind(TmplArg<F *, f>) {
+always_inline Fn<_impl_fn::RawFn<F, f>, T> bind(StaticTmplArg<F *, f>) {
   return Fn<_impl_fn::RawFn<F, f>, T>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class F, F f>
-Fn<_impl_fn::RawMemFn<F, f>> bind(TmplArg<F, f>) {
+always_inline Fn<_impl_fn::RawMemFn<F, f>> bind(StaticTmplArg<F, f>) {
   return Fn<_impl_fn::RawMemFn<F, f>>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T, class F, F f>
-Fn<_impl_fn::RawMemFn<F, f>, T> bind(TmplArg<F, f>) {
+always_inline Fn<_impl_fn::RawMemFn<F, f>, T> bind(StaticTmplArg<F, f>) {
   return Fn<_impl_fn::RawMemFn<F, f>, T>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T>
-constexpr Fn<T> bind(T &&f) {
+always_inline constexpr Fn<T> bind(T &&f) {
   return Fn<T>{forward<T>(f)};
 }
 
 template <class F, class T>
-constexpr Fn<T, F> bind(T &&f) {
+always_inline constexpr Fn<T, F> bind(T &&f) {
   return Fn<T, F>{forward<T>(f)};
 }
 
-template <class Self, class F = typename _impl_fn::MemFnClosure<Self>::Inner>
+template <class Self, class F = typename _impl_fn::MemFnClosure<Self>::Result>
 class FnMut;
 
 template <class Self, class Ret, class... Args>
@@ -119,32 +116,32 @@ public:
 };
 
 template <class F, F *f>
-FnMut<_impl_fn::RawFn<F, f>> bind_mut(TmplArg<F *, f>) {
+always_inline FnMut<_impl_fn::RawFn<F, f>> bind_mut(StaticTmplArg<F *, f>) {
   return FnMut<_impl_fn::RawFn<F, f>>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class T, class F, F *f>
-FnMut<_impl_fn::RawFn<F, f>, T> bind_mut(TmplArg<F *, f>) {
+always_inline FnMut<_impl_fn::RawFn<F, f>, T> bind_mut(StaticTmplArg<F *, f>) {
   return FnMut<_impl_fn::RawFn<F, f>, T>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class F, F f>
-FnMut<_impl_fn::RawMemFn<F, f>> bind_mut(TmplArg<F, f>) {
+always_inline FnMut<_impl_fn::RawMemFn<F, f>> bind_mut(StaticTmplArg<F, f>) {
   return FnMut<_impl_fn::RawMemFn<F, f>>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T, class F, F f>
-FnMut<_impl_fn::RawMemFn<F, f>, T> bind_mut(TmplArg<F, f>) {
+always_inline FnMut<_impl_fn::RawMemFn<F, f>, T> bind_mut(StaticTmplArg<F, f>) {
   return FnMut<_impl_fn::RawMemFn<F, f>, T>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T>
-constexpr FnMut<T> bind_mut(T &&f) {
+always_inline constexpr FnMut<T> bind_mut(T &&f) {
   return FnMut<T>{forward<T>(f)};
 }
 
 template <class F, class T>
-constexpr FnMut<T, F> bind_mut(T &&f) {
+always_inline constexpr FnMut<T, F> bind_mut(T &&f) {
   return FnMut<T, F>{forward<T>(f)};
 }
 
@@ -234,7 +231,7 @@ public:
       vtable{&_impl_fn::StaticFnVTable<Self, Ret, Args...>::vtable} {}
 
   template <class F, F *f>
-  constexpr DynFn(TmplArg<F *, f>) : DynFn{_impl_fn::RawFn<F, f>{}} {}
+  constexpr DynFn(StaticTmplArg<F *, f>) : DynFn{_impl_fn::RawFn<F, f>{}} {}
 
   DynFn(DynFn &&other) noexcept {
     if (this != &other) {
@@ -287,7 +284,8 @@ public:
       vtable{&_impl_fn::StaticFnMutVTable<Self, Ret, Args...>::vtable} {}
 
   template <class F, F *f>
-  constexpr DynFnMut(TmplArg<F *, f>) : DynFnMut{_impl_fn::RawFn<F, f>{}} {}
+  constexpr DynFnMut(StaticTmplArg<F *, f>) :
+      DynFnMut{_impl_fn::RawFn<F, f>{}} {}
 
   DynFnMut(DynFnMut &&other) noexcept {
     if (this != &other) {

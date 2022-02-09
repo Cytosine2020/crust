@@ -67,9 +67,10 @@ GTEST_TEST(cmp, derive) {
 
 
 GTEST_TEST(cmp, ordering) {
-  EXPECT_TRUE(make_less() == make_less());
-  EXPECT_TRUE(make_equal() == make_equal());
-  EXPECT_TRUE(make_greater() == make_greater());
+  crust_static_assert(make_less() == make_less());
+  crust_static_assert(make_less() == make_less());
+  crust_static_assert(make_equal() == make_equal());
+  crust_static_assert(make_greater() == make_greater());
   EXPECT_TRUE(make_less() < make_equal());
   EXPECT_TRUE(make_less() < make_greater());
   EXPECT_TRUE(make_equal() < make_greater());

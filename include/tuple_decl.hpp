@@ -103,7 +103,7 @@ struct TupleHolderImpl<false, true, Field, Fields...> {
 
 template <class Field, class... Fields>
 struct crust_ebco TupleHolderImpl<true, false, Field, Fields...> :
-    public TupleHolder<Fields...> {};
+    TupleHolder<Fields...> {};
 
 template <class... Fields>
 struct TupleHolderImpl<true, true, Fields...> {
@@ -126,7 +126,7 @@ struct TupleHolderImpl<true, true, Fields...> {
 
 template <class Field, class... Fields>
 struct crust_ebco TupleHolder<Field, Fields...> :
-    public TupleHolderImpl<
+    TupleHolderImpl<
         IsZeroSizedType<Field>::result,
         AllType<IsZeroSizedType<Fields>...>::result,
         Field,
@@ -142,14 +142,14 @@ struct crust_ebco TupleHolder<Field, Fields...> :
 
 template <class Field>
 struct crust_ebco TupleHolder<Field> :
-    public TupleHolderImpl<IsZeroSizedType<Field>::result, true, Field> {
+    TupleHolderImpl<IsZeroSizedType<Field>::result, true, Field> {
   CRUST_USE_BASE_CONSTRUCTORS(
       TupleHolder,
       TupleHolderImpl<IsZeroSizedType<Field>::result, true, Field>);
 };
 
 template <>
-struct TupleHolder<> : public TupleHolderImpl<true, true> {};
+struct TupleHolder<> : TupleHolderImpl<true, true> {};
 
 template <usize index, class... Fields>
 struct TupleGetter;

@@ -13,19 +13,20 @@ CRUST_ENUM_VARIANT(Some, T);
 CRUST_ENUM_VARIANT(None);
 
 template <class T>
-constexpr Option<typename RemoveConstOrRef<T>::Result> make_some(T &&value) {
+always_inline constexpr Option<typename RemoveConstOrRef<T>::Result>
+make_some(T &&value) {
   return Some<typename RemoveConstOrRef<T>::Result>{forward<T>(value)};
 }
 
 template <class T>
-constexpr Option<typename RemoveConstOrRef<T>::Result> make_none() {
+always_inline constexpr Option<typename RemoveConstOrRef<T>::Result>
+make_none() {
   return None{};
 }
 
 template <class T>
 template <class U, class F>
-crust_cxx14_constexpr Option<U>
-Option<T>::map(ops::Fn<F, U(const T &)> f) const {
+constexpr Option<U> Option<T>::map(ops::Fn<F, U(const T &)> f) const {
   return this->template visit<Option<U>>(
       [&](const Some<T> &value) {
         return make_some(f(value.template get<0>()));

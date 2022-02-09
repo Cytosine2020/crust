@@ -81,7 +81,7 @@ CRUST_TRAIT(Ord) {
   }
 
   crust_cxx14_constexpr Self clamp(Self && min, Self && max) {
-    crust_assert(min <= max);
+    crust_debug_assert(min <= max);
     if (self() < min) {
       return move(min);
     } else if (self() > max) {
@@ -126,14 +126,14 @@ struct DeriveEq {
 
 template <class Self, class Rhs>
 struct Derive<Self, cmp::PartialEq, Rhs> :
-    public _impl_derive_eq::DerivePartialEq<Self, Rhs> {};
+    _impl_derive_eq::DerivePartialEq<Self, Rhs> {};
 
 template <class Self>
 struct Derive<Self, cmp::PartialEq> :
-    public _impl_derive_eq::DerivePartialEq<Self, Self> {};
+    _impl_derive_eq::DerivePartialEq<Self, Self> {};
 
 template <class Self>
-struct Derive<Self, cmp::Eq> : public _impl_derive_eq::DeriveEq<Self> {};
+struct Derive<Self, cmp::Eq> : _impl_derive_eq::DeriveEq<Self> {};
 } // namespace crust
 
 
