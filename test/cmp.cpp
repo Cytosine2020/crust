@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "cmp.hpp"
-#include "tuple.hpp"
-#include "utility.hpp"
+#include "crust/cmp.hpp"
+#include "crust/tuple.hpp"
+#include "crust/utility.hpp"
 
 
 using namespace crust;

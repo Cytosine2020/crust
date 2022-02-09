@@ -1,9 +1,9 @@
-#ifndef _CRUST_INCLUDE_TUPLE_DECL_HPP
-#define _CRUST_INCLUDE_TUPLE_DECL_HPP
+#ifndef CRUST_TUPLE_DECL_HPP
+#define CRUST_TUPLE_DECL_HPP
 
 
-#include "cmp_decl.hpp"
-#include "utility.hpp"
+#include "crust/cmp_decl.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -127,25 +127,25 @@ struct TupleHolderImpl<true, true, Fields...> {
 template <class Field, class... Fields>
 struct crust_ebco TupleHolder<Field, Fields...> :
     TupleHolderImpl<
-        IsZeroSizedType<Field>::result,
-        AllType<IsZeroSizedType<Fields>...>::result,
+        IsZeroSizedTypeVal<Field>::result,
+        AllVal<IsZeroSizedTypeVal<Fields>...>::result,
         Field,
         Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(
       TupleHolder,
       TupleHolderImpl<
-          IsZeroSizedType<Field>::result,
-          AllType<IsZeroSizedType<Fields>...>::result,
+          IsZeroSizedTypeVal<Field>::result,
+          AllVal<IsZeroSizedTypeVal<Fields>...>::result,
           Field,
           Fields...>);
 };
 
 template <class Field>
 struct crust_ebco TupleHolder<Field> :
-    TupleHolderImpl<IsZeroSizedType<Field>::result, true, Field> {
+    TupleHolderImpl<IsZeroSizedTypeVal<Field>::result, true, Field> {
   CRUST_USE_BASE_CONSTRUCTORS(
       TupleHolder,
-      TupleHolderImpl<IsZeroSizedType<Field>::result, true, Field>);
+      TupleHolderImpl<IsZeroSizedTypeVal<Field>::result, true, Field>);
 };
 
 template <>
@@ -189,12 +189,12 @@ class crust_ebco Tuple :
         cmp::PartialOrd<Tuple<Fields...>>,
         Derive<Fields, cmp::PartialOrd>...>,
     public Impl<cmp::Ord<Tuple<Fields...>>, Derive<Fields, cmp::Ord>...>,
-    public Impl<ZeroSizedType, IsZeroSizedType<Fields>...> {
+    public Impl<ZeroSizedType, IsZeroSizedTypeVal<Fields>...> {
 private:
-  crust_static_assert(AllType<NotType<IsConstOrRef<Fields>>...>::result);
+  crust_static_assert(AllVal<NotVal<IsConstOrRefVal<Fields>>...>::result);
 
   using Holder =
-      _impl_tuple::TupleHolder<typename RemoveRef<Fields>::Result...>;
+      _impl_tuple::TupleHolder<typename RemoveRefType<Fields>::Result...>;
 
   template <usize index>
   using Getter = _impl_tuple::TupleGetter<index, Fields...>;
@@ -293,7 +293,24 @@ struct LetTupleHelper<0, Fields...> {
   inner(TupleHolder<Fields &...> &, Tuple<Fields...> &&) {}
 };
 } // namespace _impl_tuple
+
+#define CRUST_TUPLE_STRUCT(NAME, ...)                                          \
+  struct crust_ebco NAME final : ::crust::Tuple<__VA_ARGS__> {                 \
+    CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::Tuple<__VA_ARGS__>)             \
+    template <class = void>                                                    \
+    static void _detect_trait_partial_eq(const NAME &) {                       \
+      crust_static_assert(::crust::Derive<                                     \
+                          ::crust::Tuple<__VA_ARGS__>,                         \
+                          ::crust::cmp::PartialEq>::result);                   \
+    }                                                                          \
+    template <class = void>                                                    \
+    static void _detect_trait_eq() {                                           \
+      crust_static_assert(                                                     \
+          ::crust::Derive<::crust::Tuple<__VA_ARGS__>, ::crust::cmp::Eq>::     \
+              result);                                                         \
+    }                                                                          \
+  }
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_TUPLE_DECL_HPP
+#endif // CRUST_TUPLE_DECL_HPP

@@ -1,10 +1,10 @@
-#ifndef _CRUST_INCLUDE_OPTION_DECL_HPP
-#define _CRUST_INCLUDE_OPTION_DECL_HPP
+#ifndef CRUST_OPTION_DECL_HPP
+#define CRUST_OPTION_DECL_HPP
 
 
-#include "enum_decl.hpp"
-#include "ops/function.hpp"
-#include "utility.hpp"
+#include "crust/enum_decl.hpp"
+#include "crust/ops/function.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -78,4 +78,4 @@ using option::Some;
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_OPTION_DECL_HPP
+#endif // CRUST_OPTION_DECL_HPP

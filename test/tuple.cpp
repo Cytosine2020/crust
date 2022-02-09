@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "cmp.hpp"
-#include "tuple.hpp"
-#include "utility.hpp"
+#include "crust/cmp.hpp"
+#include "crust/tuple.hpp"
+#include "crust/utility.hpp"
 
 
 using namespace crust;
@@ -17,11 +17,11 @@ class B {};
 
 
 GTEST_TEST(tuple, size_zero) {
-  crust_static_assert(IsZeroSizedType<Tuple<>>::result);
-  crust_static_assert(IsZeroSizedType<Tuple<Tuple<>>>::result);
-  crust_static_assert(IsZeroSizedType<Tuple<Tuple<>, Tuple<>>>::result);
+  crust_static_assert(IsZeroSizedTypeVal<Tuple<>>::result);
+  crust_static_assert(IsZeroSizedTypeVal<Tuple<Tuple<>>>::result);
+  crust_static_assert(IsZeroSizedTypeVal<Tuple<Tuple<>, Tuple<>>>::result);
   crust_static_assert(
-      IsZeroSizedType<Tuple<Tuple<>, Tuple<>, Tuple<>>>::result);
+      IsZeroSizedTypeVal<Tuple<Tuple<>, Tuple<>, Tuple<>>>::result);
 
   crust_static_assert(sizeof(Tuple<>) == 1);
   crust_static_assert(sizeof(Tuple<Tuple<>>) == 1);
@@ -50,7 +50,7 @@ GTEST_TEST(tuple, size_zero) {
 }
 
 GTEST_TEST(tuple, size_one) {
-  crust_static_assert(!IsZeroSizedType<Tuple<A>>::result);
+  crust_static_assert(!IsZeroSizedTypeVal<Tuple<A>>::result);
 
   crust_static_assert(!Derive<Tuple<A>, PartialEq>::result);
   crust_static_assert(!Derive<Tuple<A>, Eq>::result);
@@ -82,7 +82,7 @@ GTEST_TEST(tuple, size_one) {
 }
 
 GTEST_TEST(tuple, size_two) {
-  crust_static_assert(!IsZeroSizedType<Tuple<A, B>>::result);
+  crust_static_assert(!IsZeroSizedTypeVal<Tuple<A, B>>::result);
 
   crust_static_assert(!Derive<Tuple<A, B>, PartialEq>::result);
   crust_static_assert(!Derive<Tuple<A, B>, Eq>::result);

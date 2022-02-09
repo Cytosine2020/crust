@@ -1,8 +1,8 @@
-#ifndef _CRUST_INCLUDE_CMP_DECL_HPP
-#define _CRUST_INCLUDE_CMP_DECL_HPP
+#ifndef CRUST_CMP_DECL_HPP
+#define CRUST_CMP_DECL_HPP
 
 
-#include "utility.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -72,15 +72,15 @@ CRUST_TRAIT(Ord) {
 
   Ordering cmp(const Self &other) const;
 
-  crust_cxx14_constexpr Self max(Self && other) {
+  crust_cxx14_constexpr Self max(Self && other) && {
     return self() > other ? move(self()) : move(other);
   }
 
-  crust_cxx14_constexpr Self min(Self && other) {
+  crust_cxx14_constexpr Self min(Self && other) && {
     return self() > other ? move(other) : move(self());
   }
 
-  crust_cxx14_constexpr Self clamp(Self && min, Self && max) {
+  crust_cxx14_constexpr Self clamp(Self && min, Self && max) && {
     crust_debug_assert(min <= max);
     if (self() < min) {
       return move(min);
@@ -104,9 +104,6 @@ struct DerivePartialEq {
 
   template <class>
   static void check(...);
-
-  static constexpr bool result =
-      IsSame<decltype(check<T>(nullptr)), u32>::result;
 };
 
 template <class T>
@@ -117,24 +114,31 @@ struct DeriveEq {
 
   template <class>
   static void check(...);
-
-  static constexpr bool result =
-      IsSame<decltype(check<T>(nullptr)), u32>::result;
 };
 } // namespace _impl_derive_eq
 
 
 template <class Self, class Rhs>
 struct Derive<Self, cmp::PartialEq, Rhs> :
-    _impl_derive_eq::DerivePartialEq<Self, Rhs> {};
+    IsSameVal<
+        decltype(_impl_derive_eq::DerivePartialEq<Self, Rhs>::template check<
+                 Self>(nullptr)),
+        u32> {};
 
 template <class Self>
 struct Derive<Self, cmp::PartialEq> :
-    _impl_derive_eq::DerivePartialEq<Self, Self> {};
+    IsSameVal<
+        decltype(_impl_derive_eq::DerivePartialEq<Self, Self>::template check<
+                 Self>(nullptr)),
+        u32> {};
 
 template <class Self>
-struct Derive<Self, cmp::Eq> : _impl_derive_eq::DeriveEq<Self> {};
+struct Derive<Self, cmp::Eq> :
+    IsSameVal<
+        decltype(_impl_derive_eq::DeriveEq<Self>::template check<Self>(
+            nullptr)),
+        u32> {};
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_CMP_DECL_HPP
+#endif // CRUST_CMP_DECL_HPP

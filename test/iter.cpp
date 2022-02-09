@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "iter/mod.hpp"
+#include "crust/iter/mod.hpp"
 
 using namespace crust;
 

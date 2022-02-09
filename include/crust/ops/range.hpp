@@ -1,9 +1,9 @@
-#ifndef _CRUST_INCLUDE_RANGE_HPP
-#define _CRUST_INCLUDE_RANGE_HPP
+#ifndef CRUST_OPS_RANGE_HPP
+#define CRUST_OPS_RANGE_HPP
 
 
-#include "enum.hpp"
-#include "utility.hpp"
+#include "crust/enum.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -40,4 +40,4 @@ public:
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_RANGE_HPP
+#endif // CRUST_OPS_RANGE_HPP

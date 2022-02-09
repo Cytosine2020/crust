@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "result.hpp"
+#include "crust/result.hpp"
 
 using namespace crust;
 

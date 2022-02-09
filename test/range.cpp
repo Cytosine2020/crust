@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "ops/range.hpp"
+#include "crust/ops/range.hpp"
 
 using namespace crust;
 

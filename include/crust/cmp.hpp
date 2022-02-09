@@ -1,21 +1,21 @@
-#ifndef _CRUST_INCLUDE_CMP_HPP
-#define _CRUST_INCLUDE_CMP_HPP
+#ifndef CRUST_CMP_HPP
+#define CRUST_CMP_HPP
 
 
 #include "cmp_decl.hpp"
 
-#include "enum_decl.hpp"
-#include "ops/function.hpp"
-#include "option.hpp"
-#include "tuple_decl.hpp"
-#include "utility.hpp"
+#include "crust/enum_decl.hpp"
+#include "crust/ops/function.hpp"
+#include "crust/option.hpp"
+#include "crust/tuple_decl.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
 namespace cmp {
-CRUST_ENUM_VARIANT(Less);
-CRUST_ENUM_VARIANT(Equal);
-CRUST_ENUM_VARIANT(Greater);
+CRUST_TUPLE_STRUCT(Less);
+CRUST_TUPLE_STRUCT(Equal);
+CRUST_TUPLE_STRUCT(Greater);
 
 class Ordering :
     public Enum<Less, Equal, Greater>,
@@ -76,12 +76,13 @@ always_inline constexpr Ordering make_greater() { return Greater{}; }
 /// following two functions are used for invoking `partial_cmp' or `cmp' for
 /// both struct implemented `PartialOrd' or `Ord' trait and primitive types.
 template <class T, class U>
-constexpr Option<Ordering> operator_partial_cmp(const T &v1, const U &v2) {
+always_inline constexpr Option<Ordering>
+operator_partial_cmp(const T &v1, const U &v2) {
   return v1.partial_cmp(v2);
 }
 
 template <class T>
-constexpr Ordering operator_cmp(const T &v1, const T &v2) {
+always_inline constexpr Ordering operator_cmp(const T &v1, const T &v2) {
   return v1.cmp(v2);
 }
 
@@ -158,7 +159,7 @@ Ordering::cmp(const Ordering &other) const {
 template <class T>
 constexpr T min(T &&v1, T &&v2) {
   crust_static_assert(Derive<T, Ord>::result);
-  return v1.min(forward<T>(v2));
+  return move(v1).min(forward<T>(v2));
 }
 
 template <class T, class F>
@@ -180,7 +181,7 @@ constexpr T min_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
 template <class T>
 constexpr T max(T &&v1, T &&v2) {
   crust_static_assert(Derive<T, Ord>::result);
-  return v1.max(forward<T>(v2));
+  return move(v1).max(forward<T>(v2));
 }
 
 template <class T, class F>
@@ -250,7 +251,7 @@ public:
 } // namespace cmp
 
 #define _DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...)                               \
-  struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> : TrueType {}
+  struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> : BoolVal<true> {}
 
 _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::PartialEq);
 _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::Eq);
@@ -264,4 +265,4 @@ _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::Ord);
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_CMP_HPP
+#endif // CRUST_CMP_HPP

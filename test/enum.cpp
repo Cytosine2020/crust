@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 
-#include "cmp.hpp"
-#include "enum.hpp"
-#include "utility.hpp"
+#include "crust/cmp.hpp"
+#include "crust/enum.hpp"
+#include "crust/utility.hpp"
 
 #include "raii_checker.hpp"
 
@@ -21,10 +21,10 @@ struct ClassB : test::RAIIChecker<ClassB> {
 
 template <class T>
 struct VisitType {
-  bool operator()(const T &) { return true; }
+  constexpr bool operator()(const T &) const { return true; }
 
   template <class U>
-  bool operator()(const U &) {
+  constexpr bool operator()(const U &) const {
     return false;
   }
 };
@@ -62,12 +62,12 @@ GTEST_TEST(enum_, enum_) {
 
 
 namespace {
-CRUST_ENUM_VARIANT(A);
-CRUST_ENUM_VARIANT(B);
-CRUST_ENUM_VARIANT(C, i32);
-CRUST_ENUM_VARIANT(D, i32);
-CRUST_ENUM_VARIANT(E, i32);
-CRUST_ENUM_VARIANT(F, i32);
+CRUST_TUPLE_STRUCT(A);
+CRUST_TUPLE_STRUCT(B);
+CRUST_TUPLE_STRUCT(C, i32);
+CRUST_TUPLE_STRUCT(D, i32);
+CRUST_TUPLE_STRUCT(E, i32);
+CRUST_TUPLE_STRUCT(F, i32);
 
 class Enumerate : public Enum<A, B, C, D, E, F> {
 public:

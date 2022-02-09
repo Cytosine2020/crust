@@ -1,8 +1,8 @@
-#ifndef _CRUST_INCLUDE_FMT_HPP
-#define _CRUST_INCLUDE_FMT_HPP
+#ifndef CRUST_FMT_MOD_HPP
+#define CRUST_FMT_MOD_HPP
 
 
-#include "utility.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -24,4 +24,4 @@ CRUST_TRAIT(Display) {
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_FMT_HPP
+#endif // CRUST_FMT_MOD_HPP

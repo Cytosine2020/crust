@@ -1,11 +1,11 @@
-#ifndef _CRUST_TEST_RAII_CHECKER_HPP
-#define _CRUST_TEST_RAII_CHECKER_HPP
+#ifndef CRUST_TEST_RAII_CHECKER_HPP
+#define CRUST_TEST_RAII_CHECKER_HPP
 
 
 #include <memory>
 #include <unordered_map>
 
-#include "utility.hpp"
+#include "crust/utility.hpp"
 
 
 namespace test {
@@ -75,4 +75,4 @@ const RAIITypeInfo RAIIChecker<Self>::TYPE_INFO{};
 } // namespace test
 
 
-#endif //_CRUST_TEST_RAII_CHECKER_HPP
+#endif // CRUST_TEST_RAII_CHECKER_HPP

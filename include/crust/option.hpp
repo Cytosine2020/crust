@@ -1,25 +1,25 @@
-#ifndef _CRUST_INCLUDE_OPTION_HPP
-#define _CRUST_INCLUDE_OPTION_HPP
+#ifndef CRUST_OPTION_HPP
+#define CRUST_OPTION_HPP
 
 
-#include "option_decl.hpp"
+#include "crust/option_decl.hpp"
 
 
 namespace crust {
 namespace option {
 template <class T>
-CRUST_ENUM_VARIANT(Some, T);
+CRUST_TUPLE_STRUCT(Some, T);
 
-CRUST_ENUM_VARIANT(None);
+CRUST_TUPLE_STRUCT(None);
 
 template <class T>
-always_inline constexpr Option<typename RemoveConstOrRef<T>::Result>
+always_inline constexpr Option<typename RemoveConstOrRefType<T>::Result>
 make_some(T &&value) {
-  return Some<typename RemoveConstOrRef<T>::Result>{forward<T>(value)};
+  return Some<typename RemoveConstOrRefType<T>::Result>{forward<T>(value)};
 }
 
 template <class T>
-always_inline constexpr Option<typename RemoveConstOrRef<T>::Result>
+always_inline constexpr Option<typename RemoveConstOrRefType<T>::Result>
 make_none() {
   return None{};
 }
@@ -47,4 +47,4 @@ using option::make_some;
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_OPTION_HPP
+#endif // CRUST_OPTION_HPP

@@ -1,11 +1,10 @@
-#ifndef _CRUST_INCLUDE_ITER_HPP
-#define _CRUST_INCLUDE_ITER_HPP
+#ifndef CRUST_ITER_MOD_HPP
+#define CRUST_ITER_MOD_HPP
 
 
-#include "utility.hpp"
-
-#include "option.hpp"
-#include "tuple.hpp"
+#include "crust/option.hpp"
+#include "crust/tuple.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -35,4 +34,4 @@ CRUST_TRAIT(Iterator, class Item) {
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_ITER_HPP
+#endif // CRUST_ITER_MOD_HPP

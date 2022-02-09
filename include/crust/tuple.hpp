@@ -1,13 +1,13 @@
-#ifndef _CRUST_INCLUDE_TUPLE_HPP
-#define _CRUST_INCLUDE_TUPLE_HPP
+#ifndef CRUST_TUPLE_HPP
+#define CRUST_TUPLE_HPP
 
 
 #include "tuple_decl.hpp"
 
 #include <utility>
 
-#include "cmp.hpp"
-#include "option.hpp"
+#include "crust/cmp.hpp"
+#include "crust/option.hpp"
 
 
 namespace crust {
@@ -69,9 +69,9 @@ constexpr cmp::Ordering Tuple<Fields...>::cmp(const Tuple &other) const {
 }
 
 template <class... Fields>
-constexpr Tuple<typename RemoveConstOrRef<Fields>::Result...>
+constexpr Tuple<typename RemoveConstOrRefType<Fields>::Result...>
 make_tuple(Fields &&...fields) {
-  return Tuple<typename RemoveConstOrRef<Fields>::Result...>{
+  return Tuple<typename RemoveConstOrRefType<Fields>::Result...>{
       forward<Fields>(fields)...};
 }
 
@@ -92,9 +92,9 @@ public:
 
 template <class... Fields>
 crust_cxx14_constexpr
-    _impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>
+    _impl_tuple::LetTuple<typename RemoveRefType<Fields>::Result...>
     let(Fields &&...fields) {
-  return _impl_tuple::LetTuple<typename RemoveRef<Fields>::Result...>{
+  return _impl_tuple::LetTuple<typename RemoveRefType<Fields>::Result...>{
       forward<Fields>(fields)...};
 }
 } // namespace crust
@@ -127,4 +127,4 @@ get(crust::Tuple<Fields...> &object) {
 } // namespace std
 
 
-#endif //_CRUST_INCLUDE_TUPLE_HPP
+#endif // CRUST_TUPLE_HPP

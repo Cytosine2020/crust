@@ -1,9 +1,9 @@
-#ifndef _CRUST_INCLUDE_SLICE_HPP
-#define _CRUST_INCLUDE_SLICE_HPP
+#ifndef CRUST_SLICE_HPP
+#define CRUST_SLICE_HPP
 
 
-#include "ops/mod.hpp"
-#include "utility.hpp"
+#include "crust/ops/mod.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -49,4 +49,4 @@ public:
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_SLICE_HPP
+#endif // CRUST_SLICE_HPP

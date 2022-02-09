@@ -1,8 +1,8 @@
-#ifndef _CRUST_INCLUDE_FUNCTION_HPP
-#define _CRUST_INCLUDE_FUNCTION_HPP
+#ifndef CRUST_OPS_FUNCTION_HPP
+#define CRUST_OPS_FUNCTION_HPP
 
 
-#include "utility.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -16,10 +16,11 @@ struct MemFnClosure;
 
 template <class Self, class Ret, class... Args, Ret (Self::*f)(Args...) const>
 struct MemFnClosure<Self, Ret (Self::*)(Args...) const, f> :
-    TmplArg<Ret(Args...)> {};
+    TmplType<Ret(Args...)> {};
 
 template <class Self, class Ret, class... Args, Ret (Self::*f)(Args...)>
-struct MemFnClosure<Self, Ret (Self::*)(Args...), f> : TmplArg<Ret(Args...)> {};
+struct MemFnClosure<Self, Ret (Self::*)(Args...), f> :
+    TmplType<Ret(Args...)> {};
 
 template <class F, F f>
 struct RawMemFn;
@@ -55,7 +56,7 @@ class Fn;
 template <class Self, class Ret, class... Args>
 class Fn<Self, Ret(Args...)> {
 private:
-  crust_static_assert(!IsConstOrRef<Self>::result);
+  crust_static_assert(!IsConstOrRefVal<Self>::result);
 
   Self self;
 
@@ -68,22 +69,22 @@ public:
 };
 
 template <class F, F *f>
-always_inline Fn<_impl_fn::RawFn<F, f>> bind(StaticTmplArg<F *, f>) {
+always_inline Fn<_impl_fn::RawFn<F, f>> bind(TmplVal<F *, f>) {
   return Fn<_impl_fn::RawFn<F, f>>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class T, class F, F *f>
-always_inline Fn<_impl_fn::RawFn<F, f>, T> bind(StaticTmplArg<F *, f>) {
+always_inline Fn<_impl_fn::RawFn<F, f>, T> bind(TmplVal<F *, f>) {
   return Fn<_impl_fn::RawFn<F, f>, T>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class F, F f>
-always_inline Fn<_impl_fn::RawMemFn<F, f>> bind(StaticTmplArg<F, f>) {
+always_inline Fn<_impl_fn::RawMemFn<F, f>> bind(TmplVal<F, f>) {
   return Fn<_impl_fn::RawMemFn<F, f>>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T, class F, F f>
-always_inline Fn<_impl_fn::RawMemFn<F, f>, T> bind(StaticTmplArg<F, f>) {
+always_inline Fn<_impl_fn::RawMemFn<F, f>, T> bind(TmplVal<F, f>) {
   return Fn<_impl_fn::RawMemFn<F, f>, T>{_impl_fn::RawMemFn<F, f>{}};
 }
 
@@ -103,7 +104,7 @@ class FnMut;
 template <class Self, class Ret, class... Args>
 class FnMut<Self, Ret(Args...)> {
 private:
-  crust_static_assert(!IsConstOrRef<Self>::result);
+  crust_static_assert(!IsConstOrRefVal<Self>::result);
 
   Self self;
 
@@ -116,22 +117,22 @@ public:
 };
 
 template <class F, F *f>
-always_inline FnMut<_impl_fn::RawFn<F, f>> bind_mut(StaticTmplArg<F *, f>) {
+always_inline FnMut<_impl_fn::RawFn<F, f>> bind_mut(TmplVal<F *, f>) {
   return FnMut<_impl_fn::RawFn<F, f>>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class T, class F, F *f>
-always_inline FnMut<_impl_fn::RawFn<F, f>, T> bind_mut(StaticTmplArg<F *, f>) {
+always_inline FnMut<_impl_fn::RawFn<F, f>, T> bind_mut(TmplVal<F *, f>) {
   return FnMut<_impl_fn::RawFn<F, f>, T>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class F, F f>
-always_inline FnMut<_impl_fn::RawMemFn<F, f>> bind_mut(StaticTmplArg<F, f>) {
+always_inline FnMut<_impl_fn::RawMemFn<F, f>> bind_mut(TmplVal<F, f>) {
   return FnMut<_impl_fn::RawMemFn<F, f>>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T, class F, F f>
-always_inline FnMut<_impl_fn::RawMemFn<F, f>, T> bind_mut(StaticTmplArg<F, f>) {
+always_inline FnMut<_impl_fn::RawMemFn<F, f>, T> bind_mut(TmplVal<F, f>) {
   return FnMut<_impl_fn::RawMemFn<F, f>, T>{_impl_fn::RawMemFn<F, f>{}};
 }
 
@@ -231,7 +232,7 @@ public:
       vtable{&_impl_fn::StaticFnVTable<Self, Ret, Args...>::vtable} {}
 
   template <class F, F *f>
-  constexpr DynFn(StaticTmplArg<F *, f>) : DynFn{_impl_fn::RawFn<F, f>{}} {}
+  constexpr DynFn(TmplVal<F *, f>) : DynFn{_impl_fn::RawFn<F, f>{}} {}
 
   DynFn(DynFn &&other) noexcept {
     if (this != &other) {
@@ -284,8 +285,7 @@ public:
       vtable{&_impl_fn::StaticFnMutVTable<Self, Ret, Args...>::vtable} {}
 
   template <class F, F *f>
-  constexpr DynFnMut(StaticTmplArg<F *, f>) :
-      DynFnMut{_impl_fn::RawFn<F, f>{}} {}
+  constexpr DynFnMut(TmplVal<F *, f>) : DynFnMut{_impl_fn::RawFn<F, f>{}} {}
 
   DynFnMut(DynFnMut &&other) noexcept {
     if (this != &other) {
@@ -322,4 +322,4 @@ public:
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_FUNCTION_HPP
+#endif // CRUST_OPS_FUNCTION_HPP

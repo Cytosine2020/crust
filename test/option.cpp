@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 
-#include "cmp.hpp"
-#include "enum.hpp"
-#include "option.hpp"
-#include "utility.hpp"
+#include "crust/cmp.hpp"
+#include "crust/enum.hpp"
+#include "crust/option.hpp"
+#include "crust/utility.hpp"
 
 
 using namespace crust;

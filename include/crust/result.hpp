@@ -1,20 +1,19 @@
-#ifndef _CRUST_INCLUDE_RESULT_HPP
-#define _CRUST_INCLUDE_RESULT_HPP
+#ifndef CRUST_RESULT_HPP
+#define CRUST_RESULT_HPP
 
 
-#include "utility.hpp"
-
-#include "enum.hpp"
-#include "option.hpp"
+#include "crust/enum.hpp"
+#include "crust/option.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
 namespace result {
 template <class T>
-CRUST_ENUM_VARIANT(Ok, T);
+CRUST_TUPLE_STRUCT(Ok, T);
 
 template <class E>
-CRUST_ENUM_VARIANT(Err, E);
+CRUST_TUPLE_STRUCT(Err, E);
 
 template <class T, class E>
 class Result : public Enum<Ok<T>, Err<E>> {
@@ -51,4 +50,4 @@ using result::Result;
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_RESULT_HPP
+#endif // CRUST_RESULT_HPP

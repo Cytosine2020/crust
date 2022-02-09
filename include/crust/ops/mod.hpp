@@ -1,8 +1,8 @@
-#ifndef _CRUST_INCLUDE_OPS_HPP
-#define _CRUST_INCLUDE_OPS_HPP
+#ifndef CRUST_OPS_MOD_HPP
+#define CRUST_OPS_MOD_HPP
 
 
-#include "utility.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -22,4 +22,4 @@ CRUST_TRAIT(Index, class Idx, class T) {
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_OPS_HPP
+#endif // CRUST_OPS_MOD_HPP

@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
-#include "slice.hpp"
-#include "utility.hpp"
+#include "crust/slice.hpp"
+#include "crust/utility.hpp"
 
 
 using namespace crust;

@@ -1,13 +1,14 @@
-#ifndef _CRUST_INCLUDE_ENUM_DECL_HPP
-#define _CRUST_INCLUDE_ENUM_DECL_HPP
+#ifndef CRUST_ENUM_DECL_HPP
+#define CRUST_ENUM_DECL_HPP
 
 
 #include <limits>
 #include <new>
 
-#include "cmp_decl.hpp"
-#include "tuple_decl.hpp"
-#include "utility.hpp"
+#include "crust/cmp_decl.hpp"
+#include "crust/repeat_macro.hpp"
+#include "crust/tuple_decl.hpp"
+#include "crust/utility.hpp"
 
 
 namespace crust {
@@ -26,30 +27,48 @@ template <class T, class Field, class... Fields>
 struct EnumInclude<T, Field, Fields...> : EnumInclude<T, Fields...> {};
 
 template <class T, class... Fields>
-struct EnumInclude<T, T, Fields...> : TrueType {};
+struct EnumInclude<T, T, Fields...> : BoolVal<true> {};
 
 template <class T>
-struct EnumInclude<T> : FalseType {};
+struct EnumInclude<T> : BoolVal<false> {};
 
 template <class... Fields>
 struct EnumDuplicate;
 
 template <class Field, class... Fields>
 struct EnumDuplicate<Field, Fields...> :
-    AnyType<EnumInclude<Field, Fields...>, EnumDuplicate<Fields...>> {};
+    AnyVal<EnumInclude<Field, Fields...>, EnumDuplicate<Fields...>> {};
 
 template <>
-struct EnumDuplicate<> : FalseType {};
+struct EnumDuplicate<> : BoolVal<false> {};
+
+template <usize index, class... Fields>
+struct EnumIndexToType;
+
+template <usize index, class Field, class... Fields>
+struct EnumIndexToType<index, Field, Fields...> :
+    EnumIndexToType<index - 1, Fields...> {};
+
+template <class Field, class... Fields>
+struct EnumIndexToType<0, Field, Fields...> : TmplType<Field> {};
+
+template <class T, class... Fields>
+struct EnumTypeToIndex;
+
+template <class T, class Field, class... Fields>
+struct EnumTypeToIndex<T, Field, Fields...> :
+    IncVal<EnumTypeToIndex<T, Fields...>> {};
+
+template <class T, class... Fields>
+struct EnumTypeToIndex<T, T, Fields...> : TmplVal<u32, 0> {};
 
 template <bool trivial, class... Fields>
 union EnumHolder;
 
 template <class Field, class... Fields>
 union EnumHolder<true, Field, Fields...> {
-  using Remains = EnumHolder<true, Fields...>;
-
   Field field;
-  Remains remains;
+  EnumHolder<true, Fields...> remains;
 
   constexpr EnumHolder() : remains{} {}
 
@@ -63,10 +82,8 @@ union EnumHolder<true, Field, Fields...> {
 
 template <class Field, class... Fields>
 union EnumHolder<false, Field, Fields...> {
-  using Remains = EnumHolder<false, Fields...>;
-
   Field field;
-  Remains remains;
+  EnumHolder<false, Fields...> remains;
 
   constexpr EnumHolder() : remains{} {}
 
@@ -90,15 +107,6 @@ union EnumHolder<false, Field, Fields...> {
 
 template <bool trivial>
 union EnumHolder<trivial> {};
-
-template <usize index, class... Fields>
-struct EnumType;
-
-template <usize index, class Field, class... Fields>
-struct EnumType<index, Field, Fields...> : EnumType<index - 1, Fields...> {};
-
-template <class Field, class... Fields>
-struct EnumType<0, Field, Fields...> : TmplArg<Field> {};
 
 template <usize index, bool trivial, class... Fields>
 struct EnumGetter;
@@ -217,7 +225,7 @@ struct TagVisitor {
 
 #define _TAG_VISITOR_BRANCH(index)                                             \
   case offset + index:                                                         \
-    return impl(typename EnumType<offset + index, Fields...>::Result{});
+    return impl(typename EnumIndexToType<offset + index, Fields...>::Result{});
 
 #define _TAG_VISITOR_IMPL(len)                                                 \
   template <usize offset, class... Fields>                                     \
@@ -251,17 +259,6 @@ _TAG_VISITOR_IMPL(1);
 
 #undef _TAG_VISITOR_IMPL
 #undef _TAG_VISITOR_BRANCH
-
-
-template <class T, class... Fields>
-struct EnumTypeToIndex;
-
-template <class T, class Field, class... Fields>
-struct EnumTypeToIndex<T, Field, Fields...> :
-    StaticTmplArg<u32, EnumTypeToIndex<T, Fields...>::result + 1> {};
-
-template <class T, class... Fields>
-struct EnumTypeToIndex<T, T, Fields...> : StaticTmplArg<u32, 0> {};
 
 template <class Self, bool flag>
 struct EnumTrivial;
@@ -321,11 +318,10 @@ struct EnumTrivial<Self, false> {
 };
 
 template <class... Fields>
-struct EnumIsTrivial : AllType<IsTriviallyCopyableType<Fields>...> {};
+struct EnumIsTrivial : AllVal<IsTriviallyCopyableVal<Fields>...> {};
 
 template <class... Fields>
-struct EnumIsTagOnly : AllType<IsZeroSizedType<Fields>...> {};
-
+struct EnumIsTagOnly : AllVal<IsZeroSizedTypeVal<Fields>...> {};
 
 template <class... Fields>
 struct EnumTagUnion :
@@ -335,7 +331,7 @@ struct EnumTagUnion :
   friend EnumTrivial<EnumTagUnion, trivial>;
 
   using Holder =
-      EnumHolder<trivial, typename RemoveConstOrRef<Fields>::Result...>;
+      EnumHolder<trivial, typename RemoveConstOrRefType<Fields>::Result...>;
   template <class T>
   using IndexGetter = EnumTypeToIndex<T, Fields...>;
   using Getter = EnumVisitor<0, sizeof...(Fields), trivial, Fields...>;
@@ -348,7 +344,8 @@ struct EnumTagUnion :
   template <class T>
   explicit constexpr EnumTagUnion(T &&value) :
       holder{forward<T>(value)},
-      index{IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1} {}
+      index{IndexGetter<typename RemoveConstOrRefType<T>::Result>::result + 1} {
+  }
 
   struct Drop {
     template <class T>
@@ -380,7 +377,7 @@ struct EnumTagUnion :
     this->drop();
 
     ::new (&holder) Holder{forward<T>(value)};
-    index = IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1;
+    index = IndexGetter<typename RemoveConstOrRefType<T>::Result>::result + 1;
 
     return *this;
   }
@@ -399,7 +396,7 @@ struct EnumTagUnion :
 
   template <class T, class V>
   constexpr bool visit_variant(V &&visitor) const {
-    using Index = IndexGetter<typename RemoveConstOrRef<T>::Result>;
+    using Index = IndexGetter<typename RemoveConstOrRefType<T>::Result>;
     return index == Index::result + 1 ?
         visitor(EnumGetter<Index::result, trivial, Fields...>::inner(holder)) :
         visitor();
@@ -408,12 +405,12 @@ struct EnumTagUnion :
   template <class T>
   constexpr bool is_variant() const {
     return index ==
-        IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1;
+        IndexGetter<typename RemoveConstOrRefType<T>::Result>::result + 1;
   }
 
   template <class T, class... Fs>
   constexpr bool eq_variant(const Fs &...other) const {
-    using Index = IndexGetter<typename RemoveConstOrRef<T>::Result>;
+    using Index = IndexGetter<typename RemoveConstOrRefType<T>::Result>;
     return index == Index::result + 1 &&
         _impl_tuple::TupleEqHelper<sizeof...(Fs), Fs...>::inner(
                _impl_tuple::TupleHolder<const Fs &...>{other...},
@@ -429,7 +426,7 @@ struct EnumTagUnion :
       _impl_tuple::LetTupleHelper<sizeof...(Fs), Fs...>::inner(
           ref,
           move(EnumGetter<
-               IndexGetter<typename RemoveConstOrRef<T>::Result>::result,
+               IndexGetter<typename RemoveConstOrRefType<T>::Result>::result,
                trivial,
                Fields...>::inner(holder)));
       return true;
@@ -447,7 +444,7 @@ struct EnumTagUnion :
     constexpr bool operator()(const T &value) const {
       return value ==
           EnumGetter<
-                 IndexGetter<typename RemoveConstOrRef<T>::Result>::result,
+                 IndexGetter<typename RemoveConstOrRefType<T>::Result>::result,
                  trivial,
                  Fields...>::inner(*other);
     };
@@ -464,7 +461,7 @@ struct EnumTagUnion :
     constexpr bool operator()(const T &value) const {
       return value !=
           EnumGetter<
-                 IndexGetter<typename RemoveConstOrRef<T>::Result>::result,
+                 IndexGetter<typename RemoveConstOrRefType<T>::Result>::result,
                  trivial,
                  Fields...>::inner(*other);
     };
@@ -488,11 +485,12 @@ struct EnumTagOnly {
 
   template <class T>
   explicit constexpr EnumTagOnly(T &&) :
-      index{IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1} {}
+      index{IndexGetter<typename RemoveConstOrRefType<T>::Result>::result + 1} {
+  }
 
   template <class T>
   EnumTagOnly &operator=(T &&) {
-    index = IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1;
+    index = IndexGetter<typename RemoveConstOrRefType<T>::Result>::result + 1;
 
     return *this;
   }
@@ -512,7 +510,7 @@ struct EnumTagOnly {
   template <class T>
   constexpr bool is_variant() const {
     return index ==
-        IndexGetter<typename RemoveConstOrRef<T>::Result>::result + 1;
+        IndexGetter<typename RemoveConstOrRefType<T>::Result>::result + 1;
   }
 
   template <class T>
@@ -584,15 +582,13 @@ template <class... Fields>
 class crust_ebco Enum :
     public Impl<
         cmp::PartialEq<Enum<Fields...>>,
-        AllType<Derive<Fields, cmp::PartialEq>...>>,
-    public Impl<
-        cmp::Eq<Tuple<Fields...>>,
-        AllType<Derive<Fields, cmp::Eq>...>> {
+        AllVal<Derive<Fields, cmp::PartialEq>...>>,
+    public Impl<cmp::Eq<Tuple<Fields...>>, AllVal<Derive<Fields, cmp::Eq>...>> {
 private:
   crust_static_assert(sizeof...(Fields) < std::numeric_limits<u32>::max());
   crust_static_assert(sizeof...(Fields) > 0);
-  crust_static_assert(NotType<_impl_enum::EnumDuplicate<Fields...>>::result);
-  crust_static_assert(AllType<NotType<IsConstOrRef<Fields>>...>::result);
+  crust_static_assert(NotVal<_impl_enum::EnumDuplicate<Fields...>>::result);
+  crust_static_assert(AllVal<NotVal<IsConstOrRefVal<Fields>>...>::result);
 
   using Inner = _impl_enum::
       EnumSelect<_impl_enum::EnumIsTagOnly<Fields...>::result, Fields...>;
@@ -621,14 +617,16 @@ public:
 
   template <
       class T,
-      typename EnableIf<!IsSame<typename RemoveConstOrRef<T>::Result, Enum>::
-                            result>::Result * = nullptr>
+      typename EnableIf<
+          !IsSameVal<typename RemoveConstOrRefType<T>::Result, Enum>::result>::
+          Result * = nullptr>
   constexpr Enum(T &&value) : inner{forward<T>(value)} {}
 
   template <
       class T,
-      typename EnableIf<!IsSame<typename RemoveConstOrRef<T>::Result, Enum>::
-                            result>::Result * = nullptr>
+      typename EnableIf<
+          !IsSameVal<typename RemoveConstOrRefType<T>::Result, Enum>::result>::
+          Result * = nullptr>
   Enum &operator=(T &&value) {
     inner = Inner{forward<T>(value)};
     return *this;
@@ -663,24 +661,7 @@ public:
     crust_static_assert(                                                       \
         ::crust::Derive<__VA_ARGS__, ::crust::cmp::Eq>::result);               \
   }
-
-#define CRUST_ENUM_VARIANT(NAME, ...)                                          \
-  struct crust_ebco NAME final : ::crust::Tuple<__VA_ARGS__> {                 \
-    CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::Tuple<__VA_ARGS__>)             \
-    template <class = void>                                                    \
-    static void _detect_trait_partial_eq(const NAME &) {                       \
-      crust_static_assert(::crust::Derive<                                     \
-                          ::crust::Tuple<__VA_ARGS__>,                         \
-                          ::crust::cmp::PartialEq>::result);                   \
-    }                                                                          \
-    template <class = void>                                                    \
-    static void _detect_trait_eq() {                                           \
-      crust_static_assert(                                                     \
-          ::crust::Derive<::crust::Tuple<__VA_ARGS__>, ::crust::cmp::Eq>::     \
-              result);                                                         \
-    }                                                                          \
-  }
 } // namespace crust
 
 
-#endif //_CRUST_INCLUDE_ENUM_DECL_HPP
+#endif // CRUST_ENUM_DECL_HPP
