@@ -118,7 +118,7 @@ struct TmplType {
   using Result = Value;
 };
 
-template <class Type, Type value>
+template <class Type, Type value = Type{}>
 struct TmplVal : TmplType<Type> {
   static constexpr Type result = value;
 };

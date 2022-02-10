@@ -100,13 +100,25 @@ struct TupleHolderImpl<false, true, Field, Fields...> {
   constexpr cmp::Ordering cmp(const TupleHolderImpl &other) const;
 };
 
+template <usize index, class Type>
+struct IndexTupleField {
+  Type inner;
+};
 
-template <class Field, class... Fields>
-struct crust_ebco TupleHolderImpl<true, false, Field, Fields...> :
-    TupleHolder<Fields...> {};
+template <class Field, bool remain_is_zst, class... Fields>
+struct crust_ebco TupleHolderImpl<true, remain_is_zst, Field, Fields...> :
+    TupleHolder<Fields...>,
+    IndexTupleField<sizeof...(Fields), Field> {
+  TupleHolderImpl() {}
 
-template <class... Fields>
-struct TupleHolderImpl<true, true, Fields...> {
+  template <class T, class... Ts>
+  explicit constexpr TupleHolderImpl(T &&field, Ts &&...fields) :
+      TupleHolder<Fields...>{forward<Ts>(fields)...},
+      IndexTupleField<sizeof...(Fields), Field>{forward<T>(field)} {}
+};
+
+template <>
+struct TupleHolderImpl<true, true> {
   constexpr bool eq(const TupleHolderImpl &) const { return true; }
 
   constexpr bool ne(const TupleHolderImpl &) const { return false; }
@@ -151,11 +163,17 @@ struct crust_ebco TupleHolder<Field> :
 template <>
 struct TupleHolder<> : TupleHolderImpl<true, true> {};
 
+template <usize index, bool remain_is_zst, class... Fields>
+struct TupleGetterImpl;
+
+template <bool is_zst, class... Fields>
+struct TupleGetterZeroImpl;
+
 template <usize index, class... Fields>
 struct TupleGetter;
 
 template <usize index, class Field, class... Fields>
-struct TupleGetter<index, Field, Fields...> {
+struct TupleGetterImpl<index, false, Field, Fields...> {
   using Self = TupleHolder<Field, Fields...>;
   using Result = typename TupleGetter<index - 1, Fields...>::Result;
 
@@ -168,8 +186,22 @@ struct TupleGetter<index, Field, Fields...> {
   }
 };
 
+template <usize index, class Field, class... Fields>
+struct TupleGetterImpl<index, true, Field, Fields...> {
+  using Self = TupleHolder<Field, Fields...>;
+  using Result = typename TupleGetter<index - 1, Fields...>::Result;
+
+  static constexpr const Result &inner(const Self &self) {
+    return TupleGetter<index - 1, Fields...>::inner(self);
+  }
+
+  static constexpr Result &inner(Self &self) {
+    return TupleGetter<index - 1, Fields...>::inner(self);
+  }
+};
+
 template <class Field, class... Fields>
-struct TupleGetter<0, Field, Fields...> {
+struct TupleGetterZeroImpl<false, Field, Fields...> {
   using Self = TupleHolder<Field, Fields...>;
   using Result = Field;
 
@@ -177,6 +209,33 @@ struct TupleGetter<0, Field, Fields...> {
 
   static constexpr Result &inner(Self &self) { return self.field; }
 };
+
+template <class Field, class... Fields>
+struct TupleGetterZeroImpl<true, Field, Fields...> {
+  using Self = TupleHolder<Field, Fields...>;
+  using Result = Field;
+  using FieldImpl = IndexTupleField<sizeof...(Fields), Field>;
+
+  static constexpr const Result &inner(const Self &self) {
+    return static_cast<const FieldImpl &>(self).inner;
+  }
+
+  static constexpr Result &inner(Self &self) {
+    return static_cast<FieldImpl &>(self).inner;
+  }
+};
+
+template <usize index, class Field, class... Fields>
+struct TupleGetter<index, Field, Fields...> :
+    TupleGetterImpl<
+        index,
+        AllVal<IsZeroSizedTypeVal<Fields>...>::result,
+        Field,
+        Fields...> {};
+
+template <class Field, class... Fields>
+struct TupleGetter<0, Field, Fields...> :
+    TupleGetterZeroImpl<IsZeroSizedTypeVal<Field>::result, Field, Fields...> {};
 } // namespace _impl_tuple
 
 template <class... Fields>

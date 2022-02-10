@@ -43,16 +43,13 @@ constexpr cmp::Ordering TupleHolderImpl<false, true, Field, Fields...>::cmp(
   return cmp::operator_cmp(this->field, other.field);
 }
 
-template <class... Fields>
-constexpr Option<cmp::Ordering>
-TupleHolderImpl<true, true, Fields...>::partial_cmp(
-    const TupleHolderImpl &) const {
+inline constexpr Option<cmp::Ordering>
+TupleHolderImpl<true, true>::partial_cmp(const TupleHolderImpl &) const {
   return make_some(cmp::make_equal());
 }
 
-template <class... Fields>
 inline constexpr cmp::Ordering
-TupleHolderImpl<true, true, Fields...>::cmp(const TupleHolderImpl &) const {
+TupleHolderImpl<true, true>::cmp(const TupleHolderImpl &) const {
   return cmp::make_equal();
 }
 } // namespace _impl_tuple
