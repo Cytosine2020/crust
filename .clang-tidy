@@ -1,4 +1,4 @@
-Checks: '-*,clang-diagnostic-*,llvm-*,misc-*,-llvm-header-guard,-llvm-else-after-return'
+Checks: '-*,clang-diagnostic-*,llvm-*,misc-*,-llvm-header-guard,-llvm-else-after-return,-misc-non-private-member-variables-in-classes'
 
 CheckOptions:
   - key:             readability-identifier-naming.ClassCase

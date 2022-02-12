@@ -12,41 +12,33 @@ using namespace cmp;
 namespace {
 class A {};
 
-class B {};
+class B : A {};
 } // namespace
 
 
 GTEST_TEST(tuple, size_zero) {
-  crust_static_assert(IsZeroSizedTypeVal<Tuple<>>::result);
-  crust_static_assert(IsZeroSizedTypeVal<Tuple<Tuple<>>>::result);
-  crust_static_assert(IsZeroSizedTypeVal<Tuple<Tuple<>, Tuple<>>>::result);
+  crust_static_assert(Derive<Tuple<>, ZeroSizedType>::result);
+  crust_static_assert(Derive<Tuple<Tuple<>>, ZeroSizedType>::result);
+  crust_static_assert(Derive<Tuple<Tuple<>, Tuple<>>, ZeroSizedType>::result);
   crust_static_assert(
-      IsZeroSizedTypeVal<Tuple<Tuple<>, Tuple<>, Tuple<>>>::result);
+      Derive<Tuple<Tuple<>, Tuple<>, Tuple<>>, ZeroSizedType>::result);
 
-  // crust_static_assert(sizeof(Tuple<>) == 1);
-  // crust_static_assert(sizeof(Tuple<Tuple<>>) == 1);
-  // crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>>) == 1);
-  // crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, Tuple<>>) == 1);
-  // crust_static_assert(sizeof(Tuple<i32, Tuple<>, Tuple<>>) == sizeof(i32));
-  // crust_static_assert(sizeof(Tuple<Tuple<>, i32, Tuple<>>) == sizeof(i32));
-  // crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, i32>) == sizeof(i32));
+  crust_static_assert(sizeof(Tuple<>) == 1);
+  crust_static_assert(sizeof(Tuple<Tuple<>>) == 1);
+  crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>>) == 1);
+  crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, Tuple<>>) == 1);
+  crust_static_assert(sizeof(Tuple<i32, Tuple<>, Tuple<>>) == sizeof(i32));
+  crust_static_assert(sizeof(Tuple<Tuple<>, i32, Tuple<>>) == sizeof(i32));
+  crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, i32>) == sizeof(i32));
 
-#define PRINT_TYPE_SIZE(...)                                                   \
-  printf("size of " #__VA_ARGS__ ": %lu\n", sizeof(__VA_ARGS__));
+  constexpr auto empty_1 = make_tuple(make_tuple(), make_tuple(), make_tuple());
+  crust_static_assert(empty_1.get<0>() == make_tuple());
+  crust_static_assert(empty_1.get<1>() == make_tuple());
+  crust_static_assert(empty_1.get<2>() == make_tuple());
 
-  PRINT_TYPE_SIZE(Tuple<>);
-  PRINT_TYPE_SIZE(Tuple<Tuple<>>);
-  PRINT_TYPE_SIZE(Tuple<Tuple<>, Tuple<>>);
-  PRINT_TYPE_SIZE(Tuple<Tuple<>, Tuple<>, Tuple<>>);
-  PRINT_TYPE_SIZE(Tuple<u32, Tuple<>, Tuple<>>);
-  PRINT_TYPE_SIZE(Tuple<Tuple<>, u32, Tuple<>>);
-  PRINT_TYPE_SIZE(Tuple<Tuple<>, Tuple<>, u32>);
-
-  constexpr auto empty_1 = make_tuple();
-  constexpr auto empty_2 = make_tuple(make_tuple(), make_tuple(), make_tuple());
-  crust_static_assert(empty_2.get<0>() == empty_1);
-  crust_static_assert(empty_2.get<1>() == empty_1);
-  crust_static_assert(empty_2.get<2>() == empty_1);
+  constexpr auto empty_2 = make_tuple(make_tuple(), 1);
+  crust_static_assert(empty_2.get<0>() == make_tuple());
+  crust_static_assert(empty_2.get<1>() == 1);
 
   crust_static_assert(Derive<Tuple<>, PartialEq>::result);
   crust_static_assert(Derive<Tuple<>, Eq>::result);
@@ -67,7 +59,7 @@ GTEST_TEST(tuple, size_zero) {
 }
 
 GTEST_TEST(tuple, size_one) {
-  crust_static_assert(!IsZeroSizedTypeVal<Tuple<A>>::result);
+  crust_static_assert(!Derive<Tuple<A>, ZeroSizedType>::result);
 
   crust_static_assert(!Derive<Tuple<A>, PartialEq>::result);
   crust_static_assert(!Derive<Tuple<A>, Eq>::result);
@@ -99,7 +91,7 @@ GTEST_TEST(tuple, size_one) {
 }
 
 GTEST_TEST(tuple, size_two) {
-  crust_static_assert(!IsZeroSizedTypeVal<Tuple<A, B>>::result);
+  crust_static_assert(!Derive<Tuple<A, B>, ZeroSizedType>::result);
 
   crust_static_assert(!Derive<Tuple<A, B>, PartialEq>::result);
   crust_static_assert(!Derive<Tuple<A, B>, Eq>::result);
@@ -120,14 +112,6 @@ GTEST_TEST(tuple, size_two) {
 
   EXPECT_TRUE(std::get<0>(tuple) == 1);
   EXPECT_TRUE(std::get<1>(tuple) == 'b');
-
-  i32 a;
-  char b;
-
-  let(a, b) = move(tuple);
-
-  EXPECT_EQ(a, 1);
-  EXPECT_EQ(b, 'b');
 
   crust_static_assert(make_tuple(true) != make_tuple(false));
   crust_static_assert(make_tuple(1) > make_tuple(0));

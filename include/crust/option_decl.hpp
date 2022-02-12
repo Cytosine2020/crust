@@ -15,9 +15,13 @@ struct Some;
 struct None;
 
 template <class T>
-class crust_ebco Option : public Enum<Some<T>, None> {
+class crust_ebco Option :
+    public Enum<Some<T>, None>,
+    public AutoImpl<Option<T>, Enum<Some<T>, None>, cmp::PartialEq, cmp::Eq>,
+    public cmp::PartialOrd<Option<T>>,
+    public cmp::Ord<Option<T>> {
 public:
-  CRUST_ENUM_USE_BASE(Option, Enum<Some<T>, None>);
+  CRUST_ENUM_USE_BASE(Option, Enum<Some<T>, None>)
 
   constexpr bool is_some() const {
     return this->template is_variant<Some<T>>();
@@ -25,9 +29,9 @@ public:
 
   constexpr bool is_none() const { return this->template is_variant<None>(); }
 
-  constexpr bool contains(const T &other) const {
-    return this->template eq_variant<Some<T>>(other);
-  }
+  // constexpr bool contains(const T &other) const {
+  //   return this->template eq_variant<Some<T>>(other);
+  // }
 
   constexpr Option<const T *> as_ptr() const {
     return map(ops::bind([](const T &value) { return &value; }));

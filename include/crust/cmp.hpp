@@ -13,12 +13,50 @@
 
 namespace crust {
 namespace cmp {
-CRUST_TUPLE_STRUCT(Less);
-CRUST_TUPLE_STRUCT(Equal);
-CRUST_TUPLE_STRUCT(Greater);
+struct Less :
+    TupleStruct<>,
+    AutoImpl<
+        Less,
+        TupleStruct<>,
+        ZeroSizedType,
+        cmp::PartialEq,
+        cmp::Eq,
+        cmp::PartialOrd,
+        cmp::Ord> {
+  CRUST_USE_BASE_CONSTRUCTORS(Less, TupleStruct<>);
+};
+struct Equal :
+    TupleStruct<>,
+    AutoImpl<
+        Equal,
+        TupleStruct<>,
+        ZeroSizedType,
+        cmp::PartialEq,
+        cmp::Eq,
+        cmp::PartialOrd,
+        cmp::Ord> {
+  CRUST_USE_BASE_CONSTRUCTORS(Equal, TupleStruct<>);
+};
+struct Greater :
+    TupleStruct<>,
+    AutoImpl<
+        Greater,
+        TupleStruct<>,
+        ZeroSizedType,
+        cmp::PartialEq,
+        cmp::Eq,
+        cmp::PartialOrd,
+        cmp::Ord> {
+  CRUST_USE_BASE_CONSTRUCTORS(Greater, TupleStruct<>);
+};
 
 class Ordering :
     public Enum<Less, Equal, Greater>,
+    public AutoImpl<
+        Ordering,
+        Enum<Less, Equal, Greater>,
+        cmp::PartialEq,
+        cmp::Eq>,
     public PartialOrd<Ordering>,
     public Ord<Ordering> {
 private:
@@ -89,7 +127,7 @@ always_inline constexpr Ordering operator_cmp(const T &v1, const T &v2) {
 // todo: refactor
 template <class Self, class Rhs>
 constexpr bool PartialOrd<Self, Rhs>::lt(const Rhs &other) const {
-  return operator_partial_cmp(self(), other).contains(make_less());
+  return operator_partial_cmp(self(), other) == make_some(make_less());
 }
 
 template <class Self, class Rhs>
@@ -100,7 +138,7 @@ constexpr bool PartialOrd<Self, Rhs>::le(const Rhs &other) const {
 
 template <class Self, class Rhs>
 constexpr bool PartialOrd<Self, Rhs>::gt(const Rhs &other) const {
-  return operator_partial_cmp(self(), other).contains(make_greater());
+  return operator_partial_cmp(self(), other) == make_some(make_greater());
 }
 
 template <class Self, class Rhs>
@@ -129,7 +167,9 @@ constexpr bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
   template <>                                                                  \
   FN(u64, ##__VA_ARGS__);                                                      \
   template <>                                                                  \
-  FN(i64, ##__VA_ARGS__)
+  FN(i64, ##__VA_ARGS__);                                                      \
+  template <class T>                                                           \
+  FN(T *, ##__VA_ARGS__)
 
 #define _IMPL_OPERATOR_CMP(type, ...)                                          \
   always_inline constexpr Ordering operator_cmp(                               \

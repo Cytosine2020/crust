@@ -11,14 +11,6 @@ using namespace crust;
 
 
 namespace {
-struct ClassA : test::RAIIChecker<ClassA> {
-  CRUST_USE_BASE_CONSTRUCTORS(ClassA, test::RAIIChecker<ClassA>);
-};
-
-struct ClassB : test::RAIIChecker<ClassB> {
-  CRUST_USE_BASE_CONSTRUCTORS(ClassB, test::RAIIChecker<ClassB>);
-};
-
 template <class T>
 struct VisitType {
   constexpr bool operator()(const T &) const { return true; }
@@ -28,65 +20,106 @@ struct VisitType {
     return false;
   }
 };
+
+struct ClassA : test::RAIIChecker<ClassA> {
+  CRUST_USE_BASE_CONSTRUCTORS(ClassA, test::RAIIChecker<ClassA>);
+};
+
+struct ClassB : test::RAIIChecker<ClassB> {
+  CRUST_USE_BASE_CONSTRUCTORS(ClassB, test::RAIIChecker<ClassB>);
+};
+
+struct EnumA : Enum<ClassA, ClassB> {
+  CRUST_ENUM_USE_BASE(EnumA, Enum<ClassA, ClassB>);
+};
 } // namespace
 
 
 GTEST_TEST(enum_, enum_) {
-  using Enumerate = Enum<ClassA, ClassB>;
-
-  crust_static_assert(!Derive<Enumerate, cmp::PartialEq>::result);
-  crust_static_assert(!Derive<Enumerate, cmp::Eq>::result);
+  crust_static_assert(!Derive<EnumA, cmp::PartialEq>::result);
+  crust_static_assert(!Derive<EnumA, cmp::Eq>::result);
 
   auto recorder = std::make_shared<test::RAIIRecorder>(test::RAIIRecorder{});
 
-  Enumerate a;
-  a = Enumerate{ClassA{recorder}};
+  EnumA a;
+  a = EnumA{ClassA{recorder}};
   EXPECT_TRUE(a.visit<bool>(VisitType<ClassA>{}));
-  a = Enumerate{ClassB{recorder}};
+  a = EnumA{ClassB{recorder}};
   EXPECT_TRUE(a.visit<bool>(VisitType<ClassB>{}));
   a = ClassA{recorder};
   EXPECT_TRUE(a.visit<bool>(VisitType<ClassA>{}));
   a = ClassB{recorder};
   EXPECT_TRUE(a.visit<bool>(VisitType<ClassB>{}));
 
-  Enumerate b;
+  EnumA b;
   b = a;
   EXPECT_TRUE(b.visit<bool>(VisitType<ClassB>{}));
   b = move(a);
 
-  Enumerate c{b};
-  Enumerate d{move(c)};
+  EnumA c{b};
+  EnumA d{move(c)};
 
   EXPECT_TRUE(d.visit<bool>(VisitType<ClassB>{}));
 }
 
 
 namespace {
-CRUST_TUPLE_STRUCT(A);
-CRUST_TUPLE_STRUCT(B);
-CRUST_TUPLE_STRUCT(C, i32);
-CRUST_TUPLE_STRUCT(D, i32);
-CRUST_TUPLE_STRUCT(E, i32);
-CRUST_TUPLE_STRUCT(F, i32);
+struct A :
+    TupleStruct<>,
+    AutoImpl<A, TupleStruct<>, ZeroSizedType, cmp::PartialEq, cmp::Eq> {
+  CRUST_USE_BASE_CONSTRUCTORS(A, TupleStruct<>);
+};
+struct B :
+    TupleStruct<>,
+    AutoImpl<B, TupleStruct<>, ZeroSizedType, cmp::PartialEq, cmp::Eq> {
+  CRUST_USE_BASE_CONSTRUCTORS(B, TupleStruct<>);
+};
+struct C :
+    TupleStruct<i32>,
+    AutoImpl<C, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
+  CRUST_USE_BASE_CONSTRUCTORS(C, TupleStruct<i32>);
+};
+struct D :
+    TupleStruct<i32>,
+    AutoImpl<D, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
+  CRUST_USE_BASE_CONSTRUCTORS(D, TupleStruct<i32>);
+};
+struct E :
+    TupleStruct<i32>,
+    AutoImpl<E, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
+  CRUST_USE_BASE_CONSTRUCTORS(E, TupleStruct<i32>);
+};
+struct F :
+    TupleStruct<i32>,
+    AutoImpl<F, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
+  CRUST_USE_BASE_CONSTRUCTORS(F, TupleStruct<i32>);
+};
 
-class Enumerate : public Enum<A, B, C, D, E, F> {
-public:
-  CRUST_ENUM_USE_BASE(Enumerate, Enum<A, B, C, D, E, F>);
+struct EnumB :
+    Enum<A, B>,
+    AutoImpl<EnumB, Enum<A, B>, cmp::PartialEq, cmp::Eq> {
+  CRUST_ENUM_USE_BASE(EnumB, Enum<A, B>);
+};
+
+struct EnumC :
+    Enum<A, B, C, D, E, F>,
+    AutoImpl<EnumC, Enum<A, B, C, D, E, F>, cmp::PartialEq, cmp::Eq> {
+  CRUST_ENUM_USE_BASE(EnumC, Enum<A, B, C, D, E, F>);
 };
 } // namespace
 
 
 GTEST_TEST(enum_, tag_only) {
-  crust_static_assert(sizeof(Enum<A, B>) == sizeof(u32));
-  crust_static_assert(sizeof(Enum<A, B, C, D, E, F>) == 2 * sizeof(u32));
+  crust_static_assert(sizeof(EnumB) == sizeof(u32));
+  crust_static_assert(sizeof(EnumC) == 2 * sizeof(u32));
 }
 
 GTEST_TEST(enum_, raii) {
-  crust_static_assert(std::is_trivially_copyable<Enumerate>::value);
-  crust_static_assert(std::is_standard_layout<Enumerate>::value);
-  crust_static_assert(std::is_literal_type<Enumerate>::value);
+  crust_static_assert(std::is_trivially_copyable<EnumC>::value);
+  crust_static_assert(std::is_standard_layout<EnumC>::value);
+  crust_static_assert(std::is_literal_type<EnumC>::value);
 
-  Enumerate a;
+  EnumC a;
   a = A{};
   EXPECT_TRUE(a.visit<bool>(VisitType<A>{}));
   a = B{};
@@ -99,14 +132,18 @@ GTEST_TEST(enum_, raii) {
   EXPECT_TRUE(a.visit<bool>(VisitType<E>{}));
   a = F{};
   EXPECT_TRUE(a.visit<bool>(VisitType<F>{}));
-  i32 var;
-  EXPECT_TRUE(let<F>(var) = move(a));
 }
 
-GTEST_TEST(enum_, cmp) {
-  using Enumerate = Enum<i32, char>;
+namespace {
+struct crust_ebco EnumD :
+    Enum<i32, char>,
+    AutoImpl<EnumD, Enum<i32, char>, cmp::PartialEq, cmp::Eq> {
+  CRUST_ENUM_USE_BASE(EnumD, Enum<i32, char>);
+};
+} // namespace
 
-  EXPECT_TRUE(Enumerate{0} == Enumerate{0});
-  EXPECT_TRUE(Enumerate{0} != Enumerate{'a'});
-  EXPECT_TRUE(Enumerate{0} != Enumerate{1});
+GTEST_TEST(enum_, cmp) {
+  EXPECT_TRUE(EnumD{0} == EnumD{0});
+  EXPECT_TRUE(EnumD{0} != EnumD{'a'});
+  EXPECT_TRUE(EnumD{0} != EnumD{1});
 }

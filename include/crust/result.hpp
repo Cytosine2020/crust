@@ -10,13 +10,33 @@
 namespace crust {
 namespace result {
 template <class T>
-CRUST_TUPLE_STRUCT(Ok, T);
+struct Ok :
+    TupleStruct<T>,
+    AutoImpl<
+        Ok<T>,
+        TupleStruct<T>,
+        ZeroSizedType,
+        cmp::PartialEq,
+        cmp::Eq,
+        cmp::PartialOrd,
+        cmp::Ord> {};
 
 template <class E>
-CRUST_TUPLE_STRUCT(Err, E);
+struct Err :
+    TupleStruct<E>,
+    AutoImpl<
+        Err<E>,
+        TupleStruct<E>,
+        ZeroSizedType,
+        cmp::PartialEq,
+        cmp::Eq,
+        cmp::PartialOrd,
+        cmp::Ord> {};
 
 template <class T, class E>
-class Result : public Enum<Ok<T>, Err<E>> {
+class Result :
+    public Enum<Ok<T>, Err<E>>,
+    AutoImpl<Result<T, E>, Enum<Ok<T>, Err<E>>, cmp::PartialEq, cmp::Eq> {
 public:
   CRUST_ENUM_USE_BASE(Result, Enum<Ok<T>, Err<E>>);
 

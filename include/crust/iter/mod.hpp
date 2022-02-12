@@ -18,17 +18,17 @@ CRUST_TRAIT(Iterator, class Item) {
     return make_tuple<usize, Option<usize>>(0, None{});
   }
 
-  template <class B, class F>
-  B fold(B && init, ops::Fn<F, B(B &&, Item &&)> f) {
-    B accum = forward(init);
+  // template <class B, class F>
+  // B fold(B && init, ops::Fn<F, B(B &&, Item &&)> f) {
+  //   B accum = forward(init);
 
-    Item x;
-    while ((let<Some<Item>>(x) = self().next())) {
-      accum = f(move(accum), move(x));
-    }
+  //   Item x;
+  //   while ((let<Some<Item>>(x) = self().next())) {
+  //     accum = f(move(accum), move(x));
+  //   }
 
-    return accum;
-  }
+  //   return accum;
+  // }
 };
 } // namespace iter
 } // namespace crust
