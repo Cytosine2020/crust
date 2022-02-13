@@ -27,14 +27,8 @@ CRUST_TRAIT(PartialEq, class Rhs = Self) {
 
   constexpr bool operator!=(const Rhs &other) const { return self().ne(other); }
 };
-} // namespace cmp
 
-namespace cmp {
 CRUST_TRAIT(Eq) { CRUST_TRAIT_REQUIRE(Eq, Derive<Self, PartialEq>); };
-} // namespace cmp
-
-namespace cmp {
-class Ordering;
 
 CRUST_TRAIT(PartialOrd, class Rhs = Self) {
   CRUST_TRAIT_REQUIRE(PartialOrd, Derive<Self, PartialEq>);
@@ -73,17 +67,95 @@ CRUST_TRAIT(Ord) {
   }
 
   crust_cxx14_constexpr Self clamp(Self && min, Self && max) && {
-    crust_debug_assert(min <= max);
-    if (self() < min) {
-      return move(min);
-    } else if (self() > max) {
-      return move(max);
-    } else {
-      return move(self());
-    }
+    return crust_debug_assert(min <= max),
+           self() < min     ? move(min) :
+               self() > max ? move(max) :
+                              move(self());
   }
 };
 } // namespace cmp
+
+namespace _auto_impl {
+template <class Self, class Base, usize rev_index = TupleLikeSize<Base>::result>
+struct TupleLikePartialEqHelper {
+  static constexpr usize index = TupleLikeSize<Base>::result - rev_index;
+  using Getter = TupleLikeGetter<Base, index>;
+  using Remains = TupleLikePartialEqHelper<Self, Base, rev_index - 1>;
+
+  static constexpr bool eq(const Self &a, const Self &b) {
+    return Getter::get(a) == Getter::get(b) && Remains::eq(a, b);
+  }
+
+  static constexpr bool ne(const Self &a, const Self &b) {
+    return Getter::get(a) != Getter::get(b) || Remains::ne(a, b);
+  }
+};
+
+template <class Self, class Base>
+struct TupleLikePartialEqHelper<Self, Base, 0> {
+  static constexpr bool eq(const Self &, const Self &) { return true; }
+
+  static constexpr bool ne(const Self &, const Self &) { return false; }
+};
+
+template <class Self, class Base, usize rev_index = TupleLikeSize<Base>::result>
+struct TupleLikePartialOrdHelper {
+  static constexpr usize index = TupleLikeSize<Base>::result - rev_index;
+  using Getter = TupleLikeGetter<Base, index>;
+  using Remains = TupleLikePartialOrdHelper<Self, Base, rev_index - 1>;
+
+  static constexpr Option<cmp::Ordering>
+  partial_cmp(const Self &a, const Self &b);
+
+  static constexpr bool lt(const Self &a, const Self &b) {
+    return Getter::get(a) != Getter::get(b) ? Getter::get(a) < Getter::get(b) :
+                                              Remains::lt(a, b);
+  }
+
+  static constexpr bool le(const Self &a, const Self &b) {
+    return Getter::get(a) != Getter::get(b) ? Getter::get(a) <= Getter::get(b) :
+                                              Remains::le(a, b);
+  }
+
+  static constexpr bool gt(const Self &a, const Self &b) {
+    return Getter::get(a) != Getter::get(b) ? Getter::get(a) > Getter::get(b) :
+                                              Remains::gt(a, b);
+  }
+
+  static constexpr bool ge(const Self &a, const Self &b) {
+    return Getter::get(a) != Getter::get(b) ? Getter::get(a) >= Getter::get(b) :
+                                              Remains::ge(a, b);
+  }
+};
+
+template <class Self, class Base>
+struct TupleLikePartialOrdHelper<Self, Base, 0> {
+  static constexpr Option<cmp::Ordering>
+  partial_cmp(const Self &, const Self &);
+
+  static constexpr bool lt(const Self &, const Self &) { return false; }
+
+  static constexpr bool le(const Self &, const Self &) { return true; }
+
+  static constexpr bool gt(const Self &, const Self &) { return false; }
+
+  static constexpr bool ge(const Self &, const Self &) { return true; }
+};
+
+template <class Self, class Base, usize rev_index = TupleLikeSize<Base>::result>
+struct TupleLikeOrdHelper {
+  static constexpr usize index = TupleLikeSize<Base>::result - rev_index;
+  using Getter = TupleLikeGetter<Base, index>;
+  using Remains = TupleLikeOrdHelper<Self, Base, rev_index - 1>;
+
+  static constexpr cmp::Ordering cmp(const Self &a, const Self &b);
+};
+
+template <class Self, class Base>
+struct TupleLikeOrdHelper<Self, Base, 0> {
+  static constexpr cmp::Ordering cmp(const Self &, const Self &);
+};
+} // namespace _auto_impl
 } // namespace crust
 
 

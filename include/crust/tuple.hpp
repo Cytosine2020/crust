@@ -11,61 +11,30 @@
 
 
 namespace crust {
-namespace _impl_tuple {
-template <class Field, class... Fields>
+namespace _auto_impl {
+template <class Self, class Base>
 constexpr Option<cmp::Ordering>
-TupleHolderSizedImpl<false, false, Field, Fields...>::_partial_cmp(
-    const TupleHolderSizedImpl &other) const {
-  return cmp::operator_partial_cmp(field, other.field)
-      .map(ops::bind([&](cmp::Ordering value) {
-        return value.then(remains._partial_cmp(other.remains)); // FIXME
-      }));
+TuplePartialOrdImpl<Self, Base>::partial_cmp(const Self &other) const {
+  return TupleLikePartialOrdHelper<Self, Base>::partial_cmp(self(), other);
 }
 
-template <class Field, class... Fields>
-constexpr cmp::Ordering
-TupleHolderSizedImpl<false, false, Field, Fields...>::_cmp(
-    const TupleHolderSizedImpl &other) const {
-  return cmp::operator_cmp(field, other.field)
-      .then(remains._cmp(other.remains));
+template <class Self, class Base>
+constexpr cmp::Ordering TupleOrdImpl<Self, Base>::cmp(const Self &other) const {
+  return TupleLikeOrdHelper<Self, Base>::cmp(self(), other);
 }
-
-template <class Field, class... Fields>
-constexpr Option<cmp::Ordering>
-TupleHolderSizedImpl<false, true, Field, Fields...>::_partial_cmp(
-    const TupleHolderSizedImpl &other) const {
-  return cmp::operator_partial_cmp(field, other.field);
-}
-
-template <class Field, class... Fields>
-constexpr cmp::Ordering
-TupleHolderSizedImpl<false, true, Field, Fields...>::_cmp(
-    const TupleHolderSizedImpl &other) const {
-  return cmp::operator_cmp(field, other.field);
-}
+} // namespace _auto_impl
 
 template <class... Fields>
 constexpr Option<cmp::Ordering>
-TupleHolderSizedImpl<true, true, Fields...>::_partial_cmp(
-    const TupleHolderSizedImpl &) const {
-  return make_some(cmp::make_equal());
+Tuple<Fields...>::partial_cmp(const Tuple<Fields...> &other) const {
+  return PartialOrdHelper::partial_cmp(*this, other);
 }
 
 template <class... Fields>
-constexpr cmp::Ordering TupleHolderSizedImpl<true, true, Fields...>::_cmp(
-    const TupleHolderSizedImpl &) const {
-  return cmp::make_equal();
+constexpr cmp::Ordering
+Tuple<Fields...>::cmp(const Tuple<Fields...> &other) const {
+  return OrdHelper::cmp(*this, other);
 }
-
-inline constexpr Option<cmp::Ordering>
-TupleHolder<>::_partial_cmp(const TupleHolder &) const {
-  return make_some(cmp::make_equal());
-}
-
-inline constexpr cmp::Ordering TupleHolder<>::_cmp(const TupleHolder &) const {
-  return cmp::make_equal();
-}
-} // namespace _impl_tuple
 
 template <class... Fields>
 constexpr Tuple<typename RemoveConstOrRefType<Fields>::Result...>
@@ -74,42 +43,28 @@ make_tuple(Fields &&...fields) {
       forward<Fields>(fields)...};
 }
 
-namespace _auto_impl {
-template <class Self>
-constexpr Option<::crust::cmp::Ordering>
-TuplePartialOrdImpl<Self>::partial_cmp(const Self &other) const {
-  return self()._partial_cmp(other);
+namespace _impl_tuple {
+template <class... Fields>
+class LetTuple {
+private:
+  TupleSizedHolder<Fields &...> ref;
+
+public:
+  explicit constexpr LetTuple(Fields &...fields) : ref{fields...} {}
+
+  crust_cxx14_constexpr void operator=(TupleSizedHolder<Fields...> &&tuple) {
+    LetTupleHelper<sizeof...(Fields), Fields...>::inner(ref, move(tuple));
+  }
+};
+} // namespace _impl_tuple
+
+template <class... Fields>
+crust_cxx14_constexpr
+    _impl_tuple::LetTuple<typename RemoveRefType<Fields>::Result...>
+    let(Fields &&...fields) {
+  return _impl_tuple::LetTuple<typename RemoveRefType<Fields>::Result...>{
+      forward<Fields>(fields)...};
 }
-
-template <class Self>
-constexpr ::crust::cmp::Ordering
-TupleOrdImpl<Self>::cmp(const Self &other) const {
-  return self()._cmp(other);
-}
-} // namespace _auto_impl
-
-// namespace _impl_tuple {
-// template <class... Fields>
-// class LetTuple {
-// private:
-//   TupleSizedHolder<Fields &...> ref;
-
-// public:
-//   explicit constexpr LetTuple(Fields &...fields) : ref{fields...} {}
-
-//   crust_cxx14_constexpr void operator=(Tuple<Fields...> &&tuple) {
-//     LetTupleHelper<sizeof...(Fields), Fields...>::inner(ref, move(tuple));
-//   }
-// };
-// } // namespace _impl_tuple
-
-// template <class... Fields>
-// crust_cxx14_constexpr
-//     _impl_tuple::LetTuple<typename RemoveRefType<Fields>::Result...>
-//     let(Fields &&...fields) {
-//   return _impl_tuple::LetTuple<typename RemoveRefType<Fields>::Result...>{
-//       forward<Fields>(fields)...};
-// }
 } // namespace crust
 
 namespace std {
@@ -118,24 +73,29 @@ namespace std {
 
 template <class... Fields>
 struct tuple_size<crust::Tuple<Fields...>> :
-    integral_constant<crust::usize, sizeof...(Fields)> {};
+    integral_constant<
+        crust::usize,
+        crust::_auto_impl::TupleLikeSize<
+            crust::TupleStruct<Fields...>>::result> {};
 
 template <crust::usize index, class... Fields>
 struct tuple_element<index, crust::Tuple<Fields...>> {
-  using type =
-      typename crust::_impl_tuple::TupleGetter<index, Fields...>::Result;
+  using type = typename crust::_auto_impl::
+      TupleLikeGetter<crust::TupleStruct<Fields...>, index>::Result;
 };
 
 template <crust::usize index, class... Fields>
 constexpr const typename tuple_element<index, crust::Tuple<Fields...>>::type &
 get(const crust::Tuple<Fields...> &object) {
-  return object.template get<index>();
+  return crust::_auto_impl::
+      TupleLikeGetter<crust::TupleStruct<Fields...>, index>::get(object);
 }
 
 template <crust::usize index, class... Fields>
 constexpr typename tuple_element<index, crust::Tuple<Fields...>>::type &
 get(crust::Tuple<Fields...> &object) {
-  return object.template get<index>();
+  return crust::_auto_impl::
+      TupleLikeGetter<crust::TupleStruct<Fields...>, index>::get(object);
 }
 } // namespace std
 

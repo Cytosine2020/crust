@@ -116,15 +116,11 @@ using usize = u64;
 template <class Value>
 struct TmplType {
   using Result = Value;
-
-  // TmplType() = delete;
 };
 
 template <class Type, Type value>
 struct TmplVal : TmplType<Type> {
   static constexpr Type result = value;
-
-  // TmplVal() = delete;
 };
 
 #define crust_tmpl_val(obj)                                                    \
@@ -198,6 +194,9 @@ struct RemoveConstOrRefType :
     CompositionType<T, RemoveRefType, RemoveConstType> {};
 
 template <class T>
+struct IsEmptyType : BoolVal<std::is_empty<T>::value> {};
+
+template <class T>
 struct IsLValueRefVal : BoolVal<false> {};
 
 template <class T>
@@ -227,41 +226,6 @@ struct IsBaseOfTypeVal : BoolVal<std::is_base_of<B, T>::value> {};
 template <class T>
 struct IsTriviallyCopyable : BoolVal<std::is_trivially_copyable<T>::value> {};
 
-template <class... Fields>
-struct TypesTuple {};
-
-template <class T, class... Fields>
-struct TypesIncludeVal;
-
-template <class T, class Field, class... Fields>
-struct TypesIncludeVal<T, Field, Fields...> : TypesIncludeVal<T, Fields...> {};
-
-template <class T, class... Fields>
-struct TypesIncludeVal<T, T, Fields...> : BoolVal<true> {};
-
-template <class T>
-struct TypesIncludeVal<T> : BoolVal<false> {};
-
-template <usize index, class... Fields>
-struct TypesIndexToType;
-
-template <usize index, class Field, class... Fields>
-struct TypesIndexToType<index, Field, Fields...> :
-    TypesIndexToType<index - 1, Fields...> {};
-
-template <class Field, class... Fields>
-struct TypesIndexToType<0, Field, Fields...> : TmplType<Field> {};
-
-template <class T, class... Fields>
-struct TypesTypeToIndex;
-
-template <class T, class Field, class... Fields>
-struct TypesTypeToIndex<T, Field, Fields...> :
-    IncVal<TypesTypeToIndex<T, Fields...>> {};
-
-template <class T, class... Fields>
-struct TypesTypeToIndex<T, T, Fields...> : TmplVal<u32, 0> {};
-
 template <bool enable>
 struct EnableIf {};
 
@@ -282,8 +246,13 @@ struct Impl<T, false> {};
 template <class T, class... Bools>
 using Impl = _impl_utility::Impl<T, AllVal<Bools...>::result>;
 
-// todo: detect condition
 namespace _auto_impl {
+template <class Self>
+struct TupleLikeSize;
+
+template <class Self, usize index>
+struct TupleLikeGetter;
+
 template <class Self, class Base, template <class...> class Trait>
 struct AutoImpl;
 } // namespace _auto_impl
@@ -351,22 +320,10 @@ public:
       __VA_ARGS__{::crust::forward<Args>(args)...} {}
 
 /// this is used by Tuple, Enum and Slice for zero sized type optimization
-/// forign type can inherit ZeroSizedType to be treated as mono state.
-
-namespace _impl_utility {
-template <class T>
-struct crust_ebco ZeroSizedTest : T {
-  struct Payload {
-    u32 a;
-  };
-  Payload a;
-};
-} // namespace _impl_utility
+/// forign type can implement ZeroSizedType to be treated as zero sized type.
 
 CRUST_TRAIT(ZeroSizedType) {
-  CRUST_TRAIT_REQUIRE(
-      ZeroSizedType,
-      BoolVal<sizeof(_impl_utility::ZeroSizedTest<Self>) == sizeof(u32)>);
+  CRUST_TRAIT_REQUIRE(ZeroSizedType, IsEmptyType<Self>);
 };
 } // namespace crust
 

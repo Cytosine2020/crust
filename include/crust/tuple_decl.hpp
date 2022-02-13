@@ -3,6 +3,7 @@
 
 
 #include "crust/cmp_decl.hpp"
+#include "crust/helper/types.hpp"
 #include "crust/utility.hpp"
 
 
@@ -26,119 +27,38 @@ struct TupleHolderSizedImpl<false, false, Field, Fields...> {
   Field field;
   TupleSizedHolder<Fields...> remains;
 
-  constexpr TupleHolderSizedImpl() : field{}, remains{} {}
+  constexpr TupleHolderSizedImpl() {}
 
   template <class T, class... Ts>
   explicit constexpr TupleHolderSizedImpl(T &&field, Ts &&...fields) :
       field{forward<T>(field)}, remains{forward<Ts>(fields)...} {}
-
-  constexpr bool _eq(const TupleHolderSizedImpl &other) const {
-    return field == other.field && remains._eq(other.remains);
-  }
-
-  constexpr bool _ne(const TupleHolderSizedImpl &other) const {
-    return field != other.field || remains._ne(other.remains);
-  }
-
-  constexpr Option<cmp::Ordering>
-  _partial_cmp(const TupleHolderSizedImpl &other) const;
-
-  constexpr bool _lt(const TupleHolderSizedImpl &other) const {
-    return field != other.field ? field < other.field :
-                                  remains._lt(other.remains);
-  }
-
-  constexpr bool _le(const TupleHolderSizedImpl &other) const {
-    return field != other.field ? field <= other.field :
-                                  remains._le(other.remains);
-  }
-
-  constexpr bool _gt(const TupleHolderSizedImpl &other) const {
-    return field != other.field ? field > other.field :
-                                  remains._gt(other.remains);
-  }
-
-  constexpr bool _ge(const TupleHolderSizedImpl &other) const {
-    return field != other.field ? field >= other.field :
-                                  remains._ge(other.remains);
-  }
-
-  constexpr cmp::Ordering _cmp(const TupleHolderSizedImpl &other) const;
 };
 
 template <class Field, class... Fields>
 struct TupleHolderSizedImpl<false, true, Field, Fields...> {
   Field field;
 
-  constexpr TupleHolderSizedImpl() : field{} {}
+  constexpr TupleHolderSizedImpl() {}
 
   explicit constexpr TupleHolderSizedImpl(Field &&field, Fields &&...) :
       field{forward<Field>(field)} {}
-
-  constexpr bool _eq(const TupleHolderSizedImpl &other) const {
-    return field == other.field;
-  }
-
-  constexpr bool _ne(const TupleHolderSizedImpl &other) const {
-    return field != other.field;
-  }
-
-  constexpr Option<cmp::Ordering>
-  _partial_cmp(const TupleHolderSizedImpl &other) const;
-
-  constexpr bool _lt(const TupleHolderSizedImpl &other) const {
-    return field < other.field;
-  }
-
-  constexpr bool _le(const TupleHolderSizedImpl &other) const {
-    return field <= other.field;
-  }
-
-  constexpr bool _gt(const TupleHolderSizedImpl &other) const {
-    return field > other.field;
-  }
-
-  constexpr bool _ge(const TupleHolderSizedImpl &other) const {
-    return field >= other.field;
-  }
-
-  constexpr cmp::Ordering _cmp(const TupleHolderSizedImpl &other) const;
 };
 
 template <class Field, class... Fields>
-struct crust_ebco TupleHolderSizedImpl<true, false, Field, Fields...> {
+struct TupleHolderSizedImpl<true, false, Field, Fields...> {
   TupleSizedHolder<Fields...> remains;
 
-  constexpr TupleHolderSizedImpl() : remains{} {}
+  constexpr TupleHolderSizedImpl() {}
 
   explicit constexpr TupleHolderSizedImpl(Field &&, Fields &&...fields) :
       remains{forward<Fields>(fields)...} {}
 };
 
 template <class... Fields>
-struct crust_ebco TupleHolderSizedImpl<true, true, Fields...> {
-  constexpr TupleHolderSizedImpl() :
-      TupleHolderSizedImpl<true, true, Fields...>{} {}
+struct TupleHolderSizedImpl<true, true, Fields...> {
+  constexpr TupleHolderSizedImpl() {}
 
-  explicit constexpr TupleHolderSizedImpl(Fields &&...) :
-      TupleHolderSizedImpl<true, true, Fields...>{} {}
-
-  constexpr bool _eq(const TupleHolderSizedImpl &) const { return true; }
-
-  constexpr bool _ne(const TupleHolderSizedImpl &) const { return false; }
-
-  constexpr Option<cmp::Ordering>
-  _partial_cmp(const TupleHolderSizedImpl &) const;
-
-  constexpr bool _lt(const TupleHolderSizedImpl &) const { return false; }
-
-  constexpr bool _le(const TupleHolderSizedImpl &) const { return true; }
-
-  constexpr bool _gt(const TupleHolderSizedImpl &) const { return false; }
-
-  constexpr bool _ge(const TupleHolderSizedImpl &) const { return true; }
-
-  constexpr cmp::Ordering _cmp(const TupleHolderSizedImpl &) const;
+  explicit constexpr TupleHolderSizedImpl(Fields &&...) {}
 };
 
 template <class Field, class... Fields>
@@ -165,89 +85,29 @@ struct crust_ebco TupleSizedHolder<Field> :
       TupleHolderSizedImpl<Derive<Field, ZeroSizedType>::result, true, Field>);
 };
 
-template <bool is_zst, class... Fields>
-struct ZeroSizedTypeHolderImpl;
-
-template <class... Fields>
-struct ZeroSizedTypeHolder;
-
-template <class Field, class... Fields>
-struct crust_ebco ZeroSizedTypeHolderImpl<true, Field, Fields...> :
-    Field,
-    ZeroSizedTypeHolder<Fields...> {};
-
-template <class Field>
-struct crust_ebco ZeroSizedTypeHolderImpl<true, Field> : Field {};
-
-template <class Field, class... Fields>
-struct crust_ebco ZeroSizedTypeHolderImpl<false, Field, Fields...> :
-    ZeroSizedTypeHolder<Fields...> {};
-
-template <class Field>
-struct ZeroSizedTypeHolderImpl<false, Field> {};
-
-template <class Field, class... Fields>
-struct crust_ebco ZeroSizedTypeHolder<Field, Fields...> :
-    ZeroSizedTypeHolderImpl<
-        AllVal<
-            Derive<Field, ZeroSizedType>,
-            NotVal<TypesIncludeVal<Field, Fields...>>>::result,
-        Field,
-        Fields...> {};
-
 template <bool is_all_zst, class... Fields>
-struct TupleHolderImpl;
+struct TupleHolder;
 
 template <class... Fields>
-struct crust_ebco TupleHolderImpl<false, Fields...> :
-    ZeroSizedTypeHolder<Fields...>,
+struct crust_ebco TupleHolder<false, Fields...> :
+    Impl<
+        _impl_types::ZeroSizedTypeHolder<Fields...>,
+        AnyVal<Derive<Fields, ZeroSizedType>...>>,
     TupleSizedHolder<Fields...> {
-  constexpr TupleHolderImpl() :
-      ZeroSizedTypeHolder<Fields...>{}, TupleSizedHolder<Fields...>{} {}
-
-  constexpr TupleHolderImpl(Fields &&...fields) :
-      ZeroSizedTypeHolder<Fields...>{}, TupleSizedHolder<Fields...>{
-                                            forward<Fields>(fields)...} {}
+  CRUST_USE_BASE_CONSTRUCTORS(TupleHolder, TupleSizedHolder<Fields...>);
 };
 
 template <class... Fields>
-struct crust_ebco TupleHolderImpl<true, Fields...> :
-    ZeroSizedTypeHolder<Fields...> {
-  constexpr TupleHolderImpl() : ZeroSizedTypeHolder<Fields...>{} {}
+struct crust_ebco TupleHolder<true, Fields...> :
+    _impl_types::ZeroSizedTypeHolder<Fields...> {
+  constexpr TupleHolder() : _impl_types::ZeroSizedTypeHolder<Fields...>{} {}
 
-  constexpr TupleHolderImpl(Fields &&...) : ZeroSizedTypeHolder<Fields...>{} {}
-};
-
-template <class... Fields>
-struct TupleHolder :
-    TupleHolderImpl<
-        AllVal<Derive<Fields, ZeroSizedType>...>::result,
-        Fields...> {
-  CRUST_USE_BASE_CONSTRUCTORS(
-      TupleHolder,
-      TupleHolderImpl<
-          AllVal<Derive<Fields, ZeroSizedType>...>::result,
-          Fields...>);
+  constexpr TupleHolder(Fields &&...) :
+      _impl_types::ZeroSizedTypeHolder<Fields...>{} {}
 };
 
 template <>
-struct crust_ebco TupleHolder<> {
-  constexpr bool _eq(const TupleHolder &) const { return true; }
-
-  constexpr bool _ne(const TupleHolder &) const { return false; }
-
-  constexpr Option<cmp::Ordering> _partial_cmp(const TupleHolder &) const;
-
-  constexpr bool _lt(const TupleHolder &) const { return false; }
-
-  constexpr bool _le(const TupleHolder &) const { return true; }
-
-  constexpr bool _gt(const TupleHolder &) const { return false; }
-
-  constexpr bool _ge(const TupleHolder &) const { return true; }
-
-  constexpr cmp::Ordering _cmp(const TupleHolder &) const;
-};
+struct TupleHolder<true> {};
 
 template <usize index, bool is_zst, class... Fields>
 struct TupleGetterImpl;
@@ -256,16 +116,28 @@ template <usize index, class... Fields>
 struct TupleGetter;
 
 template <usize index, class Field, class... Fields>
+struct TupleGetterImpl<index, true, Field, Fields...> {
+  using Self = _impl_types::ZeroSizedTypeHolder<Field, Fields...>;
+  using Result =
+      typename _impl_types::TypesIndexToType<index, Field, Fields...>::Result;
+
+  static constexpr const Result &inner(const Self &self) { return self; }
+
+  static constexpr Result &inner(Self &self) { return self; }
+};
+
+template <usize index, class Field, class... Fields>
 struct TupleGetterImpl<index, false, Field, Fields...> {
   using Self = TupleSizedHolder<Field, Fields...>;
-  using Result = typename TupleGetter<index - 1, Fields...>::Result;
+  using Result =
+      typename _impl_types::TypesIndexToType<index, Field, Fields...>::Result;
 
   static constexpr const Result &inner(const Self &self) {
-    return TupleGetter<index - 1, Fields...>::inner(self.remains);
+    return TupleGetterImpl<index - 1, false, Fields...>::inner(self.remains);
   }
 
   static constexpr Result &inner(Self &self) {
-    return TupleGetter<index - 1, Fields...>::inner(self.remains);
+    return TupleGetterImpl<index - 1, false, Fields...>::inner(self.remains);
   }
 };
 
@@ -280,28 +152,22 @@ struct TupleGetterImpl<0, false, Field, Fields...> {
 };
 
 template <usize index, class Field, class... Fields>
-struct TupleGetterImpl<index, true, Field, Fields...> {
-  using Self = ZeroSizedTypeHolder<Field, Fields...>;
-  using Result = typename TypesIndexToType<index, Field, Fields...>::Result;
-
-  static constexpr const Result &inner(const Self &self) { return self; }
-
-  static constexpr Result &inner(Self &self) { return self; }
-};
-
-template <usize index, class Field, class... Fields>
-struct TupleGetter<index, Field, Fields...> :
+struct crust_ebco TupleGetter<index, Field, Fields...> :
     TupleGetterImpl<
         index,
         Derive<
-            typename TypesIndexToType<index, Field, Fields...>::Result,
+            typename _impl_types::TypesIndexToType<index, Field, Fields...>::
+                Result,
             ZeroSizedType>::result,
         Field,
         Fields...> {};
 } // namespace _impl_tuple
 
 template <class... Fields>
-class crust_ebco TupleStruct : public _impl_tuple::TupleHolder<Fields...> {
+struct crust_ebco TupleStruct :
+    private _impl_tuple::TupleHolder<
+        AllVal<Derive<Fields, ZeroSizedType>...>::result,
+        Fields...> {
 private:
   crust_static_assert(AllVal<NotVal<IsConstOrRefVal<Fields>>...>::result);
 
@@ -311,10 +177,12 @@ private:
   template <usize index>
   using Result = typename Getter<index>::Result;
 
-  static constexpr usize size = sizeof...(Fields);
-
 protected:
-  CRUST_USE_BASE_CONSTRUCTORS(TupleStruct, _impl_tuple::TupleHolder<Fields...>);
+  CRUST_USE_BASE_CONSTRUCTORS(
+      TupleStruct,
+      _impl_tuple::TupleHolder<
+          AllVal<Derive<Fields, ZeroSizedType>...>::result,
+          Fields...>);
 
 public:
   template <usize index>
@@ -329,23 +197,46 @@ public:
 };
 
 namespace _auto_impl {
+template <class... Fields>
+struct TupleLikeSize<TupleStruct<Fields...>> :
+    TmplVal<usize, sizeof...(Fields)> {};
+
+template <usize index, class... Fields>
+struct TupleLikeGetter<TupleStruct<Fields...>, index> {
+  using Result =
+      typename _impl_types::TypesIndexToType<index, Fields...>::Result;
+
+  static constexpr const Result &get(const TupleStruct<Fields...> &self) {
+    return self.template get<index>();
+  }
+
+  static constexpr Result &get(TupleStruct<Fields...> &self) {
+    return self.template get<index>();
+  }
+};
+
 template <class Self, class... Fields>
 struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, ZeroSizedType> :
     Impl<ZeroSizedType<Self>, Derive<Fields, ZeroSizedType>...> {};
 
-template <class Self>
-struct crust_ebco TuplePartialEqImpl : ::crust::cmp::PartialEq<Self> {
+template <class Self, class Base>
+struct crust_ebco TuplePartialEqImpl : cmp::PartialEq<Self> {
   CRUST_TRAIT_REQUIRE(TuplePartialEqImpl);
 
-  constexpr bool eq(const Self &other) const { return self()._eq(other); }
+  constexpr bool eq(const Self &other) const {
+    return TupleLikePartialEqHelper<Self, Base>::eq(self(), other);
+  }
 
-  constexpr bool ne(const Self &other) const { return self()._ne(other); }
+  constexpr bool ne(const Self &other) const {
+    return TupleLikePartialEqHelper<Self, Base>::ne(self(), other);
+  }
 };
 
 template <class Self, class... Fields>
-struct crust_ebco
-    AutoImpl<Self, TupleStruct<Fields...>, ::crust::cmp::PartialEq> :
-    Impl<TuplePartialEqImpl<Self>, Derive<Fields, ::crust::cmp::PartialEq>...> {
+struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, cmp::PartialEq> :
+    Impl<
+        TuplePartialEqImpl<Self, TupleStruct<Fields...>>,
+        Derive<Fields, cmp::PartialEq>...> {
 protected:
   constexpr AutoImpl() {
     crust_static_assert(IsBaseOfTypeVal<TupleStruct<Fields...>, Self>::result);
@@ -353,53 +244,60 @@ protected:
 };
 
 template <class Self, class... Fields>
-struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, ::crust::cmp::Eq> :
-    Impl<::crust::cmp::Eq<Self>, Derive<Fields, ::crust::cmp::Eq>...> {
+struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, cmp::Eq> :
+    Impl<cmp::Eq<Self>, Derive<Fields, cmp::Eq>...> {
 protected:
   constexpr AutoImpl() {
     crust_static_assert(IsBaseOfTypeVal<TupleStruct<Fields...>, Self>::result);
   }
 };
 
-template <class Self>
-struct crust_ebco TuplePartialOrdImpl : ::crust::cmp::PartialOrd<Self> {
+template <class Self, class Base>
+struct crust_ebco TuplePartialOrdImpl : cmp::PartialOrd<Self> {
   CRUST_TRAIT_REQUIRE(TuplePartialOrdImpl);
 
-  constexpr Option<::crust::cmp::Ordering> partial_cmp(const Self &other) const;
+  constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;
 
-  constexpr bool lt(const Self &other) const { return self()._lt(other); }
+  constexpr bool lt(const Self &other) const {
+    return TupleLikePartialOrdHelper<Self, Base>::lt(self(), other);
+  }
 
-  constexpr bool le(const Self &other) const { return self()._le(other); }
+  constexpr bool le(const Self &other) const {
+    return TupleLikePartialOrdHelper<Self, Base>::le(self(), other);
+  }
 
-  constexpr bool gt(const Self &other) const { return self()._gt(other); }
+  constexpr bool gt(const Self &other) const {
+    return TupleLikePartialOrdHelper<Self, Base>::gt(self(), other);
+  }
 
-  constexpr bool ge(const Self &other) const { return self()._ge(other); }
+  constexpr bool ge(const Self &other) const {
+    return TupleLikePartialOrdHelper<Self, Base>::ge(self(), other);
+  }
 };
 
 template <class Self, class... Fields>
-struct crust_ebco
-    AutoImpl<Self, TupleStruct<Fields...>, ::crust::cmp::PartialOrd> :
+struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, cmp::PartialOrd> :
     Impl<
-        TuplePartialOrdImpl<Self>,
-        Derive<Fields, ::crust::cmp::PartialOrd>...> {
+        TuplePartialOrdImpl<Self, TupleStruct<Fields...>>,
+        Derive<Fields, cmp::PartialOrd>...> {
 protected:
   constexpr AutoImpl() {
     crust_static_assert(IsBaseOfTypeVal<TupleStruct<Fields...>, Self>::result);
   }
 };
 
-template <class Self>
-struct crust_ebco TupleOrdImpl : ::crust::cmp::Ord<Self> {
+template <class Self, class Base>
+struct crust_ebco TupleOrdImpl : cmp::Ord<Self> {
   CRUST_TRAIT_REQUIRE(TupleOrdImpl);
 
-  constexpr ::crust::cmp::Ordering cmp(const Self &other) const;
-
-  // todo: implement other
+  constexpr cmp::Ordering cmp(const Self &other) const;
 };
 
 template <class Self, class... Fields>
-struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, ::crust::cmp::Ord> :
-    Impl<TupleOrdImpl<Self>, Derive<Fields, ::crust::cmp::Ord>...> {
+struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, cmp::Ord> :
+    Impl<
+        TupleOrdImpl<Self, TupleStruct<Fields...>>,
+        Derive<Fields, cmp::Ord>...> {
 protected:
   constexpr AutoImpl() {
     crust_static_assert(IsBaseOfTypeVal<TupleStruct<Fields...>, Self>::result);
@@ -410,53 +308,87 @@ protected:
 template <class... Fields>
 struct crust_ebco Tuple :
     TupleStruct<Fields...>,
-    AutoImpl<
-        Tuple<Fields...>,
-        TupleStruct<Fields...>,
-        ZeroSizedType,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
+    Impl<ZeroSizedType<Tuple<Fields...>>, Derive<Fields, ZeroSizedType>...>,
+    Impl<cmp::PartialEq<Tuple<Fields...>>, Derive<Fields, cmp::PartialEq>...>,
+    Impl<cmp::Eq<Tuple<Fields...>>, Derive<Fields, cmp::Eq>...>,
+    Impl<cmp::PartialOrd<Tuple<Fields...>>, Derive<Fields, cmp::PartialOrd>...>,
+    Impl<cmp::Ord<Tuple<Fields...>>, Derive<Fields, cmp::Ord>...> {
+private:
+  using PartialEqHelper = _auto_impl::
+      TupleLikePartialEqHelper<Tuple<Fields...>, TupleStruct<Fields...>>;
+  using PartialOrdHelper = _auto_impl::
+      TupleLikePartialOrdHelper<Tuple<Fields...>, TupleStruct<Fields...>>;
+  using OrdHelper =
+      _auto_impl::TupleLikeOrdHelper<Tuple<Fields...>, TupleStruct<Fields...>>;
+
+public:
   CRUST_USE_BASE_CONSTRUCTORS(Tuple, TupleStruct<Fields...>);
+
+  constexpr bool eq(const Tuple<Fields...> &other) const {
+    return PartialEqHelper::eq(*this, other);
+  }
+
+  constexpr bool ne(const Tuple<Fields...> &other) const {
+    return PartialEqHelper::ne(*this, other);
+  }
+
+  constexpr Option<cmp::Ordering>
+  partial_cmp(const Tuple<Fields...> &other) const;
+
+  constexpr bool lt(const Tuple<Fields...> &other) const {
+    return PartialOrdHelper::lt(*this, other);
+  }
+
+  constexpr bool le(const Tuple<Fields...> &other) const {
+    return PartialOrdHelper::le(*this, other);
+  }
+
+  constexpr bool gt(const Tuple<Fields...> &other) const {
+    return PartialOrdHelper::gt(*this, other);
+  }
+
+  constexpr bool ge(const Tuple<Fields...> &other) const {
+    return PartialOrdHelper::ge(*this, other);
+  }
+
+  constexpr cmp::Ordering cmp(const Tuple<Fields...> &other) const;
 };
 
-// namespace _impl_tuple {
-// template <usize index, class... Fields>
-// struct TupleEqHelper {
-//   static constexpr bool inner(
-//       TupleSizedHolder<const Fields &...> ref, const Tuple<Fields...> &tuple)
-//       {
-//     return TupleEqHelper<index - 1, Fields...>::inner(ref, tuple) &&
-//         TupleGetter<index - 1, const Fields &...>::inner(ref) ==
-//         tuple.template get<index - 1>();
-//   }
-// };
+namespace _impl_tuple {
+template <usize index, class... Fields>
+struct TupleEqHelper {
+  static constexpr bool inner(
+      TupleSizedHolder<const Fields &...> ref, const TupleStruct<Fields...> &tuple) {
+    return TupleEqHelper<index - 1, Fields...>::inner(ref, tuple) &&
+        TupleGetter<index - 1, const Fields &...>::inner(ref) ==
+        tuple.template get<index - 1>();
+  }
+};
 
-// template <class... Fields>
-// struct TupleEqHelper<0, Fields...> {
-//   static crust_cxx14_constexpr bool
-//   inner(TupleSizedHolder<const Fields &...>, const Tuple<Fields...> &) {
-//     return true;
-//   }
-// };
+template <class... Fields>
+struct TupleEqHelper<0, Fields...> {
+  static crust_cxx14_constexpr bool
+  inner(TupleSizedHolder<const Fields &...>, const TupleStruct<Fields...> &) {
+    return true;
+  }
+};
 
-// template <usize index, class... Fields>
-// struct LetTupleHelper {
-//   static crust_cxx14_constexpr void
-//   inner(TupleSizedHolder<Fields &...> &ref, Tuple<Fields...> &&tuple) {
-//     TupleGetter<index - 1, Fields &...>::inner(ref) =
-//         move(tuple.template get<index - 1>());
-//     LetTupleHelper<index - 1, Fields...>::inner(ref, move(tuple));
-//   }
-// };
+template <usize index, class... Fields>
+struct LetTupleHelper {
+  static crust_cxx14_constexpr void
+  inner(TupleSizedHolder<Fields &...> &ref, TupleStruct<Fields...> &&tuple) {
+    TupleGetter<index - 1, Fields &...>::inner(ref) =
+        move(tuple.template get<index - 1>());
+    LetTupleHelper<index - 1, Fields...>::inner(ref, move(tuple));
+  }
+};
 
-// template <class... Fields>
-// struct LetTupleHelper<0, Fields...> {
-//   static crust_cxx14_constexpr void
-//   inner(TupleSizedHolder<Fields &...> &, Tuple<Fields...> &&) {}
-// };
-// } // namespace _impl_tuple
+template <class... Fields>
+struct LetTupleHelper<0, Fields...> {
+  static crust_cxx14_constexpr void
+  inner(TupleSizedHolder<Fields &...> &, TupleStruct<Fields...> &&) {}
+};
+} // namespace _impl_tuple
 } // namespace crust
 
 

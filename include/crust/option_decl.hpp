@@ -41,7 +41,7 @@ public:
     return map(ops::bind([](T &value) { return &value; }));
   }
 
-  crust_cxx14_constexpr T unwrap() {
+  crust_cxx14_constexpr T unwrap() { // FIXME: move
     return this->template visit<T>(
         [](Some<T> &value) { return move(value.template get<0>()); },
         [](None &) {

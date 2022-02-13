@@ -302,6 +302,35 @@ _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::Ord);
 #undef _IMPL_PRIMITIVE
 
 // todo: implement for float point numbers
+
+namespace _auto_impl {
+template <class Self, class Base, usize rev_index>
+constexpr Option<cmp::Ordering>
+TupleLikePartialOrdHelper<Self, Base, rev_index>::partial_cmp(
+    const Self &a, const Self &b) {
+  return make_some(cmp::operator_cmp(a, b)); // FIXME: temporary implement
+}
+
+template <class Self, class Base>
+constexpr Option<cmp::Ordering>
+TupleLikePartialOrdHelper<Self, Base, 0>::partial_cmp(
+    const Self &, const Self &) {
+  return make_some(cmp::make_equal());
+}
+
+template <class Self, class Base, usize rev_index>
+constexpr cmp::Ordering
+TupleLikeOrdHelper<Self, Base, rev_index>::cmp(const Self &a, const Self &b) {
+  return cmp::operator_cmp(Getter::get(a), Getter::get(b))
+      .then(Remains::cmp(a, b));
+}
+
+template <class Self, class Base>
+constexpr cmp::Ordering
+TupleLikeOrdHelper<Self, Base, 0>::cmp(const Self &, const Self &) {
+  return cmp::make_equal();
+}
+} // namespace _auto_impl
 } // namespace crust
 
 
