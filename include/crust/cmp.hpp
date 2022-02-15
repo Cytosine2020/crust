@@ -13,7 +13,7 @@
 
 namespace crust {
 namespace cmp {
-struct Less :
+struct crust_ebco Less :
     TupleStruct<>,
     AutoImpl<
         Less,
@@ -25,7 +25,7 @@ struct Less :
         cmp::Ord> {
   CRUST_USE_BASE_CONSTRUCTORS(Less, TupleStruct<>);
 };
-struct Equal :
+struct crust_ebco Equal :
     TupleStruct<>,
     AutoImpl<
         Equal,
@@ -37,7 +37,7 @@ struct Equal :
         cmp::Ord> {
   CRUST_USE_BASE_CONSTRUCTORS(Equal, TupleStruct<>);
 };
-struct Greater :
+struct crust_ebco Greater :
     TupleStruct<>,
     AutoImpl<
         Greater,
@@ -50,7 +50,7 @@ struct Greater :
   CRUST_USE_BASE_CONSTRUCTORS(Greater, TupleStruct<>);
 };
 
-class Ordering :
+class crust_ebco Ordering :
     public Enum<Less, Equal, Greater>,
     public AutoImpl<
         Ordering,

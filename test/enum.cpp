@@ -64,44 +64,44 @@ GTEST_TEST(enum_, enum_) {
 
 
 namespace {
-struct A :
+struct crust_ebco A :
     TupleStruct<>,
     AutoImpl<A, TupleStruct<>, ZeroSizedType, cmp::PartialEq, cmp::Eq> {
   CRUST_USE_BASE_CONSTRUCTORS(A, TupleStruct<>);
 };
-struct B :
+struct crust_ebco B :
     TupleStruct<>,
     AutoImpl<B, TupleStruct<>, ZeroSizedType, cmp::PartialEq, cmp::Eq> {
   CRUST_USE_BASE_CONSTRUCTORS(B, TupleStruct<>);
 };
-struct C :
+struct crust_ebco C :
     TupleStruct<i32>,
     AutoImpl<C, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
   CRUST_USE_BASE_CONSTRUCTORS(C, TupleStruct<i32>);
 };
-struct D :
+struct crust_ebco D :
     TupleStruct<i32>,
     AutoImpl<D, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
   CRUST_USE_BASE_CONSTRUCTORS(D, TupleStruct<i32>);
 };
-struct E :
+struct crust_ebco E :
     TupleStruct<i32>,
     AutoImpl<E, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
   CRUST_USE_BASE_CONSTRUCTORS(E, TupleStruct<i32>);
 };
-struct F :
+struct crust_ebco F :
     TupleStruct<i32>,
     AutoImpl<F, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
   CRUST_USE_BASE_CONSTRUCTORS(F, TupleStruct<i32>);
 };
 
-struct EnumB :
+struct crust_ebco EnumB :
     Enum<A, B>,
     AutoImpl<EnumB, Enum<A, B>, cmp::PartialEq, cmp::Eq> {
   CRUST_ENUM_USE_BASE(EnumB, Enum<A, B>);
 };
 
-struct EnumC :
+struct crust_ebco EnumC :
     Enum<A, B, C, D, E, F>,
     AutoImpl<EnumC, Enum<A, B, C, D, E, F>, cmp::PartialEq, cmp::Eq> {
   CRUST_ENUM_USE_BASE(EnumC, Enum<A, B, C, D, E, F>);

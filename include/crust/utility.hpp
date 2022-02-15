@@ -254,11 +254,11 @@ template <class Self, usize index>
 struct TupleLikeGetter;
 
 template <class Self, class Base, template <class...> class Trait>
-struct AutoImpl;
+struct crust_ebco AutoImpl;
 } // namespace _auto_impl
 
 template <class Self, class Base, template <class...> class... Traits>
-struct AutoImpl;
+struct crust_ebco AutoImpl;
 
 template <
     class Self,
@@ -267,7 +267,7 @@ template <
     class Trait,
     template <class...>
     class... Traits>
-struct crust_ebco AutoImpl<Self, Base, Trait, Traits...> :
+struct AutoImpl<Self, Base, Trait, Traits...> :
     _auto_impl::AutoImpl<Self, Base, Trait>,
     AutoImpl<Self, Base, Traits...> {};
 

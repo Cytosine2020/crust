@@ -40,28 +40,28 @@ template <class T, class... Fields>
 struct TypesTypeToIndex<T, T, Fields...> : TmplVal<u32, 0> {};
 
 template <bool is_zst, class... Fields>
-struct ZeroSizedTypeHolderImpl;
+struct crust_ebco ZeroSizedTypeHolderImpl;
 
 template <class... Fields>
-struct ZeroSizedTypeHolder;
+struct crust_ebco ZeroSizedTypeHolder;
 
 template <class Field, class... Fields>
-struct crust_ebco ZeroSizedTypeHolderImpl<true, Field, Fields...> :
+struct ZeroSizedTypeHolderImpl<true, Field, Fields...> :
     Field,
     ZeroSizedTypeHolder<Fields...> {};
 
 template <class Field>
-struct crust_ebco ZeroSizedTypeHolderImpl<true, Field> : Field {};
+struct ZeroSizedTypeHolderImpl<true, Field> : Field {};
 
 template <class Field, class... Fields>
-struct crust_ebco ZeroSizedTypeHolderImpl<false, Field, Fields...> :
+struct ZeroSizedTypeHolderImpl<false, Field, Fields...> :
     ZeroSizedTypeHolder<Fields...> {};
 
 template <class Field>
 struct ZeroSizedTypeHolderImpl<false, Field> {};
 
 template <class Field, class... Fields>
-struct crust_ebco ZeroSizedTypeHolder<Field, Fields...> :
+struct ZeroSizedTypeHolder<Field, Fields...> :
     ZeroSizedTypeHolderImpl<
         AllVal<
             Derive<Field, ZeroSizedType>,

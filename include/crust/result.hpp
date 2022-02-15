@@ -10,7 +10,7 @@
 namespace crust {
 namespace result {
 template <class T>
-struct Ok :
+struct crust_ebco Ok :
     TupleStruct<T>,
     AutoImpl<
         Ok<T>,
@@ -22,7 +22,7 @@ struct Ok :
         cmp::Ord> {};
 
 template <class E>
-struct Err :
+struct crust_ebco Err :
     TupleStruct<E>,
     AutoImpl<
         Err<E>,
@@ -34,7 +34,7 @@ struct Err :
         cmp::Ord> {};
 
 template <class T, class E>
-class Result :
+class crust_ebco Result :
     public Enum<Ok<T>, Err<E>>,
     AutoImpl<Result<T, E>, Enum<Ok<T>, Err<E>>, cmp::PartialEq, cmp::Eq> {
 public:

@@ -534,10 +534,10 @@ template <class T, class... Fields>
 struct LetEnum;
 
 template <class... Ts>
-struct Overloaded;
+struct crust_ebco Overloaded;
 
 template <class T, class... Ts>
-struct crust_ebco Overloaded<T, Ts...> : T, Overloaded<Ts...> {
+struct Overloaded<T, Ts...> : T, Overloaded<Ts...> {
   using T::operator();
   using Overloaded<Ts...>::operator();
 
@@ -546,7 +546,7 @@ struct crust_ebco Overloaded<T, Ts...> : T, Overloaded<Ts...> {
 };
 
 template <class T>
-struct crust_ebco Overloaded<T> : T {
+struct Overloaded<T> : T {
   using T::operator();
 
   explicit constexpr Overloaded(T t) : T{forward<T>(t)} {}
@@ -636,7 +636,7 @@ struct crust_ebco EnumPartialEqImpl : cmp::PartialEq<Self> {
 };
 
 template <class Self, class... Fields>
-struct crust_ebco AutoImpl<Self, Enum<Fields...>, cmp::PartialEq> :
+struct AutoImpl<Self, Enum<Fields...>, cmp::PartialEq> :
     Impl<EnumPartialEqImpl<Self>, Derive<Fields, cmp::PartialEq>...> {
 protected:
   constexpr AutoImpl() {
@@ -645,7 +645,7 @@ protected:
 };
 
 template <class Self, class... Fields>
-struct crust_ebco AutoImpl<Self, Enum<Fields...>, cmp::Eq> :
+struct AutoImpl<Self, Enum<Fields...>, cmp::Eq> :
     Impl<cmp::Eq<Self>, Derive<Fields, cmp::Eq>...> {
 protected:
   constexpr AutoImpl() {
@@ -670,7 +670,7 @@ protected:
 // };
 
 // template <class Self, class... Fields>
-// struct crust_ebco AutoImpl<Self, Enum<Fields...>, cmp::PartialOrd> :
+// struct AutoImpl<Self, Enum<Fields...>, cmp::PartialOrd> :
 //     Impl<
 //         EnumPartialOrdImpl<Self>,
 //         Derive<Fields, cmp::PartialOrd>...> {

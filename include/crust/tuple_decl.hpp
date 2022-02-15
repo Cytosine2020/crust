@@ -20,7 +20,7 @@ template <bool is_zst, bool remain_is_zst, class... Fields>
 struct TupleHolderSizedImpl;
 
 template <class... Fields>
-struct TupleSizedHolder;
+struct crust_ebco TupleSizedHolder;
 
 template <class Field, class... Fields>
 struct TupleHolderSizedImpl<false, false, Field, Fields...> {
@@ -62,7 +62,7 @@ struct TupleHolderSizedImpl<true, true, Fields...> {
 };
 
 template <class Field, class... Fields>
-struct crust_ebco TupleSizedHolder<Field, Fields...> :
+struct TupleSizedHolder<Field, Fields...> :
     TupleHolderSizedImpl<
         Derive<Field, ZeroSizedType>::result,
         AllVal<Derive<Fields, ZeroSizedType>...>::result,
@@ -78,7 +78,7 @@ struct crust_ebco TupleSizedHolder<Field, Fields...> :
 };
 
 template <class Field>
-struct crust_ebco TupleSizedHolder<Field> :
+struct TupleSizedHolder<Field> :
     TupleHolderSizedImpl<Derive<Field, ZeroSizedType>::result, true, Field> {
   CRUST_USE_BASE_CONSTRUCTORS(
       TupleSizedHolder,
@@ -86,10 +86,10 @@ struct crust_ebco TupleSizedHolder<Field> :
 };
 
 template <bool is_all_zst, class... Fields>
-struct TupleHolder;
+struct crust_ebco TupleHolder;
 
 template <class... Fields>
-struct crust_ebco TupleHolder<false, Fields...> :
+struct TupleHolder<false, Fields...> :
     Impl<
         _impl_types::ZeroSizedTypeHolder<Fields...>,
         AnyVal<Derive<Fields, ZeroSizedType>...>>,
@@ -98,7 +98,7 @@ struct crust_ebco TupleHolder<false, Fields...> :
 };
 
 template <class... Fields>
-struct crust_ebco TupleHolder<true, Fields...> :
+struct TupleHolder<true, Fields...> :
     _impl_types::ZeroSizedTypeHolder<Fields...> {
   constexpr TupleHolder() : _impl_types::ZeroSizedTypeHolder<Fields...>{} {}
 
@@ -152,7 +152,7 @@ struct TupleGetterImpl<0, false, Field, Fields...> {
 };
 
 template <usize index, class Field, class... Fields>
-struct crust_ebco TupleGetter<index, Field, Fields...> :
+struct TupleGetter<index, Field, Fields...> :
     TupleGetterImpl<
         index,
         Derive<
@@ -164,7 +164,7 @@ struct crust_ebco TupleGetter<index, Field, Fields...> :
 } // namespace _impl_tuple
 
 template <class... Fields>
-struct crust_ebco TupleStruct :
+struct TupleStruct :
     private _impl_tuple::TupleHolder<
         AllVal<Derive<Fields, ZeroSizedType>...>::result,
         Fields...> {
@@ -181,7 +181,7 @@ protected:
   CRUST_USE_BASE_CONSTRUCTORS(
       TupleStruct,
       _impl_tuple::TupleHolder<
-          AllVal<Derive<Fields, ZeroSizedType>...>::result,
+          AllVal<Derive<Fields, ::crust::ZeroSizedType>...>::result,
           Fields...>);
 
 public:
@@ -216,7 +216,7 @@ struct TupleLikeGetter<TupleStruct<Fields...>, index> {
 };
 
 template <class Self, class... Fields>
-struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, ZeroSizedType> :
+struct AutoImpl<Self, TupleStruct<Fields...>, ZeroSizedType> :
     Impl<ZeroSizedType<Self>, Derive<Fields, ZeroSizedType>...> {};
 
 template <class Self, class Base>
@@ -233,7 +233,7 @@ struct crust_ebco TuplePartialEqImpl : cmp::PartialEq<Self> {
 };
 
 template <class Self, class... Fields>
-struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, cmp::PartialEq> :
+struct AutoImpl<Self, TupleStruct<Fields...>, cmp::PartialEq> :
     Impl<
         TuplePartialEqImpl<Self, TupleStruct<Fields...>>,
         Derive<Fields, cmp::PartialEq>...> {
@@ -244,7 +244,7 @@ protected:
 };
 
 template <class Self, class... Fields>
-struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, cmp::Eq> :
+struct AutoImpl<Self, TupleStruct<Fields...>, cmp::Eq> :
     Impl<cmp::Eq<Self>, Derive<Fields, cmp::Eq>...> {
 protected:
   constexpr AutoImpl() {
@@ -276,7 +276,7 @@ struct crust_ebco TuplePartialOrdImpl : cmp::PartialOrd<Self> {
 };
 
 template <class Self, class... Fields>
-struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, cmp::PartialOrd> :
+struct AutoImpl<Self, TupleStruct<Fields...>, cmp::PartialOrd> :
     Impl<
         TuplePartialOrdImpl<Self, TupleStruct<Fields...>>,
         Derive<Fields, cmp::PartialOrd>...> {
@@ -294,7 +294,7 @@ struct crust_ebco TupleOrdImpl : cmp::Ord<Self> {
 };
 
 template <class Self, class... Fields>
-struct crust_ebco AutoImpl<Self, TupleStruct<Fields...>, cmp::Ord> :
+struct AutoImpl<Self, TupleStruct<Fields...>, cmp::Ord> :
     Impl<
         TupleOrdImpl<Self, TupleStruct<Fields...>>,
         Derive<Fields, cmp::Ord>...> {
