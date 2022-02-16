@@ -113,18 +113,16 @@ template <usize index, bool is_zst, class... Fields>
 struct TupleGetterImpl;
 
 template <usize index, class... Fields>
-struct TupleGetter;
+using TupleGetter = TupleGetterImpl<
+    index,
+    Derive<
+        typename _impl_types::TypesIndexToType<index, Fields...>::Result,
+        ZeroSizedType>::result,
+    Fields...>;
 
-template <usize index, class Field, class... Fields>
-struct TupleGetterImpl<index, true, Field, Fields...> {
-  using Self = _impl_types::ZeroSizedTypeHolder<Field, Fields...>;
-  using Result =
-      typename _impl_types::TypesIndexToType<index, Field, Fields...>::Result;
-
-  static constexpr const Result &inner(const Self &self) { return self; }
-
-  static constexpr Result &inner(Self &self) { return self; }
-};
+template <usize index, class... Fields>
+struct TupleGetterImpl<index, true, Fields...> :
+    _impl_types::ZeroSizedTypeGetter<index, Fields...> {};
 
 template <usize index, class Field, class... Fields>
 struct TupleGetterImpl<index, false, Field, Fields...> {
@@ -150,17 +148,6 @@ struct TupleGetterImpl<0, false, Field, Fields...> {
 
   static constexpr Result &inner(Self &self) { return self.field; }
 };
-
-template <usize index, class Field, class... Fields>
-struct TupleGetter<index, Field, Fields...> :
-    TupleGetterImpl<
-        index,
-        Derive<
-            typename _impl_types::TypesIndexToType<index, Field, Fields...>::
-                Result,
-            ZeroSizedType>::result,
-        Field,
-        Fields...> {};
 } // namespace _impl_tuple
 
 template <class... Fields>
@@ -353,42 +340,6 @@ public:
 
   constexpr cmp::Ordering cmp(const Tuple<Fields...> &other) const;
 };
-
-namespace _impl_tuple {
-template <usize index, class... Fields>
-struct TupleEqHelper {
-  static constexpr bool inner(
-      TupleSizedHolder<const Fields &...> ref, const TupleStruct<Fields...> &tuple) {
-    return TupleEqHelper<index - 1, Fields...>::inner(ref, tuple) &&
-        TupleGetter<index - 1, const Fields &...>::inner(ref) ==
-        tuple.template get<index - 1>();
-  }
-};
-
-template <class... Fields>
-struct TupleEqHelper<0, Fields...> {
-  static crust_cxx14_constexpr bool
-  inner(TupleSizedHolder<const Fields &...>, const TupleStruct<Fields...> &) {
-    return true;
-  }
-};
-
-template <usize index, class... Fields>
-struct LetTupleHelper {
-  static crust_cxx14_constexpr void
-  inner(TupleSizedHolder<Fields &...> &ref, TupleStruct<Fields...> &&tuple) {
-    TupleGetter<index - 1, Fields &...>::inner(ref) =
-        move(tuple.template get<index - 1>());
-    LetTupleHelper<index - 1, Fields...>::inner(ref, move(tuple));
-  }
-};
-
-template <class... Fields>
-struct LetTupleHelper<0, Fields...> {
-  static crust_cxx14_constexpr void
-  inner(TupleSizedHolder<Fields &...> &, TupleStruct<Fields...> &&) {}
-};
-} // namespace _impl_tuple
 } // namespace crust
 
 

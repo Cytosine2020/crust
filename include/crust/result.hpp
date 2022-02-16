@@ -10,28 +10,10 @@
 namespace crust {
 namespace result {
 template <class T>
-struct crust_ebco Ok :
-    TupleStruct<T>,
-    AutoImpl<
-        Ok<T>,
-        TupleStruct<T>,
-        ZeroSizedType,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {};
+CRUST_ENUM_TUPLE_VARIANT(Ok, Ok<T>, T);
 
 template <class E>
-struct crust_ebco Err :
-    TupleStruct<E>,
-    AutoImpl<
-        Err<E>,
-        TupleStruct<E>,
-        ZeroSizedType,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {};
+CRUST_ENUM_TUPLE_VARIANT(Err, Err<E>, E);
 
 template <class T, class E>
 class crust_ebco Result :

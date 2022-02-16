@@ -64,36 +64,12 @@ GTEST_TEST(enum_, enum_) {
 
 
 namespace {
-struct crust_ebco A :
-    TupleStruct<>,
-    AutoImpl<A, TupleStruct<>, ZeroSizedType, cmp::PartialEq, cmp::Eq> {
-  CRUST_USE_BASE_CONSTRUCTORS(A, TupleStruct<>);
-};
-struct crust_ebco B :
-    TupleStruct<>,
-    AutoImpl<B, TupleStruct<>, ZeroSizedType, cmp::PartialEq, cmp::Eq> {
-  CRUST_USE_BASE_CONSTRUCTORS(B, TupleStruct<>);
-};
-struct crust_ebco C :
-    TupleStruct<i32>,
-    AutoImpl<C, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
-  CRUST_USE_BASE_CONSTRUCTORS(C, TupleStruct<i32>);
-};
-struct crust_ebco D :
-    TupleStruct<i32>,
-    AutoImpl<D, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
-  CRUST_USE_BASE_CONSTRUCTORS(D, TupleStruct<i32>);
-};
-struct crust_ebco E :
-    TupleStruct<i32>,
-    AutoImpl<E, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
-  CRUST_USE_BASE_CONSTRUCTORS(E, TupleStruct<i32>);
-};
-struct crust_ebco F :
-    TupleStruct<i32>,
-    AutoImpl<F, TupleStruct<i32>, cmp::PartialEq, cmp::Eq> {
-  CRUST_USE_BASE_CONSTRUCTORS(F, TupleStruct<i32>);
-};
+CRUST_ENUM_VARIANT(A);
+CRUST_ENUM_VARIANT(B);
+CRUST_ENUM_TUPLE_VARIANT(C, C, i32);
+CRUST_ENUM_TUPLE_VARIANT(D, D, i32);
+CRUST_ENUM_TUPLE_VARIANT(E, E, i32);
+CRUST_ENUM_TUPLE_VARIANT(F, F, i32);
 
 struct crust_ebco EnumB :
     Enum<A, B>,
@@ -106,12 +82,30 @@ struct crust_ebco EnumC :
     AutoImpl<EnumC, Enum<A, B, C, D, E, F>, cmp::PartialEq, cmp::Eq> {
   CRUST_ENUM_USE_BASE(EnumC, Enum<A, B, C, D, E, F>);
 };
+
+struct crust_ebco EnumD :
+    Enum<EnumRepr<i16>, A, B>,
+    AutoImpl<EnumD, Enum<EnumRepr<u16>, A, B>, cmp::PartialEq, cmp::Eq> {
+  CRUST_ENUM_USE_BASE(EnumD, Enum<EnumRepr<u16>, A, B>);
+};
+
+struct crust_ebco EnumE :
+    Enum<EnumRepr<isize>, A, B, C, D, E, F>,
+    AutoImpl<
+        EnumE,
+        Enum<EnumRepr<isize>, A, B, C, D, E, F>,
+        cmp::PartialEq,
+        cmp::Eq> {
+  CRUST_ENUM_USE_BASE(EnumE, Enum<EnumRepr<isize>, A, B, C, D, E, F>);
+};
 } // namespace
 
 
 GTEST_TEST(enum_, tag_only) {
-  crust_static_assert(sizeof(EnumB) == sizeof(u32));
-  crust_static_assert(sizeof(EnumC) == 2 * sizeof(u32));
+  crust_static_assert(sizeof(EnumB) == sizeof(i32));
+  crust_static_assert(sizeof(EnumC) == 2 * sizeof(i32));
+  crust_static_assert(sizeof(EnumD) == sizeof(i16));
+  crust_static_assert(sizeof(EnumE) == 2 * sizeof(isize));
 }
 
 GTEST_TEST(enum_, raii) {
@@ -135,15 +129,15 @@ GTEST_TEST(enum_, raii) {
 }
 
 namespace {
-struct crust_ebco EnumD :
+struct crust_ebco EnumF :
     Enum<i32, char>,
-    AutoImpl<EnumD, Enum<i32, char>, cmp::PartialEq, cmp::Eq> {
-  CRUST_ENUM_USE_BASE(EnumD, Enum<i32, char>);
+    AutoImpl<EnumF, Enum<i32, char>, cmp::PartialEq, cmp::Eq> {
+  CRUST_ENUM_USE_BASE(EnumF, Enum<i32, char>);
 };
 } // namespace
 
 GTEST_TEST(enum_, cmp) {
-  EXPECT_TRUE(EnumD{0} == EnumD{0});
-  EXPECT_TRUE(EnumD{0} != EnumD{'a'});
-  EXPECT_TRUE(EnumD{0} != EnumD{1});
+  EXPECT_TRUE(EnumF{0} == EnumF{0});
+  EXPECT_TRUE(EnumF{0} != EnumF{'a'});
+  EXPECT_TRUE(EnumF{0} != EnumF{1});
 }

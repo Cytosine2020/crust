@@ -214,8 +214,6 @@ class DynFnMut;
 template <class Ret, class... Args>
 class DynFn<Ret(Args...)> { // todo: optimize for zero sized type
 private:
-  friend DynFnMut<Ret(Args...)>;
-
   void *self;
   const _impl_fn::FnVTable<Ret, Args...> *vtable;
 

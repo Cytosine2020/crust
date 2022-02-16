@@ -11,51 +11,32 @@
 
 namespace crust {
 namespace _impl_enum {
-template <class... Fields>
+template <class Inner, class... Fields>
 template <class T>
-crust_cxx14_constexpr Option<T> EnumTagUnion<Fields...>::move_variant() {
-  constexpr usize i =
-      IndexGetter<typename RemoveConstOrRefType<T>::Result>::result;
-  return index == i ?
-      make_some(EnumGetter<i, trivial, Fields...>::inner(holder)) :
+crust_cxx14_constexpr Option<T> Enum<Inner, Fields...>::move_variant() && {
+  return is_variant<T>() ?
+      make_some(move(inner.template unsafe_get_variant<T>())) :
       None{};
 }
 
-template <class... Fields>
 template <class T>
-crust_cxx14_constexpr Option<T> EnumTagOnly<Fields...>::move_variant() {
-  constexpr usize i =
-      IndexGetter<typename RemoveConstOrRefType<T>::Result>::result;
-  return index == i ? make_some(T{}) : None{};
-}
-} // namespace _impl_enum
-
-template <class... Fields>
-template <class T>
-crust_cxx14_constexpr Option<T> Enum<Fields...>::move_variant() {
-  return inner.template move_variant<T>();
-}
-
-namespace _impl_enum {
-template <class T, class... Fields>
 struct LetEnum {
 private:
-  _impl_tuple::TupleSizedHolder<Fields &...> ref;
+  T &ref;
 
 public:
-  explicit constexpr LetEnum(Fields &...ref) : ref{ref...} {}
+  explicit constexpr LetEnum(T &ref) : ref{ref} {}
 
-  template <class... Vs>
-  crust_cxx14_constexpr bool operator=(Enum<Vs...> &&other) {
+  template <class... Fields>
+  crust_cxx14_constexpr bool operator=(Enum<Fields...> &&other) {
     return other.inner.template let_helper<T>(ref);
   }
 };
 } // namespace _impl_enum
 
-template <class T, class... Fields>
-crust_cxx14_constexpr _impl_enum::LetEnum<T, Fields...> let(Fields
-&...fields) {
-  return _impl_enum::LetEnum<T, Fields...>{fields...};
+template <class T>
+crust_cxx14_constexpr _impl_enum::LetEnum<T> let(T &ref) {
+  return _impl_enum::LetEnum<T>{ref};
 }
 
 // namespace _auto_impl {

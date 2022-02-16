@@ -23,26 +23,10 @@ namespace crust {
 
 #define crust_static_assert(...) static_assert(__VA_ARGS__, #__VA_ARGS__)
 
-#if defined(__GNUC__) || defined(__clang__)
-#define crust_unreachable() __builtin_unreachable()
-#elif defined(_MSC_VER)
-#define crust_unreachable() __assume(false)
-#else
-#define crust_unreachable()
-#endif
-
 #if defined(_MSC_VER)
 #define crust_ebco __declspec(empty_bases)
 #else
 #define crust_ebco
-#endif
-
-#if INTPTR_MAX == INT32_MAX
-#define CRUST_BIT_WIDTH 32
-#elif INTPTR_MAX == INT64_MAX
-#define CRUST_BIT_WIDTH 64
-#else
-#error "Unsupported bit width."
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -72,15 +56,11 @@ namespace crust {
 namespace _impl_utility {
 no_return inline void
 panic(const char *file, int line, const char *msg) noexcept {
-  fprintf(stderr, "Abort at file %s, line %d: %s\n", file, line, msg);
+  fprintf(stderr, "Panic at file %s, line %d: %s\n", file, line, msg);
   exit(1);
 }
 
-#define crust_panic(msg)                                                       \
-  ([](const char *f, int l, const char *m) {                                   \
-    fprintf(stderr, "Panic at file %s, line %d: %s\n", f, l, m);               \
-    exit(-1);                                                                  \
-  }(__FILE__, __LINE__, msg))
+#define crust_panic(msg) _impl_utility::panic(__FILE__, __LINE__, msg)
 
 #define crust_assert(expr)                                                     \
   (crust_likely(expr) ? void(0) : [](const char *f, int l, const char *m) {    \
@@ -93,6 +73,18 @@ panic(const char *file, int line, const char *msg) noexcept {
 #else
 #define crust_debug_assert(expr) crust_assert(expr)
 #endif
+
+#if defined(NODEBUG)
+#if defined(__GNUC__) || defined(__clang__)
+#define crust_unreachable() __builtin_unreachable()
+#elif defined(_MSC_VER)
+#define crust_unreachable() __assume(false)
+#else
+#define crust_unreachable()
+#endif
+#else
+#define crust_unreachable() crust_panic("should not reach here!")
+#endif
 } // namespace _impl_utility
 
 using i8 = int8_t;
@@ -103,10 +95,10 @@ using i32 = int32_t;
 using u32 = uint32_t;
 using i64 = int64_t;
 using u64 = uint64_t;
-#if CRUST_BIT_WIDTH == 32
+#if INTPTR_MAX == INT32_MAX
 using isize = i32;
 using usize = u32;
-#elif CRUST_BIT_WIDTH == 64
+#elif INTPTR_MAX == INT64_MAX
 using isize = i64;
 using usize = u64;
 #else
@@ -152,12 +144,6 @@ struct AnyVal<Bool, Bools...> :
 template <>
 struct AnyVal<> : BoolVal<false> {};
 
-template <class T>
-struct IncVal : TmplVal<typename T::Result, T::result + 1> {};
-
-template <class T>
-struct DecVal : TmplVal<typename T::Result, T::result - 1> {};
-
 template <class T, template <class> class... Tmpls>
 struct CompositionType;
 
@@ -173,6 +159,30 @@ struct IsSameVal : BoolVal<false> {};
 
 template <class A>
 struct IsSameVal<A, A> : BoolVal<true> {};
+
+template <class A, class B>
+struct LTVal : BoolVal<(A::result < B::result)> {
+  crust_static_assert(
+      IsSameVal<typename A::Result, typename B::Result>::result);
+};
+
+template <class A, class B>
+struct LEVal : BoolVal<(A::result <= B::result)> {
+  crust_static_assert(
+      IsSameVal<typename A::Result, typename B::Result>::result);
+};
+
+template <class A, class B>
+struct GTVal : BoolVal<(A::result > B::result)> {
+  crust_static_assert(
+      IsSameVal<typename A::Result, typename B::Result>::result);
+};
+
+template <class A, class B>
+struct GEVal : BoolVal<(A::result >= B::result)> {
+  crust_static_assert(
+      IsSameVal<typename A::Result, typename B::Result>::result);
+};
 
 template <class T>
 struct RemoveRefType : TmplType<T> {};
@@ -323,8 +333,16 @@ public:
 /// forign type can implement ZeroSizedType to be treated as zero sized type.
 
 CRUST_TRAIT(ZeroSizedType) {
-  CRUST_TRAIT_REQUIRE(ZeroSizedType, IsEmptyType<Self>);
+  CRUST_TRAIT_REQUIRE(
+      ZeroSizedType, IsEmptyType<Self>, IsTriviallyCopyable<Self>);
 };
+
+struct MonoStateType {};
+
+namespace _auto_impl {
+template <class Self>
+struct AutoImpl<Self, MonoStateType, ZeroSizedType> : ZeroSizedType<Self> {};
+} // namespace _auto_impl
 } // namespace crust
 
 

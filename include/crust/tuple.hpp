@@ -44,6 +44,22 @@ make_tuple(Fields &&...fields) {
 }
 
 namespace _impl_tuple {
+template <usize index, class... Fields>
+struct LetTupleHelper {
+  static crust_cxx14_constexpr void
+  inner(TupleSizedHolder<Fields &...> &ref, TupleStruct<Fields...> &&tuple) {
+    TupleGetter<index - 1, Fields &...>::inner(ref) =
+        move(tuple.template get<index - 1>());
+    LetTupleHelper<index - 1, Fields...>::inner(ref, move(tuple));
+  }
+};
+
+template <class... Fields>
+struct LetTupleHelper<0, Fields...> {
+  static crust_cxx14_constexpr void
+  inner(TupleSizedHolder<Fields &...> &, TupleStruct<Fields...> &&) {}
+};
+
 template <class... Fields>
 class LetTuple {
 private:

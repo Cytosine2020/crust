@@ -13,62 +13,21 @@
 
 namespace crust {
 namespace cmp {
-struct crust_ebco Less :
-    TupleStruct<>,
-    AutoImpl<
-        Less,
-        TupleStruct<>,
-        ZeroSizedType,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
-  CRUST_USE_BASE_CONSTRUCTORS(Less, TupleStruct<>);
-};
-struct crust_ebco Equal :
-    TupleStruct<>,
-    AutoImpl<
-        Equal,
-        TupleStruct<>,
-        ZeroSizedType,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
-  CRUST_USE_BASE_CONSTRUCTORS(Equal, TupleStruct<>);
-};
-struct crust_ebco Greater :
-    TupleStruct<>,
-    AutoImpl<
-        Greater,
-        TupleStruct<>,
-        ZeroSizedType,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
-  CRUST_USE_BASE_CONSTRUCTORS(Greater, TupleStruct<>);
-};
+CRUST_ENUM_DISCRIMANT_VARIANT(Less, -1);
+CRUST_ENUM_DISCRIMANT_VARIANT(Equal, 0);
+CRUST_ENUM_DISCRIMANT_VARIANT(Greater, 1);
 
 class crust_ebco Ordering :
-    public Enum<Less, Equal, Greater>,
+    public Enum<EnumRepr<i8>, Less, Equal, Greater>,
     public AutoImpl<
         Ordering,
-        Enum<Less, Equal, Greater>,
+        Enum<EnumRepr<i8>, Less, Equal, Greater>,
         cmp::PartialEq,
         cmp::Eq>,
     public PartialOrd<Ordering>,
     public Ord<Ordering> {
-private:
-  crust_cxx17_constexpr i32 to_i32() const {
-    return this->template visit<i32>(
-        [](const Less &) { return -1; },
-        [](const Equal &) { return 0; },
-        [](const Greater &) { return 1; });
-  }
-
 public:
-  CRUST_ENUM_USE_BASE(Ordering, Enum<Less, Equal, Greater>);
+  CRUST_ENUM_USE_BASE(Ordering, Enum<EnumRepr<i8>, Less, Equal, Greater>);
 
   crust_cxx17_constexpr Ordering reverse() const {
     return this->template visit<Ordering>(
@@ -94,14 +53,14 @@ public:
 
   /// impl PartialOrd
 
-  crust_cxx17_constexpr Option<Ordering>
+  constexpr Option<Ordering>
   partial_cmp(const Ordering &other) const {
     return make_some(cmp(other));
   }
 
   /// impl Ord
 
-  crust_cxx17_constexpr Ordering cmp(const Ordering &other) const;
+  constexpr Ordering cmp(const Ordering &other) const;
 };
 
 always_inline constexpr Ordering make_less() { return Less{}; }
@@ -191,9 +150,8 @@ _IMPL_PRIMITIVE(_IMPL_OPERATOR_PARTIAL_CMP)
 
 #undef _IMPL_OPERATOR_PARTIAL_CMP
 
-inline crust_cxx17_constexpr Ordering
-Ordering::cmp(const Ordering &other) const {
-  return operator_cmp(to_i32(), other.to_i32());
+inline constexpr Ordering Ordering::cmp(const Ordering &other) const {
+  return operator_cmp(as(), other.as());
 }
 
 template <class T>
@@ -276,16 +234,16 @@ public:
     return operator_cmp(other.inner, inner);
   }
 
-  crust_cxx14_constexpr Reverse max(const Reverse &&other) {
-    return Reverse{inner.min(move(other.inner))};
+  crust_cxx14_constexpr Reverse max(const Reverse &&other) && {
+    return Reverse{move(inner).min(move(other.inner))};
   }
 
-  crust_cxx14_constexpr Reverse min(const Reverse &&other) {
-    return Reverse{inner.max(move(other.inner))};
+  crust_cxx14_constexpr Reverse min(const Reverse &&other) && {
+    return Reverse{move(inner).max(move(other.inner))};
   }
 
-  crust_cxx14_constexpr Reverse clamp(Reverse &&min, Reverse &&max) {
-    return Reverse{inner.clamp(move(max.inner), move(min.inner))};
+  crust_cxx14_constexpr Reverse clamp(Reverse &&min, Reverse &&max) && {
+    return Reverse{move(inner).clamp(move(max.inner), move(min.inner))};
   }
 };
 } // namespace cmp
@@ -328,6 +286,19 @@ TupleLikeOrdHelper<Self, Base, rev_index>::cmp(const Self &a, const Self &b) {
 template <class Self, class Base>
 constexpr cmp::Ordering
 TupleLikeOrdHelper<Self, Base, 0>::cmp(const Self &, const Self &) {
+  return cmp::make_equal();
+}
+
+template <class Self>
+constexpr Option<cmp::Ordering>
+AutoImpl<Self, MonoStateType, cmp::PartialOrd>::partial_cmp(
+    const Self &, const Self &) {
+  return make_some(cmp::make_equal());
+}
+
+template <class Self>
+constexpr cmp::Ordering
+AutoImpl<Self, MonoStateType, cmp::Ord>::cmp(const Self &, const Self &) {
   return cmp::make_equal();
 }
 } // namespace _auto_impl

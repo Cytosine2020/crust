@@ -155,6 +155,35 @@ template <class Self, class Base>
 struct TupleLikeOrdHelper<Self, Base, 0> {
   static constexpr cmp::Ordering cmp(const Self &, const Self &);
 };
+
+template <class Self>
+struct AutoImpl<Self, MonoStateType, cmp::PartialEq> : cmp::PartialEq<Self> {
+  static constexpr bool eq(const Self &, const Self &) { return true; }
+
+  static constexpr bool ne(const Self &, const Self &) { return false; }
+};
+
+template <class Self>
+struct AutoImpl<Self, MonoStateType, cmp::Eq> : cmp::Eq<Self> {};
+
+template <class Self>
+struct AutoImpl<Self, MonoStateType, cmp::PartialOrd> : cmp::PartialOrd<Self> {
+  static constexpr Option<cmp::Ordering>
+  partial_cmp(const Self &, const Self &);
+
+  static constexpr bool lt(const Self &, const Self &) { return false; }
+
+  static constexpr bool le(const Self &, const Self &) { return true; }
+
+  static constexpr bool gt(const Self &, const Self &) { return false; }
+
+  static constexpr bool ge(const Self &, const Self &) { return true; }
+};
+
+template <class Self>
+struct AutoImpl<Self, MonoStateType, cmp::Ord> : cmp::Ord<Self> {
+  static constexpr cmp::Ordering cmp(const Self &, const Self &);
+};
 } // namespace _auto_impl
 } // namespace crust
 

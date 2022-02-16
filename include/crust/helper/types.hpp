@@ -2,6 +2,7 @@
 #define CRUST_HELPER_TYPES_HPP
 
 
+#include "crust/num/mod.hpp"
 #include "crust/utility.hpp"
 
 
@@ -18,6 +19,16 @@ struct TypesIncludeVal<T, T, Fields...> : BoolVal<true> {};
 
 template <class T>
 struct TypesIncludeVal<T> : BoolVal<false> {};
+
+template <class... Fields>
+struct TypesDuplicateVal;
+
+template <class Field, class... Fields>
+struct TypesDuplicateVal<Field, Fields...> :
+    AnyVal<TypesIncludeVal<Field, Fields...>, TypesDuplicateVal<Fields...>> {};
+
+template <>
+struct TypesDuplicateVal<> : BoolVal<false> {};
 
 template <usize index, class... Fields>
 struct TypesIndexToType;
@@ -37,7 +48,13 @@ struct TypesTypeToIndex<T, Field, Fields...> :
     IncVal<TypesTypeToIndex<T, Fields...>> {};
 
 template <class T, class... Fields>
-struct TypesTypeToIndex<T, T, Fields...> : TmplVal<u32, 0> {};
+struct TypesTypeToIndex<T, T, Fields...> : TmplVal<usize, 0> {};
+
+template <class T, class... Fields>
+struct TypesPrevType :
+    TypesIndexToType<
+        DecVal<TypesTypeToIndex<T, Fields...>>::result,
+        Fields...> {};
 
 template <bool is_zst, class... Fields>
 struct crust_ebco ZeroSizedTypeHolderImpl;
@@ -48,26 +65,79 @@ struct crust_ebco ZeroSizedTypeHolder;
 template <class Field, class... Fields>
 struct ZeroSizedTypeHolderImpl<true, Field, Fields...> :
     Field,
-    ZeroSizedTypeHolder<Fields...> {};
+    ZeroSizedTypeHolder<Fields...> {
+  constexpr ZeroSizedTypeHolderImpl() {}
+
+  constexpr ZeroSizedTypeHolderImpl(Field &&field) :
+      Field{forward<Field>(field)} {}
+
+  template <class T>
+  constexpr ZeroSizedTypeHolderImpl(T &&t) :
+      ZeroSizedTypeHolder<Fields...>{forward<T>(t)} {}
+
+  constexpr ZeroSizedTypeHolderImpl(Field &&field, Fields &&...fields) :
+      Field{forward<Field>(field)}, ZeroSizedTypeHolder<Fields...>{
+                                        forward<Fields>(fields)...} {}
+};
 
 template <class Field>
-struct ZeroSizedTypeHolderImpl<true, Field> : Field {};
+struct ZeroSizedTypeHolderImpl<true, Field> : Field {
+  constexpr ZeroSizedTypeHolderImpl() {}
+
+  constexpr ZeroSizedTypeHolderImpl(Field &&field) :
+      Field{forward<Field>(field)} {}
+};
 
 template <class Field, class... Fields>
 struct ZeroSizedTypeHolderImpl<false, Field, Fields...> :
-    ZeroSizedTypeHolder<Fields...> {};
+    ZeroSizedTypeHolder<Fields...> {
+  constexpr ZeroSizedTypeHolderImpl() {}
+
+  constexpr ZeroSizedTypeHolderImpl(Field &&) {}
+
+  template <class T>
+  constexpr ZeroSizedTypeHolderImpl(T &&t) :
+      ZeroSizedTypeHolder<Fields...>{forward<T>(t)} {}
+
+  constexpr ZeroSizedTypeHolderImpl(Field &&, Fields &&...fields) :
+      ZeroSizedTypeHolder<Fields...>{forward<Fields>(fields)...} {}
+};
 
 template <class Field>
-struct ZeroSizedTypeHolderImpl<false, Field> {};
+struct ZeroSizedTypeHolderImpl<false, Field> {
+  constexpr ZeroSizedTypeHolderImpl() {}
+
+  constexpr ZeroSizedTypeHolderImpl(Field &&) {}
+};
 
 template <class Field, class... Fields>
 struct ZeroSizedTypeHolder<Field, Fields...> :
     ZeroSizedTypeHolderImpl<
         AllVal<
             Derive<Field, ZeroSizedType>,
-            NotVal<_impl_types::TypesIncludeVal<Field, Fields...>>>::result,
+            NotVal<TypesIncludeVal<Field, Fields...>>>::result,
         Field,
-        Fields...> {};
+        Fields...> {
+  CRUST_USE_BASE_CONSTRUCTORS(
+      ZeroSizedTypeHolder,
+      ZeroSizedTypeHolderImpl<
+          AllVal<
+              Derive<Field, ZeroSizedType>,
+              NotVal<TypesIncludeVal<Field, Fields...>>>::result,
+          Field,
+          Fields...>);
+};
+
+template <usize index, class... Fields>
+struct ZeroSizedTypeGetter {
+  using Self = _impl_types::ZeroSizedTypeHolder<Fields...>;
+  using Result =
+      typename _impl_types::TypesIndexToType<index, Fields...>::Result;
+
+  static constexpr const Result &inner(const Self &self) { return self; }
+
+  static constexpr Result &inner(Self &self) { return self; }
+};
 } // namespace _impl_types
 } // namespace crust
 
