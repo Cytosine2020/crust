@@ -122,7 +122,7 @@ struct ZeroSizedTypeHolder<Field, Fields...> :
       ZeroSizedTypeHolder,
       ZeroSizedTypeHolderImpl<
           AllVal<
-              Derive<Field, ZeroSizedType>,
+              Derive<Field, ::crust::ZeroSizedType>,
               NotVal<TypesIncludeVal<Field, Fields...>>>::result,
           Field,
           Fields...>);
