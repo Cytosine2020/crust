@@ -10,7 +10,7 @@
 namespace crust {
 namespace iter {
 CRUST_TRAIT(Iterator, class Item) {
-  CRUST_TRAIT_REQUIRE(Iterator);
+  CRUST_TRAIT_USE_SELF(Iterator);
 
   Option<Item> next();
 

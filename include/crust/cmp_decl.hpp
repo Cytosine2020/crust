@@ -17,7 +17,7 @@ namespace cmp {
 class Ordering;
 
 CRUST_TRAIT(PartialEq, class Rhs = Self) {
-  CRUST_TRAIT_REQUIRE(PartialEq);
+  CRUST_TRAIT_USE_SELF(PartialEq);
 
   bool eq(const Rhs &other) const;
 
@@ -28,10 +28,10 @@ CRUST_TRAIT(PartialEq, class Rhs = Self) {
   constexpr bool operator!=(const Rhs &other) const { return self().ne(other); }
 };
 
-CRUST_TRAIT(Eq) { CRUST_TRAIT_REQUIRE(Eq, Derive<Self, PartialEq>); };
+CRUST_TRAIT(Eq) { CRUST_TRAIT_USE_SELF(Eq, Derive<Self, PartialEq>); };
 
 CRUST_TRAIT(PartialOrd, class Rhs = Self) {
-  CRUST_TRAIT_REQUIRE(PartialOrd, Derive<Self, PartialEq>);
+  CRUST_TRAIT_USE_SELF(PartialOrd, Derive<Self, PartialEq>);
 
   Option<Ordering> partial_cmp(const Rhs &other) const;
 
@@ -53,7 +53,7 @@ CRUST_TRAIT(PartialOrd, class Rhs = Self) {
 };
 
 CRUST_TRAIT(Ord) {
-  CRUST_TRAIT_REQUIRE(
+  CRUST_TRAIT_USE_SELF(
       Ord, Derive<Self, PartialEq>, Derive<Self, Eq>, Derive<Self, PartialOrd>);
 
   Ordering cmp(const Self &other) const;
@@ -164,10 +164,11 @@ struct AutoImpl<Self, MonoStateType, cmp::PartialEq> : cmp::PartialEq<Self> {
 };
 
 template <class Self>
-struct AutoImpl<Self, MonoStateType, cmp::Eq> : cmp::Eq<Self> {};
+struct AutoImpl<Self, MonoStateType, cmp::Eq, void> : cmp::Eq<Self> {};
 
 template <class Self>
-struct AutoImpl<Self, MonoStateType, cmp::PartialOrd> : cmp::PartialOrd<Self> {
+struct AutoImpl<Self, MonoStateType, cmp::PartialOrd, void> :
+    cmp::PartialOrd<Self> {
   static constexpr Option<cmp::Ordering>
   partial_cmp(const Self &, const Self &);
 
@@ -181,7 +182,7 @@ struct AutoImpl<Self, MonoStateType, cmp::PartialOrd> : cmp::PartialOrd<Self> {
 };
 
 template <class Self>
-struct AutoImpl<Self, MonoStateType, cmp::Ord> : cmp::Ord<Self> {
+struct AutoImpl<Self, MonoStateType, cmp::Ord, void> : cmp::Ord<Self> {
   static constexpr cmp::Ordering cmp(const Self &, const Self &);
 };
 } // namespace _auto_impl

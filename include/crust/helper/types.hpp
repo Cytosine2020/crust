@@ -25,7 +25,7 @@ struct TypesDuplicateVal;
 
 template <class Field, class... Fields>
 struct TypesDuplicateVal<Field, Fields...> :
-    AnyVal<TypesIncludeVal<Field, Fields...>, TypesDuplicateVal<Fields...>> {};
+    Any<TypesIncludeVal<Field, Fields...>, TypesDuplicateVal<Fields...>> {};
 
 template <>
 struct TypesDuplicateVal<> : BoolVal<false> {};
@@ -113,17 +113,15 @@ struct ZeroSizedTypeHolderImpl<false, Field> {
 template <class Field, class... Fields>
 struct ZeroSizedTypeHolder<Field, Fields...> :
     ZeroSizedTypeHolderImpl<
-        AllVal<
-            Derive<Field, ZeroSizedType>,
-            NotVal<TypesIncludeVal<Field, Fields...>>>::result,
+        All<Derive<Field, ZeroSizedType>,
+            Not<TypesIncludeVal<Field, Fields...>>>::result,
         Field,
         Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(
       ZeroSizedTypeHolder,
       ZeroSizedTypeHolderImpl<
-          AllVal<
-              Derive<Field, ::crust::ZeroSizedType>,
-              NotVal<TypesIncludeVal<Field, Fields...>>>::result,
+          All<Derive<Field, ::crust::ZeroSizedType>,
+              Not<TypesIncludeVal<Field, Fields...>>>::result,
           Field,
           Fields...>);
 };

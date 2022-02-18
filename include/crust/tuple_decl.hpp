@@ -65,14 +65,14 @@ template <class Field, class... Fields>
 struct TupleSizedHolder<Field, Fields...> :
     TupleHolderSizedImpl<
         Derive<Field, ZeroSizedType>::result,
-        AllVal<Derive<Fields, ZeroSizedType>...>::result,
+        All<Derive<Fields, ZeroSizedType>...>::result,
         Field,
         Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(
       TupleSizedHolder,
       TupleHolderSizedImpl<
           Derive<Field, ZeroSizedType>::result,
-          AllVal<Derive<Fields, ZeroSizedType>...>::result,
+          All<Derive<Fields, ZeroSizedType>...>::result,
           Field,
           Fields...>);
 };
@@ -90,9 +90,9 @@ struct crust_ebco TupleHolder;
 
 template <class... Fields>
 struct TupleHolder<false, Fields...> :
-    Impl<
+    InheritIf<
         _impl_types::ZeroSizedTypeHolder<Fields...>,
-        AnyVal<Derive<Fields, ZeroSizedType>...>>,
+        Any<Derive<Fields, ZeroSizedType>...>>,
     TupleSizedHolder<Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(TupleHolder, TupleSizedHolder<Fields...>);
 };
@@ -152,11 +152,10 @@ struct TupleGetterImpl<0, false, Field, Fields...> {
 
 template <class... Fields>
 struct TupleStruct :
-    private _impl_tuple::TupleHolder<
-        AllVal<Derive<Fields, ZeroSizedType>...>::result,
-        Fields...> {
+    private _impl_tuple::
+        TupleHolder<All<Derive<Fields, ZeroSizedType>...>::result, Fields...> {
 private:
-  crust_static_assert(AllVal<NotVal<IsConstOrRefVal<Fields>>...>::result);
+  crust_static_assert(All<Not<IsConstOrRefVal<Fields>>...>::result);
 
   template <usize index>
   using Getter = _impl_tuple::TupleGetter<index, Fields...>;
@@ -168,7 +167,7 @@ protected:
   CRUST_USE_BASE_CONSTRUCTORS(
       TupleStruct,
       _impl_tuple::TupleHolder<
-          AllVal<Derive<Fields, ::crust::ZeroSizedType>...>::result,
+          All<Derive<Fields, ::crust::ZeroSizedType>...>::result,
           Fields...>);
 
 public:
@@ -203,142 +202,97 @@ struct TupleLikeGetter<TupleStruct<Fields...>, index> {
 };
 
 template <class Self, class... Fields>
-struct AutoImpl<Self, TupleStruct<Fields...>, ZeroSizedType> :
-    Impl<ZeroSizedType<Self>, Derive<Fields, ZeroSizedType>...> {};
+struct AutoImpl<
+    Self,
+    TupleStruct<Fields...>,
+    ZeroSizedType,
+    EnableIf<Derive<Fields, ZeroSizedType>...>> : ZeroSizedType<Self> {};
 
-template <class Self, class Base>
-struct crust_ebco TuplePartialEqImpl : cmp::PartialEq<Self> {
-  CRUST_TRAIT_REQUIRE(TuplePartialEqImpl);
+template <class Self, class... Fields>
+struct AutoImpl<
+    Self,
+    TupleStruct<Fields...>,
+    cmp::PartialEq,
+    EnableIf<Derive<Fields, cmp::PartialEq>...>> : cmp::PartialEq<Self> {
+  CRUST_TRAIT_USE_SELF(AutoImpl);
 
+private:
+  using PartialEqHelper =
+      _auto_impl::TupleLikePartialEqHelper<Self, TupleStruct<Fields...>>;
+
+public:
   constexpr bool eq(const Self &other) const {
-    return TupleLikePartialEqHelper<Self, Base>::eq(self(), other);
+    return PartialEqHelper::eq(self(), other);
   }
 
   constexpr bool ne(const Self &other) const {
-    return TupleLikePartialEqHelper<Self, Base>::ne(self(), other);
+    return PartialEqHelper::ne(self(), other);
   }
 };
 
 template <class Self, class... Fields>
-struct AutoImpl<Self, TupleStruct<Fields...>, cmp::PartialEq> :
-    Impl<
-        TuplePartialEqImpl<Self, TupleStruct<Fields...>>,
-        Derive<Fields, cmp::PartialEq>...> {
-protected:
-  constexpr AutoImpl() {
-    crust_static_assert(IsBaseOfTypeVal<TupleStruct<Fields...>, Self>::result);
-  }
-};
+struct AutoImpl<
+    Self,
+    TupleStruct<Fields...>,
+    cmp::Eq,
+    EnableIf<Derive<Fields, cmp::Eq>...>> : cmp::Eq<Self> {};
 
 template <class Self, class... Fields>
-struct AutoImpl<Self, TupleStruct<Fields...>, cmp::Eq> :
-    Impl<cmp::Eq<Self>, Derive<Fields, cmp::Eq>...> {
-protected:
-  constexpr AutoImpl() {
-    crust_static_assert(IsBaseOfTypeVal<TupleStruct<Fields...>, Self>::result);
-  }
-};
+struct AutoImpl<
+    Self,
+    TupleStruct<Fields...>,
+    cmp::PartialOrd,
+    EnableIf<Derive<Fields, cmp::PartialOrd>...>> : cmp::PartialOrd<Self> {
+  CRUST_TRAIT_USE_SELF(AutoImpl);
 
-template <class Self, class Base>
-struct crust_ebco TuplePartialOrdImpl : cmp::PartialOrd<Self> {
-  CRUST_TRAIT_REQUIRE(TuplePartialOrdImpl);
+private:
+  using PartialOrdHelper =
+      _auto_impl::TupleLikePartialOrdHelper<Self, TupleStruct<Fields...>>;
 
+public:
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;
 
   constexpr bool lt(const Self &other) const {
-    return TupleLikePartialOrdHelper<Self, Base>::lt(self(), other);
+    return PartialOrdHelper::lt(self(), other);
   }
 
   constexpr bool le(const Self &other) const {
-    return TupleLikePartialOrdHelper<Self, Base>::le(self(), other);
+    return PartialOrdHelper::le(self(), other);
   }
 
   constexpr bool gt(const Self &other) const {
-    return TupleLikePartialOrdHelper<Self, Base>::gt(self(), other);
+    return PartialOrdHelper::gt(self(), other);
   }
 
   constexpr bool ge(const Self &other) const {
-    return TupleLikePartialOrdHelper<Self, Base>::ge(self(), other);
+    return PartialOrdHelper::ge(self(), other);
   }
 };
 
 template <class Self, class... Fields>
-struct AutoImpl<Self, TupleStruct<Fields...>, cmp::PartialOrd> :
-    Impl<
-        TuplePartialOrdImpl<Self, TupleStruct<Fields...>>,
-        Derive<Fields, cmp::PartialOrd>...> {
-protected:
-  constexpr AutoImpl() {
-    crust_static_assert(IsBaseOfTypeVal<TupleStruct<Fields...>, Self>::result);
-  }
-};
-
-template <class Self, class Base>
-struct crust_ebco TupleOrdImpl : cmp::Ord<Self> {
-  CRUST_TRAIT_REQUIRE(TupleOrdImpl);
+struct AutoImpl<
+    Self,
+    TupleStruct<Fields...>,
+    cmp::Ord,
+    EnableIf<Derive<Fields, cmp::Ord>...>> : cmp::Ord<Self> {
+  CRUST_TRAIT_USE_SELF(AutoImpl);
 
   constexpr cmp::Ordering cmp(const Self &other) const;
-};
-
-template <class Self, class... Fields>
-struct AutoImpl<Self, TupleStruct<Fields...>, cmp::Ord> :
-    Impl<
-        TupleOrdImpl<Self, TupleStruct<Fields...>>,
-        Derive<Fields, cmp::Ord>...> {
-protected:
-  constexpr AutoImpl() {
-    crust_static_assert(IsBaseOfTypeVal<TupleStruct<Fields...>, Self>::result);
-  }
 };
 } // namespace _auto_impl
 
 template <class... Fields>
 struct crust_ebco Tuple :
     TupleStruct<Fields...>,
-    Impl<ZeroSizedType<Tuple<Fields...>>, Derive<Fields, ZeroSizedType>...>,
-    Impl<cmp::PartialEq<Tuple<Fields...>>, Derive<Fields, cmp::PartialEq>...>,
-    Impl<cmp::Eq<Tuple<Fields...>>, Derive<Fields, cmp::Eq>...>,
-    Impl<cmp::PartialOrd<Tuple<Fields...>>, Derive<Fields, cmp::PartialOrd>...>,
-    Impl<cmp::Ord<Tuple<Fields...>>, Derive<Fields, cmp::Ord>...> {
-private:
-  using PartialEqHelper = _auto_impl::
-      TupleLikePartialEqHelper<Tuple<Fields...>, TupleStruct<Fields...>>;
-  using PartialOrdHelper = _auto_impl::
-      TupleLikePartialOrdHelper<Tuple<Fields...>, TupleStruct<Fields...>>;
-  using OrdHelper =
-      _auto_impl::TupleLikeOrdHelper<Tuple<Fields...>, TupleStruct<Fields...>>;
-
-public:
+    AutoImpl<
+        Tuple<Fields...>,
+        TupleStruct<Fields...>,
+        ZeroSizedType,
+        cmp::PartialEq,
+        cmp::Eq,
+        cmp::PartialOrd,
+        cmp::Ord> {
   CRUST_USE_BASE_CONSTRUCTORS(Tuple, TupleStruct<Fields...>);
-
-  constexpr bool eq(const Tuple<Fields...> &other) const {
-    return PartialEqHelper::eq(*this, other);
-  }
-
-  constexpr bool ne(const Tuple<Fields...> &other) const {
-    return PartialEqHelper::ne(*this, other);
-  }
-
-  constexpr Option<cmp::Ordering>
-  partial_cmp(const Tuple<Fields...> &other) const;
-
-  constexpr bool lt(const Tuple<Fields...> &other) const {
-    return PartialOrdHelper::lt(*this, other);
-  }
-
-  constexpr bool le(const Tuple<Fields...> &other) const {
-    return PartialOrdHelper::le(*this, other);
-  }
-
-  constexpr bool gt(const Tuple<Fields...> &other) const {
-    return PartialOrdHelper::gt(*this, other);
-  }
-
-  constexpr bool ge(const Tuple<Fields...> &other) const {
-    return PartialOrdHelper::ge(*this, other);
-  }
-
-  constexpr cmp::Ordering cmp(const Tuple<Fields...> &other) const;
 };
 } // namespace crust
 

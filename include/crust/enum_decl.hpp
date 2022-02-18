@@ -32,7 +32,7 @@ namespace _impl_enum {
           ::crust::cmp::PartialOrd,                                            \
           ::crust::cmp::Ord> {}
 
-CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_REQUIRE(DiscriminantVariant); };
+CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
 
 #define CRUST_ENUM_DISCRIMANT_VARIANT(NAME, VALUE)                             \
   struct crust_ebco NAME :                                                     \
@@ -81,8 +81,7 @@ struct IndexToDiscriminant :
 
 template <class I, isize index, class... Fields>
 struct CheckDiscriminant :
-    AllVal<
-        LTVal<
+    All<LTVal<
             IndexToDiscriminant<I, index - 1, Fields...>,
             IndexToDiscriminant<I, index, Fields...>>,
         CheckDiscriminant<I, index - 1, Fields...>> {};
@@ -157,7 +156,7 @@ union EnumHolderImpl<trivial> {};
 
 template <class... Fields>
 using EnumHolder =
-    EnumHolderImpl<AllVal<IsTriviallyCopyable<Fields>...>::result, Fields...>;
+    EnumHolderImpl<All<IsTriviallyCopyable<Fields>...>::result, Fields...>;
 
 template <isize index, class... Fields>
 struct EnumGetter;
@@ -335,7 +334,7 @@ template <class Index_, class... Fields>
 struct EnumTagUnion :
     EnumTrivial<
         EnumTagUnion<Index_, Fields...>,
-        AllVal<IsTriviallyCopyable<Fields>...>::result> {
+        All<IsTriviallyCopyable<Fields>...>::result> {
   using Index = Index_;
 
   using Getter = EnumVisitor<EnumTagUnion, 0, sizeof...(Fields), Fields...>;
@@ -344,8 +343,7 @@ struct EnumTagUnion :
   using IndexGetter =
       Discriminant<Index, typename RemoveConstOrRefType<T>::Result, Fields...>;
 
-  crust_static_assert(
-      AllVal<NotVal<Derive<Fields, DiscriminantVariant>>...>::result);
+  crust_static_assert(All<Not<Derive<Fields, DiscriminantVariant>>...>::result);
 
   struct Drop {
     template <class T>
@@ -373,21 +371,71 @@ struct EnumTagUnion :
   };
 
   struct Equal {
-    const EnumTagUnion &other;
+    const EnumTagUnion *other;
 
     template <class T>
     constexpr bool operator()(const T &value) const {
-      return value == other.unsafe_get_variant<T>();
+      return value == other->unsafe_get_variant<T>();
     };
   };
 
   struct NotEqual {
-    const EnumTagUnion &other;
+    const EnumTagUnion *other;
 
     template <class T>
     constexpr bool operator()(const T &value) const {
-      return value != other.unsafe_get_variant<T>();
+      return value != other->unsafe_get_variant<T>();
     };
+  };
+
+  struct PartialCmp {
+    const EnumTagUnion *other;
+
+    template <class T>
+    constexpr Option<cmp::Ordering> operator()(const T &value) const;
+  };
+
+  struct LessThan {
+    const EnumTagUnion *other;
+
+    template <class T>
+    constexpr bool operator()(const T &value) const {
+      return value < other->unsafe_get_variant<T>();
+    };
+  };
+
+  struct LessEqual {
+    const EnumTagUnion *other;
+
+    template <class T>
+    constexpr bool operator()(const T &value) const {
+      return value <= other->unsafe_get_variant<T>();
+    };
+  };
+
+  struct GreaterThan {
+    const EnumTagUnion *other;
+
+    template <class T>
+    constexpr bool operator()(const T &value) const {
+      return value > other->unsafe_get_variant<T>();
+    };
+  };
+
+  struct GreaterEqual {
+    const EnumTagUnion *other;
+
+    template <class T>
+    constexpr bool operator()(const T &value) const {
+      return value >= other->unsafe_get_variant<T>();
+    };
+  };
+
+  struct Cmp {
+    const EnumTagUnion *other;
+
+    template <class T>
+    constexpr cmp::Ordering operator()(const T &value) const;
   };
 
   Index index;
@@ -443,12 +491,36 @@ struct EnumTagUnion :
   }
 
   constexpr bool eq(const EnumTagUnion &other) const {
-    return index == other.index && visit<bool>(Equal{other});
+    return index == other.index && visit<bool>(Equal{&other});
   }
 
   constexpr bool ne(const EnumTagUnion &other) const {
-    return index != other.index || visit<bool>(NotEqual{other});
+    return index != other.index || visit<bool>(NotEqual{&other});
   }
+
+  constexpr Option<cmp::Ordering> partial_cmp(const EnumTagUnion &other) const;
+
+  constexpr bool lt(const EnumTagUnion &other) const {
+    return index != other.index ? index < other.index :
+                                  visit<bool>(LessThan{&other});
+  }
+
+  constexpr bool le(const EnumTagUnion &other) const {
+    return index != other.index ? index <= other.index :
+                                  visit<bool>(LessEqual{&other});
+  }
+
+  constexpr bool gt(const EnumTagUnion &other) const {
+    return index != other.index ? index > other.index :
+                                  visit<bool>(GreaterThan{&other});
+  }
+
+  constexpr bool ge(const EnumTagUnion &other) const {
+    return index != other.index ? index >= other.index :
+                                  visit<bool>(GreaterEqual{&other});
+  }
+
+  constexpr cmp::Ordering cmp(const EnumTagUnion &other) const;
 };
 
 template <class Index_, class... Fields>
@@ -514,6 +586,26 @@ struct crust_ebco EnumTagOnly : _impl_types::ZeroSizedTypeHolder<Fields...> {
   constexpr bool ne(const EnumTagOnly &other) const {
     return index != other.index;
   }
+
+  constexpr Option<cmp::Ordering> partial_cmp(const EnumTagOnly &other) const;
+
+  constexpr bool lt(const EnumTagOnly &other) const {
+    return index < other.index;
+  }
+
+  constexpr bool le(const EnumTagOnly &other) const {
+    return index <= other.index;
+  }
+
+  constexpr bool gt(const EnumTagOnly &other) const {
+    return index > other.index;
+  }
+
+  constexpr bool ge(const EnumTagOnly &other) const {
+    return index >= other.index;
+  }
+
+  constexpr cmp::Ordering cmp(const EnumTagOnly &other) const;
 };
 
 template <class hint, bool is_tag_only, class... Fields>
@@ -543,7 +635,7 @@ struct EnumSelectImpl<void, true, Fields...> : EnumTagOnly<i32, Fields...> {
 template <class hint, class... Fields>
 using EnumSelect = EnumSelectImpl<
     hint,
-    AllVal<Derive<Fields, ZeroSizedType>...>::result,
+    All<Derive<Fields, ZeroSizedType>...>::result,
     Fields...>;
 
 template <class T>
@@ -574,21 +666,20 @@ constexpr Overloaded<Ts...> overloaded(Ts &&...ts) {
 }
 
 CRUST_TRAIT(EnumAs, class Index) {
-  CRUST_TRAIT_REQUIRE(EnumAs);
+  CRUST_TRAIT_USE_SELF(EnumAs);
 
   constexpr Index as() const { return self().inner.get_index(); }
 };
 
 template <class Inner, class... Fields>
 struct Enum :
-    Impl<
+    InheritIf<
         EnumAs<Enum<Inner, Fields...>, typename Inner::Index>,
-        AllVal<Derive<Fields, ZeroSizedType>...>> {
+        All<Derive<Fields, ZeroSizedType>...>> {
 private:
   crust_static_assert(sizeof...(Fields) > 0);
-  crust_static_assert(
-      NotVal<_impl_types::TypesDuplicateVal<Fields...>>::result);
-  crust_static_assert(AllVal<NotVal<IsConstOrRefVal<Fields>>...>::result);
+  crust_static_assert(Not<_impl_types::TypesDuplicateVal<Fields...>>::result);
+  crust_static_assert(All<Not<IsConstOrRefVal<Fields>>...>::result);
 
   Inner inner;
 
@@ -598,14 +689,16 @@ private:
   template <class, class>
   friend struct EnumAs;
 
+  template <class, class, template <class...> class, class>
+  friend struct _auto_impl::AutoImpl;
+
 protected:
   constexpr Enum() : inner{} {}
 
   template <
       class T,
-      typename EnableIf<
-          !IsBaseOfTypeVal<Enum, typename RemoveConstOrRefType<T>::Result>::
-              result>::Result * = nullptr>
+      class = EnableIf<
+          Not<IsBaseOfVal<Enum, typename RemoveConstOrRefType<T>::Result>>>>
   constexpr Enum(T &&value) : inner{forward<T>(value)} {}
 
   template <class T>
@@ -629,15 +722,12 @@ protected:
 public:
   template <
       class T,
-      typename EnableIf<
-          !IsBaseOfTypeVal<Enum, typename RemoveConstOrRefType<T>::Result>::
-              result>::Result * = nullptr>
+      class = EnableIf<
+          Not<IsBaseOfVal<Enum, typename RemoveConstOrRefType<T>::Result>>>>
   Enum &operator=(T &&value) {
     inner = Inner{forward<T>(value)};
     return *this;
   }
-
-  // todo: hide all of these functions
 
   template <class R = void, class... Fs>
   constexpr R visit(Fs &&...fs) const {
@@ -662,10 +752,6 @@ public:
         overloaded(forward<Fs>(fs)...)(inner.template unsafe_get_variant<T>()) :
         overloaded(forward<Fs>(fs)...)();
   }
-
-  constexpr bool _eq(const Enum &other) const { return inner.eq(other.inner); }
-
-  constexpr bool _ne(const Enum &other) const { return inner.ne(other.inner); }
 };
 
 // todo: option like enum
@@ -696,79 +782,67 @@ struct crust_ebco Enum<EnumRepr<Type>, Fields...> :
 };
 
 namespace _auto_impl {
-template <class Self>
-struct crust_ebco EnumPartialEqImpl : cmp::PartialEq<Self> {
-  CRUST_TRAIT_REQUIRE(EnumPartialEqImpl);
-
-  constexpr bool eq(const Self &other) const { return self()._eq(other); }
-
-  constexpr bool ne(const Self &other) const { return self()._ne(other); }
-};
-
 template <class Self, class... Fields>
-struct AutoImpl<Self, Enum<Fields...>, cmp::PartialEq> :
-    Impl<EnumPartialEqImpl<Self>, Derive<Fields, cmp::PartialEq>...> {
-protected:
-  constexpr AutoImpl() {
-    crust_static_assert(IsBaseOfTypeVal<Enum<Fields...>, Self>::result);
-  }
-};
+struct AutoImpl<
+    Self,
+    Enum<Fields...>,
+    cmp::PartialEq,
+    EnableIf<Derive<Fields, cmp::PartialEq>...>> : cmp::PartialEq<Self> {
+  CRUST_TRAIT_USE_SELF(AutoImpl);
 
-template <class Self, class Type, class... Fields>
-struct AutoImpl<Self, Enum<EnumRepr<Type>, Fields...>, cmp::PartialEq> :
-    Impl<EnumPartialEqImpl<Self>, Derive<Fields, cmp::PartialEq>...> {
-protected:
-  constexpr AutoImpl() {
-    crust_static_assert(
-        IsBaseOfTypeVal<Enum<EnumRepr<Type>, Fields...>, Self>::result);
+  constexpr bool eq(const Self &other) const {
+    return self().inner.eq(other.inner);
+  }
+
+  constexpr bool ne(const Self &other) const {
+    return self().inner.ne(other.inner);
   }
 };
 
 template <class Self, class... Fields>
-struct AutoImpl<Self, Enum<Fields...>, cmp::Eq> :
-    Impl<cmp::Eq<Self>, Derive<Fields, cmp::Eq>...> {
-protected:
-  constexpr AutoImpl() {
-    crust_static_assert(IsBaseOfTypeVal<Enum<Fields...>, Self>::result);
+struct AutoImpl<
+    Self,
+    Enum<Fields...>,
+    cmp::Eq,
+    EnableIf<Derive<Fields, cmp::Eq>...>> : cmp::Eq<Self> {};
+
+template <class Self, class... Fields>
+struct AutoImpl<
+    Self,
+    Enum<Fields...>,
+    cmp::PartialOrd,
+    EnableIf<Derive<Fields, cmp::Eq>...>> : cmp::PartialOrd<Self> {
+  CRUST_TRAIT_USE_SELF(AutoImpl);
+
+  constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;
+
+  constexpr bool lt(const Self &other) const {
+    return self().inner.lt(other.inner);
+  }
+
+  constexpr bool le(const Self &other) const {
+    return self().inner.le(other.inner);
+  }
+
+  constexpr bool gt(const Self &other) const {
+    return self().inner.gt(other.inner);
+  }
+
+  constexpr bool ge(const Self &other) const {
+    return self().inner.ge(other.inner);
   }
 };
 
-template <class Self, class Type, class... Fields>
-struct AutoImpl<Self, Enum<EnumRepr<Type>, Fields...>, cmp::Eq> :
-    Impl<cmp::Eq<Self>, Derive<Fields, cmp::Eq>...> {
-protected:
-  constexpr AutoImpl() {
-    crust_static_assert(
-        IsBaseOfTypeVal<Enum<EnumRepr<Type>, Fields...>, Self>::result);
-  }
+template <class Self, class... Fields>
+struct AutoImpl<
+    Self,
+    Enum<Fields...>,
+    cmp::Ord,
+    EnableIf<Derive<Fields, cmp::Eq>...>> : cmp::Ord<Self> {
+  CRUST_TRAIT_USE_SELF(AutoImpl);
+
+  constexpr cmp::Ordering cmp(const Self &other) const;
 };
-// todo: implement PartialOrd, Ord
-// template <class Self>
-// struct crust_ebco EnumPartialOrdImpl : cmp::PartialOrd<Self> {
-//   CRUST_TRAIT_REQUIRE(EnumPartialOrdImpl);
-
-//   constexpr Option<::cmp::Ordering> partial_cmp(const Self &other)
-//   const;
-
-//   constexpr bool lt(const Self &other) const { return self()._lt(other); }
-
-//   constexpr bool le(const Self &other) const { return self()._le(other); }
-
-//   constexpr bool gt(const Self &other) const { return self()._gt(other); }
-
-//   constexpr bool ge(const Self &other) const { return self()._ge(other); }
-// };
-
-// template <class Self, class... Fields>
-// struct AutoImpl<Self, Enum<Fields...>, cmp::PartialOrd> :
-//     Impl<
-//         EnumPartialOrdImpl<Self>,
-//         Derive<Fields, cmp::PartialOrd>...> {
-// protected:
-//   constexpr AutoImpl() {
-//     crust_static_assert(IsBaseOfTypeVal<Enum<Fields...>, Self>::result);
-//   }
-// };
 } // namespace _auto_impl
 } // namespace crust
 

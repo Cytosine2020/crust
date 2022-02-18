@@ -122,27 +122,25 @@ template <bool value>
 struct BoolVal : TmplVal<bool, value> {};
 
 template <class Bool>
-struct NotVal : BoolVal<!Bool::result> {};
+struct Not : BoolVal<!Bool::result> {};
 
 template <class... Bools>
-struct AllVal;
+struct All;
 
 template <class Bool, class... Bools>
-struct AllVal<Bool, Bools...> :
-    BoolVal<Bool::result && AllVal<Bools...>::result> {};
+struct All<Bool, Bools...> : BoolVal<Bool::result && All<Bools...>::result> {};
 
 template <>
-struct AllVal<> : BoolVal<true> {};
+struct All<> : BoolVal<true> {};
 
 template <class... Bools>
-struct AnyVal;
+struct Any;
 
 template <class Bool, class... Bools>
-struct AnyVal<Bool, Bools...> :
-    BoolVal<Bool::result || AnyVal<Bools...>::result> {};
+struct Any<Bool, Bools...> : BoolVal<Bool::result || Any<Bools...>::result> {};
 
 template <>
-struct AnyVal<> : BoolVal<false> {};
+struct Any<> : BoolVal<false> {};
 
 template <class T, template <class> class... Tmpls>
 struct CompositionType;
@@ -225,71 +223,40 @@ template <class T>
 struct IsConstVal<const T> : BoolVal<true> {};
 
 template <class T>
-struct IsRefVal : AnyVal<IsLValueRefVal<T>, IsRValueRefVal<T>> {};
+struct IsRefVal : Any<IsLValueRefVal<T>, IsRValueRefVal<T>> {};
 
 template <class T>
-struct IsConstOrRefVal : AnyVal<IsRefVal<T>, IsConstVal<T>> {};
+struct IsConstOrRefVal : Any<IsRefVal<T>, IsConstVal<T>> {};
 
 template <class B, class T>
-struct IsBaseOfTypeVal : BoolVal<std::is_base_of<B, T>::value> {};
+struct IsBaseOfVal : BoolVal<std::is_base_of<B, T>::value> {};
 
 template <class T>
 struct IsTriviallyCopyable : BoolVal<std::is_trivially_copyable<T>::value> {};
 
+namespace _impl_utility {
 template <bool enable>
 struct EnableIf {};
 
 template <>
 struct EnableIf<true> : TmplType<void> {};
 
-namespace _impl_utility {
 template <class T, bool Bool>
-struct Impl;
+struct InheritIf;
 
 template <class T>
-struct Impl<T, true> : T {};
+struct InheritIf<T, true> : T {};
 
 template <class T>
-struct Impl<T, false> {};
+struct InheritIf<T, false> {};
 } // namespace _impl_utility
 
+template <class... Enable>
+using EnableIf =
+    typename _impl_utility::EnableIf<All<Enable...>::result>::Result;
+
 template <class T, class... Bools>
-using Impl = _impl_utility::Impl<T, AllVal<Bools...>::result>;
-
-namespace _auto_impl {
-template <class Self>
-struct TupleLikeSize;
-
-template <class Self, usize index>
-struct TupleLikeGetter;
-
-template <class Self, class Base, template <class...> class Trait>
-struct crust_ebco AutoImpl;
-} // namespace _auto_impl
-
-template <class Self, class Base, template <class...> class... Traits>
-struct crust_ebco AutoImpl;
-
-template <
-    class Self,
-    class Base,
-    template <class...>
-    class Trait,
-    template <class...>
-    class... Traits>
-struct AutoImpl<Self, Base, Trait, Traits...> :
-    _auto_impl::AutoImpl<Self, Base, Trait>,
-    AutoImpl<Self, Base, Traits...> {};
-
-template <class Self, class Base>
-struct AutoImpl<Self, Base> {};
-
-template <
-    class Struct,
-    template <class Self, class... Args>
-    class Trait,
-    class... Args>
-struct Derive : IsBaseOfTypeVal<Trait<Struct, Args...>, Struct> {};
+using InheritIf = _impl_utility::InheritIf<T, All<Bools...>::result>;
 
 template <class T>
 constexpr typename RemoveRefType<T>::Result &&move(T &&t) {
@@ -307,15 +274,20 @@ constexpr T &&forward(typename RemoveRefType<T>::Result &&t) {
   return static_cast<T &&>(t);
 }
 
+#define CRUST_USE_BASE_CONSTRUCTORS(NAME, ...)                                 \
+  template <class... Args>                                                     \
+  explicit constexpr NAME(Args &&...args) :                                    \
+      __VA_ARGS__{::crust::forward<Args>(args)...} {}
+
 #define CRUST_TRAIT(TRAIT, ...)                                                \
   template <class Self, ##__VA_ARGS__>                                         \
   struct TRAIT
 
-#define CRUST_TRAIT_REQUIRE(TRAIT, ...)                                        \
+#define CRUST_TRAIT_USE_SELF(TRAIT, ...)                                       \
 protected:                                                                     \
   constexpr TRAIT() {                                                          \
-    crust_static_assert(::crust::IsBaseOfTypeVal<TRAIT, Self>::result);        \
-    crust_static_assert(::crust::AllVal<__VA_ARGS__>::result);                 \
+    crust_static_assert(::crust::IsBaseOfVal<TRAIT, Self>::result);            \
+    crust_static_assert(::crust::All<__VA_ARGS__>::result);                    \
   }                                                                            \
   constexpr const Self &self() const {                                         \
     return *static_cast<const Self *>(this);                                   \
@@ -324,16 +296,90 @@ protected:                                                                     \
                                                                                \
 public:
 
-#define CRUST_USE_BASE_CONSTRUCTORS(NAME, ...)                                 \
-  template <class... Args>                                                     \
-  explicit constexpr NAME(Args &&...args) :                                    \
-      __VA_ARGS__{::crust::forward<Args>(args)...} {}
+template <template <class, class...> class T, class... Args>
+struct Trait {
+  template <class Self>
+  using Result = T<Self, Args...>;
+};
+
+template <class Trait, class Self, class Enable = void>
+struct ImplFor {};
+
+#define CRUST_IMPL_FOR(TRAIT, SELF, ...)                                       \
+  struct ImplFor<Trait<TRAIT>, SELF, EnableIf<__VA_ARGS__>> :                  \
+      Trait<TRAIT>::Result<SELF>
+
+#define CRUST_IMPL_USE_SELF(SELF, ...)                                         \
+  using Self = SELF;                                                           \
+                                                                               \
+protected:                                                                     \
+  constexpr ImplFor() {                                                        \
+    crust_static_assert(::crust::IsBaseOfVal<ImplFor, Self>::result);          \
+    crust_static_assert(::crust::All<__VA_ARGS__>::result);                    \
+  }                                                                            \
+  constexpr const Self &self() const {                                         \
+    return *static_cast<const Self *>(this);                                   \
+  }                                                                            \
+  crust_cxx14_constexpr Self &self() { return *static_cast<Self *>(this); }    \
+                                                                               \
+public:
+
+template <class Self, class... Traits>
+struct crust_ebco Impl;
+
+template <class Self, class Trait, class... Traits>
+struct Impl<Self, Trait, Traits...> :
+    ImplFor<Trait, Self>,
+    Impl<Self, Traits...> {};
+
+template <class Self>
+struct Impl<Self> {};
+
+namespace _auto_impl {
+template <class Self>
+struct TupleLikeSize;
+
+template <class Self, usize index>
+struct TupleLikeGetter;
+
+template <
+    class Self,
+    class Base,
+    template <class...>
+    class Trait,
+    class Enable = void>
+struct crust_ebco AutoImpl {};
+} // namespace _auto_impl
+
+template <class Self, class Base, template <class...> class... Traits>
+struct crust_ebco AutoImpl;
+
+template <
+    class Self,
+    class Base,
+    template <class, class...>
+    class Trait,
+    template <class, class...>
+    class... Traits>
+struct AutoImpl<Self, Base, Trait, Traits...> :
+    _auto_impl::AutoImpl<Self, Base, Trait>,
+    AutoImpl<Self, Base, Traits...> {};
+
+template <class Self, class Base>
+struct AutoImpl<Self, Base> {};
+
+template <
+    class Struct,
+    template <class Self, class... Args>
+    class Trait,
+    class... Args>
+struct Derive : IsBaseOfVal<Trait<Struct, Args...>, Struct> {};
 
 /// this is used by Tuple, Enum and Slice for zero sized type optimization
 /// forign type can implement ZeroSizedType to be treated as zero sized type.
 
 CRUST_TRAIT(ZeroSizedType) {
-  CRUST_TRAIT_REQUIRE(
+  CRUST_TRAIT_USE_SELF(
       ZeroSizedType, IsEmptyType<Self>, IsTriviallyCopyable<Self>);
 };
 

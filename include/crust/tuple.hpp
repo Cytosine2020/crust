@@ -12,29 +12,26 @@
 
 namespace crust {
 namespace _auto_impl {
-template <class Self, class Base>
-constexpr Option<cmp::Ordering>
-TuplePartialOrdImpl<Self, Base>::partial_cmp(const Self &other) const {
-  return TupleLikePartialOrdHelper<Self, Base>::partial_cmp(self(), other);
+template <class Self, class... Fields>
+constexpr Option<cmp::Ordering> AutoImpl<
+    Self,
+    TupleStruct<Fields...>,
+    cmp::PartialOrd,
+    EnableIf<Derive<Fields, cmp::PartialOrd>...>>::partial_cmp(const Self
+                                                                   &other)
+    const {
+  return PartialOrdHelper::partial_cmp(self(), other);
 }
 
-template <class Self, class Base>
-constexpr cmp::Ordering TupleOrdImpl<Self, Base>::cmp(const Self &other) const {
-  return TupleLikeOrdHelper<Self, Base>::cmp(self(), other);
+template <class Self, class... Fields>
+constexpr cmp::Ordering AutoImpl<
+    Self,
+    TupleStruct<Fields...>,
+    cmp::Ord,
+    EnableIf<Derive<Fields, cmp::Ord>...>>::cmp(const Self &other) const {
+  return TupleLikeOrdHelper<Self, TupleStruct<Fields...>>::cmp(self(), other);
 }
 } // namespace _auto_impl
-
-template <class... Fields>
-constexpr Option<cmp::Ordering>
-Tuple<Fields...>::partial_cmp(const Tuple<Fields...> &other) const {
-  return PartialOrdHelper::partial_cmp(*this, other);
-}
-
-template <class... Fields>
-constexpr cmp::Ordering
-Tuple<Fields...>::cmp(const Tuple<Fields...> &other) const {
-  return OrdHelper::cmp(*this, other);
-}
 
 template <class... Fields>
 constexpr Tuple<typename RemoveConstOrRefType<Fields>::Result...>

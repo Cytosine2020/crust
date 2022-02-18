@@ -8,7 +8,7 @@
 namespace crust {
 namespace index {
 CRUST_TRAIT(Index, class Idx, class T) {
-  CRUST_TRAIT_REQUIRE(Index);
+  CRUST_TRAIT_USE_SELF(Index);
 
   const T &index(Idx idx) const;
 

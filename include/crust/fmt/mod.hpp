@@ -10,13 +10,13 @@ namespace fmt {
 class Formatter {};
 
 CRUST_TRAIT(Debug) {
-  CRUST_TRAIT_REQUIRE(Debug);
+  CRUST_TRAIT_USE_SELF(Debug);
 
   bool fmt_debug(Formatter & fmt);
 };
 
 CRUST_TRAIT(Display) {
-  CRUST_TRAIT_REQUIRE(Display);
+  CRUST_TRAIT_USE_SELF(Display);
 
   bool fmt_display(Formatter & fmt);
 };

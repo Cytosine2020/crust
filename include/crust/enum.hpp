@@ -11,6 +11,45 @@
 
 namespace crust {
 namespace _impl_enum {
+template <class Index, class... Fields>
+template <class T>
+constexpr Option<cmp::Ordering>
+EnumTagUnion<Index, Fields...>::PartialCmp::operator()(const T &value) const {
+  return operator_partial_cmp(value, other->unsafe_get_variant<T>());
+}
+
+template <class Index, class... Fields>
+template <class T>
+constexpr cmp::Ordering
+EnumTagUnion<Index, Fields...>::Cmp::operator()(const T &value) const {
+  return operator_cmp(value, other->unsafe_get_variant<T>());
+}
+
+template <class Index, class... Fields>
+constexpr Option<cmp::Ordering>
+EnumTagUnion<Index, Fields...>::partial_cmp(const EnumTagUnion &other) const {
+  return make_some(operator_cmp(*this, other)); // FIXME
+}
+
+template <class Index, class... Fields>
+constexpr cmp::Ordering
+EnumTagUnion<Index, Fields...>::cmp(const EnumTagUnion &other) const {
+  return operator_cmp(index, other.index)
+      .then(visit<cmp::Ordering>(Cmp{&other}));
+}
+
+template <class Index, class... Fields>
+constexpr Option<cmp::Ordering>
+EnumTagOnly<Index, Fields...>::partial_cmp(const EnumTagOnly &other) const {
+  return operator_partial_cmp(index, other.index);
+}
+
+template <class Index, class... Fields>
+constexpr cmp::Ordering
+EnumTagOnly<Index, Fields...>::cmp(const EnumTagOnly &other) const {
+  return operator_cmp(index, other.index);
+}
+
 template <class Inner, class... Fields>
 template <class T>
 crust_cxx14_constexpr Option<T> Enum<Inner, Fields...>::move_variant() && {
@@ -39,13 +78,26 @@ crust_cxx14_constexpr _impl_enum::LetEnum<T> let(T &ref) {
   return _impl_enum::LetEnum<T>{ref};
 }
 
-// namespace _auto_impl {
-// template <class Self>
-// constexpr Option<cmp::Ordering>
-// EnumPartialOrdImpl<Self>::partial_cmp(const Self &other) const {
-//   return self()._partial_cmp(other);
-// }
-// } // namespace _auto_impl
+namespace _auto_impl {
+template <class Self, class... Fields>
+constexpr Option<cmp::Ordering> AutoImpl<
+    Self,
+    Enum<Fields...>,
+    cmp::PartialOrd,
+    EnableIf<Derive<Fields, cmp::Eq>...>>::partial_cmp(const Self &other)
+    const {
+  return operator_partial_cmp(self().inner, other.inner);
+}
+
+template <class Self, class... Fields>
+constexpr cmp::Ordering AutoImpl<
+    Self,
+    Enum<Fields...>,
+    cmp::Ord,
+    EnableIf<Derive<Fields, cmp::Eq>...>>::cmp(const Self &other) const {
+  return operator_cmp(self().inner, other.inner);
+}
+} // namespace _auto_impl
 } // namespace crust
 
 
