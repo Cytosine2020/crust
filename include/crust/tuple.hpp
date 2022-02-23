@@ -58,7 +58,7 @@ struct LetTupleHelper<0, Fields...> {
 };
 
 template <class... Fields>
-class LetTuple {
+struct LetTuple {
 private:
   TupleSizedHolder<Fields &...> ref;
 

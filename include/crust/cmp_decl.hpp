@@ -8,13 +8,13 @@
 namespace crust {
 namespace option {
 template <class T>
-class Option;
+struct Option;
 } // namespace option
 
 using option::Option;
 
 namespace cmp {
-class Ordering;
+struct Ordering;
 
 CRUST_TRAIT(PartialEq, class Rhs = Self) {
   CRUST_TRAIT_USE_SELF(PartialEq);
@@ -158,9 +158,9 @@ struct TupleLikeOrdHelper<Self, Base, 0> {
 
 template <class Self>
 struct AutoImpl<Self, MonoStateType, cmp::PartialEq> : cmp::PartialEq<Self> {
-  static constexpr bool eq(const Self &, const Self &) { return true; }
+  constexpr bool eq(const Self &) const { return true; }
 
-  static constexpr bool ne(const Self &, const Self &) { return false; }
+  constexpr bool ne(const Self &) const { return false; }
 };
 
 template <class Self>
@@ -169,21 +169,20 @@ struct AutoImpl<Self, MonoStateType, cmp::Eq, void> : cmp::Eq<Self> {};
 template <class Self>
 struct AutoImpl<Self, MonoStateType, cmp::PartialOrd, void> :
     cmp::PartialOrd<Self> {
-  static constexpr Option<cmp::Ordering>
-  partial_cmp(const Self &, const Self &);
+  constexpr Option<cmp::Ordering> partial_cmp(const Self &) const;
 
-  static constexpr bool lt(const Self &, const Self &) { return false; }
+  constexpr bool lt(const Self &) const { return false; }
 
-  static constexpr bool le(const Self &, const Self &) { return true; }
+  constexpr bool le(const Self &) const { return true; }
 
-  static constexpr bool gt(const Self &, const Self &) { return false; }
+  constexpr bool gt(const Self &) const { return false; }
 
-  static constexpr bool ge(const Self &, const Self &) { return true; }
+  constexpr bool ge(const Self &) const { return true; }
 };
 
 template <class Self>
 struct AutoImpl<Self, MonoStateType, cmp::Ord, void> : cmp::Ord<Self> {
-  static constexpr cmp::Ordering cmp(const Self &, const Self &);
+  constexpr cmp::Ordering cmp(const Self &) const;
 };
 } // namespace _auto_impl
 } // namespace crust

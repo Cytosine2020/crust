@@ -7,32 +7,10 @@
 
 namespace crust {
 namespace option {
-template <class T>
-struct crust_ebco Some :
-    TupleStruct<T>,
-    AutoImpl<
-        Some<T>,
-        TupleStruct<T>,
-        ZeroSizedType,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
-  CRUST_USE_BASE_CONSTRUCTORS(Some, TupleStruct<T>);
-};
+CRUST_ENUM_VARIANT(None);
 
-struct crust_ebco None :
-    TupleStruct<>,
-    AutoImpl<
-        None,
-        TupleStruct<>,
-        ZeroSizedType,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
-  CRUST_USE_BASE_CONSTRUCTORS(None, TupleStruct<>);
-};
+template <class T>
+CRUST_ENUM_TUPLE_VARIANT(Some, Some<T>, T);
 
 template <class T>
 always_inline constexpr Option<typename RemoveConstOrRefType<T>::Result>

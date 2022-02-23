@@ -51,10 +51,10 @@ struct RawFn<Ret(Args...), f> {
 } // namespace _impl_fn
 
 template <class Self, class F = typename _impl_fn::MemFnClosure<Self>::Result>
-class Fn;
+struct Fn;
 
 template <class Self, class Ret, class... Args>
-class Fn<Self, Ret(Args...)> {
+struct Fn<Self, Ret(Args...)> {
 private:
   crust_static_assert(!IsConstOrRefVal<Self>::result);
 
@@ -99,10 +99,10 @@ always_inline constexpr Fn<T, F> bind(T &&f) {
 }
 
 template <class Self, class F = typename _impl_fn::MemFnClosure<Self>::Result>
-class FnMut;
+struct FnMut;
 
 template <class Self, class Ret, class... Args>
-class FnMut<Self, Ret(Args...)> {
+struct FnMut<Self, Ret(Args...)> {
 private:
   crust_static_assert(!IsConstOrRefVal<Self>::result);
 
@@ -206,21 +206,29 @@ const FnMutVTable<Ret, Args...> StaticFnMutVTable<Self, Ret, Args...>::vtable{
 } // namespace _impl_fn
 
 template <class F>
-class DynFn;
+struct DynFn;
 
 template <class F>
-class DynFnMut;
+struct DynFnMut;
 
 template <class Ret, class... Args>
-class DynFn<Ret(Args...)> { // todo: optimize for zero sized type
+struct DynFn<Ret(Args...)> { // todo: optimize for zero sized type
 private:
   void *self;
   const _impl_fn::FnVTable<Ret, Args...> *vtable;
 
   void drop() {
-    vtable->drop(self);
-    delete reinterpret_cast<char *>(self);
-    self = nullptr;
+    if (self != nullptr) {
+      vtable->drop(self);
+      delete reinterpret_cast<char *>(self);
+      self = nullptr;
+    }
+  }
+
+  void move_from(DynFn &&other) {
+    self = other.self;
+    vtable = other.vtable;
+    other.self = nullptr;
   }
 
 public:
@@ -232,22 +240,12 @@ public:
   template <class F, F *f>
   constexpr DynFn(TmplVal<F *, f>) : DynFn{_impl_fn::RawFn<F, f>{}} {}
 
-  DynFn(DynFn &&other) noexcept {
-    if (this != &other) {
-      self = other.self;
-      vtable = other.vtable;
-      other.self = nullptr;
-    }
-  }
+  DynFn(DynFn &&other) noexcept { move_from(move(other)); }
 
   DynFn &operator=(DynFn &&other) noexcept {
     if (this != &other) {
-      if (self != nullptr) {
-        drop();
-      }
-      self = other.self;
-      vtable = other.vtable;
-      other.self = nullptr;
+      drop();
+      move_from(move(other));
     }
 
     return *this;
@@ -257,23 +255,27 @@ public:
     return vtable->call(self, forward<Args>(args)...);
   }
 
-  ~DynFn() {
-    if (self != nullptr) {
-      drop();
-    }
-  }
+  ~DynFn() { drop(); }
 };
 
 template <class Ret, class... Args>
-class DynFnMut<Ret(Args...)> {
+struct DynFnMut<Ret(Args...)> {
 private:
   void *self;
   const _impl_fn::FnMutVTable<Ret, Args...> *vtable;
 
   void drop() {
-    vtable->drop(self);
-    delete reinterpret_cast<char *>(self);
-    self = nullptr;
+    if (self != nullptr) {
+      vtable->drop(self);
+      delete reinterpret_cast<char *>(self);
+      self = nullptr;
+    }
+  }
+
+  void move_from(DynFnMut &&other) {
+    self = other.self;
+    vtable = other.vtable;
+    other.self = nullptr;
   }
 
 public:
@@ -285,22 +287,12 @@ public:
   template <class F, F *f>
   constexpr DynFnMut(TmplVal<F *, f>) : DynFnMut{_impl_fn::RawFn<F, f>{}} {}
 
-  DynFnMut(DynFnMut &&other) noexcept {
-    if (this != &other) {
-      self = other.self;
-      vtable = other.vtable;
-      other.self = nullptr;
-    }
-  }
+  DynFnMut(DynFnMut &&other) noexcept { move_from(move(other)); }
 
   DynFnMut &operator=(DynFnMut &&other) noexcept {
     if (this != &other) {
-      if (self != nullptr) {
-        drop();
-      }
-      self = other.self;
-      vtable = other.vtable;
-      other.self = nullptr;
+      drop();
+      move_from(move(other));
     }
 
     return *this;
@@ -310,11 +302,7 @@ public:
     return vtable->call(self, forward<Args>(args)...);
   }
 
-  ~DynFnMut() {
-    if (self != nullptr) {
-      drop();
-    }
-  }
+  ~DynFnMut() { drop(); }
 };
 } // namespace ops
 } // namespace crust

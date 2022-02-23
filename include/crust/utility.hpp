@@ -87,6 +87,8 @@ panic(const char *file, int line, const char *msg) noexcept {
 #endif
 } // namespace _impl_utility
 
+#define CRUST_MACRO(...) __VA_ARGS__
+
 using i8 = int8_t;
 using u8 = uint8_t;
 using i16 = int16_t;
@@ -153,33 +155,29 @@ template <class T>
 struct CompositionType<T> : TmplType<T> {};
 
 template <class A, class B>
-struct IsSameVal : BoolVal<false> {};
+struct IsSame : BoolVal<false> {};
 
 template <class A>
-struct IsSameVal<A, A> : BoolVal<true> {};
+struct IsSame<A, A> : BoolVal<true> {};
 
 template <class A, class B>
 struct LTVal : BoolVal<(A::result < B::result)> {
-  crust_static_assert(
-      IsSameVal<typename A::Result, typename B::Result>::result);
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
 };
 
 template <class A, class B>
 struct LEVal : BoolVal<(A::result <= B::result)> {
-  crust_static_assert(
-      IsSameVal<typename A::Result, typename B::Result>::result);
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
 };
 
 template <class A, class B>
 struct GTVal : BoolVal<(A::result > B::result)> {
-  crust_static_assert(
-      IsSameVal<typename A::Result, typename B::Result>::result);
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
 };
 
 template <class A, class B>
 struct GEVal : BoolVal<(A::result >= B::result)> {
-  crust_static_assert(
-      IsSameVal<typename A::Result, typename B::Result>::result);
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
 };
 
 template <class T>
@@ -284,43 +282,46 @@ constexpr T &&forward(typename RemoveRefType<T>::Result &&t) {
   struct TRAIT
 
 #define CRUST_TRAIT_USE_SELF(TRAIT, ...)                                       \
-protected:                                                                     \
-  constexpr TRAIT() {                                                          \
-    crust_static_assert(::crust::IsBaseOfVal<TRAIT, Self>::result);            \
-    crust_static_assert(::crust::All<__VA_ARGS__>::result);                    \
-  }                                                                            \
+private:                                                                       \
   constexpr const Self &self() const {                                         \
     return *static_cast<const Self *>(this);                                   \
   }                                                                            \
   crust_cxx14_constexpr Self &self() { return *static_cast<Self *>(this); }    \
                                                                                \
+protected:                                                                     \
+  constexpr TRAIT() {                                                          \
+    crust_static_assert(::crust::All<__VA_ARGS__>::result);                    \
+  }                                                                            \
+                                                                               \
 public:
 
+namespace _impl_utility {
+template <class Self, template <class, class...> class T, class... Args>
+using Trait = T<Self, Args...>;
+} // namespace _impl_utility
+
 template <template <class, class...> class T, class... Args>
-struct Trait {
-  template <class Self>
-  using Result = T<Self, Args...>;
-};
+struct Trait {};
 
 template <class Trait, class Self, class Enable = void>
 struct ImplFor {};
 
 #define CRUST_IMPL_FOR(TRAIT, SELF, ...)                                       \
   struct ImplFor<Trait<TRAIT>, SELF, EnableIf<__VA_ARGS__>> :                  \
-      Trait<TRAIT>::Result<SELF>
+      _impl_utility::Trait<SELF, TRAIT>
 
-#define CRUST_IMPL_USE_SELF(SELF, ...)                                         \
-  using Self = SELF;                                                           \
-                                                                               \
-protected:                                                                     \
-  constexpr ImplFor() {                                                        \
-    crust_static_assert(::crust::IsBaseOfVal<ImplFor, Self>::result);          \
-    crust_static_assert(::crust::All<__VA_ARGS__>::result);                    \
-  }                                                                            \
+#define CRUST_IMPL(SELF, ...) struct ImplFor<void, SELF, EnableIf<__VA_ARGS__>>
+
+#define CRUST_IMPL_USE_SELF(...)                                               \
+private:                                                                       \
+  using Self = __VA_ARGS__;                                                    \
   constexpr const Self &self() const {                                         \
     return *static_cast<const Self *>(this);                                   \
   }                                                                            \
   crust_cxx14_constexpr Self &self() { return *static_cast<Self *>(this); }    \
+                                                                               \
+protected:                                                                     \
+  constexpr ImplFor() {}                                                       \
                                                                                \
 public:
 
@@ -333,7 +334,7 @@ struct Impl<Self, Trait, Traits...> :
     Impl<Self, Traits...> {};
 
 template <class Self>
-struct Impl<Self> {};
+struct Impl<Self> : ImplFor<void, Self> {};
 
 namespace _auto_impl {
 template <class Self>
@@ -389,6 +390,40 @@ namespace _auto_impl {
 template <class Self>
 struct AutoImpl<Self, MonoStateType, ZeroSizedType> : ZeroSizedType<Self> {};
 } // namespace _auto_impl
+
+template <class T>
+struct Ref {
+private:
+  const T *ptr;
+
+public:
+  constexpr Ref(const T *ptr) : ptr{ptr} {}
+
+  constexpr const T &operator*() const {
+    return crust_debug_assert(ptr != nullptr), *ptr;
+  }
+
+  constexpr const T *operator->() const {
+    return crust_debug_assert(ptr != nullptr), ptr;
+  }
+};
+
+template <class T>
+struct RefMut {
+private:
+  T *ptr;
+
+public:
+  constexpr RefMut(T *ptr) : ptr{ptr} {}
+
+  crust_cxx14_constexpr T &operator*() {
+    return crust_debug_assert(ptr != nullptr), *ptr;
+  }
+
+  crust_cxx14_constexpr T *operator->() {
+    return crust_debug_assert(ptr != nullptr), ptr;
+  }
+};
 } // namespace crust
 
 

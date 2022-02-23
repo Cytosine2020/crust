@@ -9,6 +9,19 @@
 
 using namespace crust;
 
+namespace {
+struct ClassA;
+
+struct ClassB;
+} // namespace
+
+namespace crust {
+template <>
+CRUST_IMPL_FOR(clone::Clone, ClassA){};
+
+template <>
+CRUST_IMPL_FOR(clone::Clone, ClassB){};
+} // namespace crust
 
 namespace {
 template <class T>
@@ -21,19 +34,20 @@ struct VisitType {
   }
 };
 
-struct ClassA : test::RAIIChecker<ClassA> {
+struct ClassA : test::RAIIChecker<ClassA>, Impl<ClassA, Trait<clone::Clone>> {
   CRUST_USE_BASE_CONSTRUCTORS(ClassA, test::RAIIChecker<ClassA>);
 };
 
-struct ClassB : test::RAIIChecker<ClassB> {
+struct ClassB : test::RAIIChecker<ClassB>, Impl<ClassB, Trait<clone::Clone>> {
   CRUST_USE_BASE_CONSTRUCTORS(ClassB, test::RAIIChecker<ClassB>);
 };
 
-struct EnumA : Enum<ClassA, ClassB> {
+struct EnumA :
+    Enum<ClassA, ClassB>,
+    AutoImpl<EnumA, Enum<ClassA, ClassB>, clone::Clone> {
   CRUST_ENUM_USE_BASE(EnumA, Enum<ClassA, ClassB>);
 };
 } // namespace
-
 
 GTEST_TEST(enum_, enum_) {
   crust_static_assert(!Derive<EnumA, cmp::PartialEq>::result);
@@ -54,11 +68,22 @@ GTEST_TEST(enum_, enum_) {
   EnumA b;
   b = a;
   EXPECT_TRUE(b.visit<bool>(VisitType<ClassB>{}));
+
+  a = ClassA{recorder};
+  b = a.clone();
+  EXPECT_TRUE(b.visit<bool>(VisitType<ClassA>{}));
+
+  a = ClassB{recorder};
+  b.clone_from(a);
+  EXPECT_TRUE(b.visit<bool>(VisitType<ClassB>{}));
+
   b = move(a);
+  EXPECT_TRUE(b.visit<bool>(VisitType<ClassB>{}));
 
   EnumA c{b};
-  EnumA d{move(c)};
+  EXPECT_TRUE(b.visit<bool>(VisitType<ClassB>{}));
 
+  EnumA d{move(c)};
   EXPECT_TRUE(d.visit<bool>(VisitType<ClassB>{}));
 }
 

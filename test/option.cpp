@@ -1,14 +1,12 @@
 #include "gtest/gtest.h"
 
 #include "crust/cmp.hpp"
-#include "crust/enum.hpp"
 #include "crust/option.hpp"
 #include "crust/utility.hpp"
 
 
 using namespace crust;
 using ops::bind;
-using ops::bind_mut;
 
 
 GTEST_TEST(option, option) {

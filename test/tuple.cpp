@@ -1,8 +1,11 @@
 #include "gtest/gtest.h"
 
+#include "crust/clone.hpp"
 #include "crust/cmp.hpp"
 #include "crust/tuple.hpp"
 #include "crust/utility.hpp"
+
+#include "raii_checker.hpp"
 
 
 using namespace crust;
@@ -10,9 +13,31 @@ using namespace cmp;
 
 
 namespace {
-class A {};
+struct C;
 
-class B : A {};
+struct D;
+} // namespace
+
+namespace crust {
+template <>
+CRUST_IMPL_FOR(clone::Clone, C){};
+
+template <>
+CRUST_IMPL_FOR(clone::Clone, D){};
+} // namespace crust
+
+namespace {
+struct A {};
+
+struct B : A {};
+
+struct C : test::RAIIChecker<C>, Impl<C, Trait<clone::Clone>> {
+  CRUST_USE_BASE_CONSTRUCTORS(C, test::RAIIChecker<C>);
+};
+
+struct D : test::RAIIChecker<D>, Impl<D, Trait<clone::Clone>> {
+  CRUST_USE_BASE_CONSTRUCTORS(D, test::RAIIChecker<D>);
+};
 } // namespace
 
 
@@ -118,4 +143,14 @@ GTEST_TEST(tuple, size_two) {
   crust_static_assert(make_tuple(0, 'b') > make_tuple(0, 'a'));
 
   EXPECT_TRUE(make_tuple(0, 1).cmp(make_tuple(0, 0)) == make_greater());
+}
+
+GTEST_TEST(tuple, raii) {
+  auto recorder = std::make_shared<test::RAIIRecorder>(test::RAIIRecorder{});
+
+  auto a = make_tuple(C{recorder}, D{recorder}, C{recorder}, D{recorder});
+  auto b = a;
+  auto c = clone::clone(a);
+  c.clone_from(b);
+  auto d = move(a);
 }

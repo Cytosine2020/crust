@@ -11,7 +11,7 @@
 namespace test {
 struct RAIITypeInfo {};
 
-class RAIIRecorder {
+struct RAIIRecorder {
 private:
   struct Record {
     const RAIITypeInfo *type_info;
@@ -37,7 +37,7 @@ public:
 };
 
 template <class Self>
-class RAIIChecker {
+struct RAIIChecker {
 private:
   static const RAIITypeInfo TYPE_INFO;
 

@@ -8,7 +8,7 @@
 
 namespace crust {
 template <class T>
-class crust_ebco Slice : public index::Index<Slice<T>, usize, T> {
+struct crust_ebco Slice : index::Index<Slice<T>, usize, T> {
 private:
   T *inner;
   usize size;

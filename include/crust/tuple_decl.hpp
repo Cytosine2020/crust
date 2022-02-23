@@ -2,19 +2,13 @@
 #define CRUST_TUPLE_DECL_HPP
 
 
+#include "crust/clone.hpp"
 #include "crust/cmp_decl.hpp"
 #include "crust/helper/types.hpp"
 #include "crust/utility.hpp"
 
 
 namespace crust {
-namespace option {
-template <class T>
-class Option;
-} // namespace option
-
-using option::Option;
-
 namespace _impl_tuple {
 template <bool is_zst, bool remain_is_zst, class... Fields>
 struct TupleHolderSizedImpl;
@@ -149,7 +143,7 @@ struct TupleGetterImpl<0, false, Field, Fields...> {
   static constexpr Result &inner(Self &self) { return self.field; }
 };
 } // namespace _impl_tuple
-
+// todo: repr(transparent)
 template <class... Fields>
 struct TupleStruct :
     private _impl_tuple::
@@ -207,6 +201,44 @@ struct AutoImpl<
     TupleStruct<Fields...>,
     ZeroSizedType,
     EnableIf<Derive<Fields, ZeroSizedType>...>> : ZeroSizedType<Self> {};
+
+template <usize... indexs>
+struct IndexSequence {};
+
+template <usize size, usize... indexs>
+struct IndexSequenceImpl : IndexSequenceImpl<size - 1, size - 1, indexs...> {};
+
+template <usize... indexs>
+struct IndexSequenceImpl<0, indexs...> : TmplType<IndexSequence<indexs...>> {};
+
+template <usize size>
+using MakeIndexSequence = typename IndexSequenceImpl<size>::Result;
+
+template <class Self, class Index>
+struct TupleLikeCloneHelper;
+
+template <class Self, usize... indexs>
+struct TupleLikeCloneHelper<Self, IndexSequence<indexs...>> {
+  static constexpr Self clone(const Self &self) {
+    return Self{clone::clone(self.template get<indexs>())...};
+  }
+};
+
+template <class Self, class... Fields>
+struct AutoImpl<
+    Self,
+    TupleStruct<Fields...>,
+    clone::Clone,
+    EnableIf<Derive<Fields, clone::Clone>...>> : clone::Clone<Self> {
+  CRUST_TRAIT_USE_SELF(AutoImpl);
+
+private:
+  using CloneHelper =
+      TupleLikeCloneHelper<Self, MakeIndexSequence<sizeof...(Fields)>>;
+
+public:
+  Self clone() const { return CloneHelper::clone(self()); }
+};
 
 template <class Self, class... Fields>
 struct AutoImpl<
@@ -288,6 +320,7 @@ struct crust_ebco Tuple :
         Tuple<Fields...>,
         TupleStruct<Fields...>,
         ZeroSizedType,
+        clone::Clone,
         cmp::PartialEq,
         cmp::Eq,
         cmp::PartialOrd,

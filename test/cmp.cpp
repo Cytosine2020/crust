@@ -8,7 +8,6 @@
 using namespace crust;
 using namespace cmp;
 using ops::bind;
-using ops::bind_mut;
 
 
 GTEST_TEST(cmp, derive) {
@@ -123,6 +122,10 @@ GTEST_TEST(cmp, min_max) {
 
 GTEST_TEST(cmp, reverse) {
   crust_static_assert(sizeof(cmp::Reverse<i32>) == sizeof(i32));
+  crust_static_assert(Derive<cmp::Reverse<i32>, PartialEq>::result);
+  crust_static_assert(Derive<cmp::Reverse<i32>, Eq>::result);
+  crust_static_assert(Derive<cmp::Reverse<i32>, PartialOrd>::result);
+  crust_static_assert(Derive<cmp::Reverse<i32>, Ord>::result);
 
   cmp::Reverse<i32> a{0};
   cmp::Reverse<i32> b{1};

@@ -16,10 +16,15 @@ template <class E>
 CRUST_ENUM_TUPLE_VARIANT(Err, Err<E>, E);
 
 template <class T, class E>
-class crust_ebco Result :
-    public Enum<Ok<T>, Err<E>>,
-    AutoImpl<Result<T, E>, Enum<Ok<T>, Err<E>>, cmp::PartialEq, cmp::Eq> {
-public:
+struct crust_ebco Result :
+    Enum<Ok<T>, Err<E>>,
+    AutoImpl<
+        Result<T, E>,
+        Enum<Ok<T>, Err<E>>,
+        cmp::PartialEq,
+        cmp::Eq,
+        cmp::PartialOrd,
+        cmp::Ord> {
   CRUST_ENUM_USE_BASE(Result, Enum<Ok<T>, Err<E>>);
 
   constexpr bool is_ok() const { return this->template is_variant<Ok<T>>(); }

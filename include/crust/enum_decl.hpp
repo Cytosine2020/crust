@@ -4,6 +4,7 @@
 
 #include <new>
 
+#include "crust/clone.hpp"
 #include "crust/cmp_decl.hpp"
 #include "crust/helper/repeat_macro.hpp"
 #include "crust/helper/types.hpp"
@@ -13,13 +14,6 @@
 
 
 namespace crust {
-namespace option {
-template <class T>
-class Option;
-} // namespace option
-
-using option::Option;
-
 namespace _impl_enum {
 #define CRUST_ENUM_VARIANT(NAME)                                               \
   struct crust_ebco NAME :                                                     \
@@ -186,17 +180,6 @@ struct EnumGetter<0, Field, Fields...> {
   static constexpr Result &inner(Self &self) { return self.field; }
 };
 
-template <isize index, class... Fields>
-struct EnumZeroSizedGetter {
-  using Self = _impl_types::ZeroSizedTypeHolder<Fields...>;
-  using Result =
-      typename _impl_types::TypesIndexToType<index, Fields...>::Result;
-
-  static constexpr const Result &inner(const Self &self) { return self; }
-
-  static constexpr Result &inner(Self &self) { return self; }
-};
-
 template <class Self, isize offset, isize size, class... Fields>
 struct EnumVisitor {
   static constexpr isize cut = size / 2;
@@ -274,45 +257,64 @@ _ENUM_VISITOR_SWITCH_IMPL(1);
 #undef _ENUM_VISITOR_BRANCH
 
 template <class Self, bool flag>
-struct EnumTrivial;
-
-template <class Self>
-struct EnumTrivial<Self, true> {
-  void drop() {}
-};
+struct EnumTrivial {};
 
 template <class Self>
 struct EnumTrivial<Self, false> {
-  constexpr EnumTrivial() {}
-
+private:
   constexpr const Self &self() const {
     return *static_cast<const Self *>(this);
   }
 
-  crust_cxx14_constexpr Self &self() { return *static_cast<Self *>(this); };
+  crust_cxx14_constexpr Self &self() { return *static_cast<Self *>(this); }
+
+  struct Drop {
+    template <class T>
+    crust_cxx14_constexpr void operator()(T &value) const {
+      value.~T();
+    }
+  };
+
+  struct MoveTo {
+    Self *other;
+
+    template <class T>
+    void operator()(T &value) {
+      ::new (&other->template unsafe_get_variant<T>()) T{move(value)};
+    }
+  };
+
+  struct CopyTo {
+    Self *other;
+
+    template <class T>
+    void operator()(const T &value) {
+      ::new (&other->template unsafe_get_variant<T>()) T{value};
+    }
+  };
 
   void drop() {
     if (self().index != 0) {
-      self().visit(typename Self::Drop{});
+      self().visit(Drop{});
+      self().index = 0;
     }
   }
 
-  EnumTrivial(const EnumTrivial &other) {
-    if (this != &other) {
-      other.self().visit(typename Self::Copy{&self().holder});
-    }
-  }
+  void move_from(Self &&other) { other.visit(MoveTo{&self()}); }
 
-  EnumTrivial(EnumTrivial &&other) noexcept {
-    if (this != &other) {
-      other.self().visit(typename Self::Emplace{&self().holder});
-    }
-  }
+  void clone_from(const Self &other) { other.visit(CopyTo{&self()}); }
+
+public:
+  constexpr EnumTrivial() {}
+
+  EnumTrivial(const EnumTrivial &other) { clone_from(move(other.self())); }
+
+  EnumTrivial(EnumTrivial &&other) noexcept { move_from(move(other.self())); }
 
   EnumTrivial &operator=(const EnumTrivial &other) {
     if (this != &other) {
       drop();
-      other.self().visit(typename Self::Copy{&self().holder});
+      clone_from(move(other.self()));
     }
 
     return *this;
@@ -321,7 +323,7 @@ struct EnumTrivial<Self, false> {
   EnumTrivial &operator=(EnumTrivial &&other) noexcept {
     if (this != &other) {
       drop();
-      other.self().visit(typename Self::Emplace{&self().holder});
+      move_from(move(other.self()));
     }
 
     return *this;
@@ -331,7 +333,7 @@ struct EnumTrivial<Self, false> {
 };
 
 template <class Index_, class... Fields>
-struct EnumTagUnion :
+struct crust_ebco EnumTagUnion :
     EnumTrivial<
         EnumTagUnion<Index_, Fields...>,
         All<IsTriviallyCopyable<Fields>...>::result> {
@@ -344,31 +346,6 @@ struct EnumTagUnion :
       Discriminant<Index, typename RemoveConstOrRefType<T>::Result, Fields...>;
 
   crust_static_assert(All<Not<Derive<Fields, DiscriminantVariant>>...>::result);
-
-  struct Drop {
-    template <class T>
-    crust_cxx14_constexpr void operator()(T &value) const {
-      value.~T();
-    }
-  };
-
-  struct Copy {
-    EnumHolder<Fields...> *holder;
-
-    template <class T>
-    void operator()(const T &value) {
-      ::new (holder) EnumHolder<Fields...>{value};
-    }
-  };
-
-  struct Emplace {
-    EnumHolder<Fields...> *holder;
-
-    template <class T>
-    void operator()(T &value) {
-      ::new (holder) EnumHolder<Fields...>{move(value)};
-    }
-  };
 
   struct Equal {
     const EnumTagUnion *other;
@@ -449,7 +426,7 @@ struct EnumTagUnion :
 
   template <class T>
   EnumTagUnion &operator=(T &&value) {
-    this->drop();
+    ~EnumTagUnion();
 
     ::new (&holder) EnumHolder<Fields...>{forward<T>(value)};
     set_index(IndexGetter<T>::result);
@@ -665,16 +642,18 @@ constexpr Overloaded<Ts...> overloaded(Ts &&...ts) {
   return Overloaded<Ts...>{forward<Ts>(ts)...};
 }
 
-CRUST_TRAIT(EnumAs, class Index) {
+CRUST_TRAIT(EnumAs, class Inner) {
   CRUST_TRAIT_USE_SELF(EnumAs);
 
-  constexpr Index as() const { return self().inner.get_index(); }
+  constexpr typename Inner::Index as() const {
+    return self().inner.get_index();
+  }
 };
 
 template <class Inner, class... Fields>
 struct Enum :
-    InheritIf<
-        EnumAs<Enum<Inner, Fields...>, typename Inner::Index>,
+    Impl<
+        EnumAs<Enum<Inner, Fields...>, Inner>,
         All<Derive<Fields, ZeroSizedType>...>> {
 private:
   crust_static_assert(sizeof...(Fields) > 0);
@@ -762,6 +741,12 @@ public:
 // };
 } // namespace _impl_enum
 
+template <class Inner, class... Fields>
+CRUST_IMPL_FOR(
+    CRUST_MACRO(_impl_enum::EnumAs, Inner),
+    CRUST_MACRO(_impl_enum::Enum<Inner, Fields...>),
+    Derive<Fields, ZeroSizedType>...){};
+
 template <class Type>
 struct EnumRepr : TmplType<Type> {};
 
@@ -782,6 +767,26 @@ struct crust_ebco Enum<EnumRepr<Type>, Fields...> :
 };
 
 namespace _auto_impl {
+template <class Self, class... Fields>
+struct AutoImpl<
+    Self,
+    Enum<Fields...>,
+    clone::Clone,
+    EnableIf<Derive<Fields, clone::Clone>...>> : clone::Clone<Self> {
+  CRUST_TRAIT_USE_SELF(AutoImpl);
+
+private:
+  struct Clone {
+    template <class T>
+    Self operator()(const T &value) {
+      return clone::clone(value);
+    }
+  };
+
+public:
+  Self clone() const { return self().template visit<Self>(Clone{}); }
+};
+
 template <class Self, class... Fields>
 struct AutoImpl<
     Self,

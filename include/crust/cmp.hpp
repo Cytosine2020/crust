@@ -5,7 +5,6 @@
 #include "cmp_decl.hpp"
 
 #include "crust/enum_decl.hpp"
-#include "crust/ops/function.hpp"
 #include "crust/option.hpp"
 #include "crust/utility.hpp"
 
@@ -16,16 +15,15 @@ CRUST_ENUM_DISCRIMANT_VARIANT(Less, -1);
 CRUST_ENUM_DISCRIMANT_VARIANT(Equal, 0);
 CRUST_ENUM_DISCRIMANT_VARIANT(Greater, 1);
 
-class crust_ebco Ordering :
-    public Enum<EnumRepr<i8>, Less, Equal, Greater>,
-    public AutoImpl<
+struct crust_ebco Ordering :
+    Enum<EnumRepr<i8>, Less, Equal, Greater>,
+    AutoImpl<
         Ordering,
         Enum<Less, Equal, Greater>,
         cmp::PartialEq,
         cmp::Eq,
         cmp::PartialOrd,
         cmp::Ord> {
-public:
   CRUST_ENUM_USE_BASE(Ordering, Enum<EnumRepr<i8>, Less, Equal, Greater>);
 
   crust_cxx17_constexpr Ordering reverse() const {
@@ -290,13 +288,13 @@ TupleLikeOrdHelper<Self, Base, 0>::cmp(const Self &, const Self &) {
 template <class Self>
 constexpr Option<cmp::Ordering>
 AutoImpl<Self, MonoStateType, cmp::PartialOrd>::partial_cmp(
-    const Self &, const Self &) {
+    const Self &) const {
   return make_some(cmp::make_equal());
 }
 
 template <class Self>
 constexpr cmp::Ordering
-AutoImpl<Self, MonoStateType, cmp::Ord>::cmp(const Self &, const Self &) {
+AutoImpl<Self, MonoStateType, cmp::Ord>::cmp(const Self &) const {
   return cmp::make_equal();
 }
 } // namespace _auto_impl

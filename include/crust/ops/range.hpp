@@ -8,11 +8,10 @@
 
 namespace crust {
 namespace range {
-class RangeFull {};
+struct RangeFull {};
 
 template <class T>
-class Range {
-public:
+struct Range {
   T start;
   T end;
 
@@ -22,16 +21,14 @@ public:
 };
 
 template <class T>
-class RangeFrom {
-public:
+struct RangeFrom {
   T start;
 
   explicit constexpr RangeFrom(T start) : start{start} {}
 };
 
 template <class T>
-class RangeTo {
-public:
+struct RangeTo {
   T end;
 
   explicit constexpr RangeTo(T end) : end{end} {}

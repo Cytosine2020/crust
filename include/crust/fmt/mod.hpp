@@ -7,7 +7,7 @@
 
 namespace crust {
 namespace fmt {
-class Formatter {};
+struct Formatter {};
 
 CRUST_TRAIT(Debug) {
   CRUST_TRAIT_USE_SELF(Debug);
