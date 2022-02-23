@@ -17,7 +17,7 @@ namespace crust {
 namespace _impl_enum {
 #define CRUST_ENUM_VARIANT(NAME)                                               \
   struct crust_ebco NAME :                                                     \
-      ::crust::AutoImpl<                                                       \
+      ::crust::Derive<                                                         \
           NAME,                                                                \
           ::crust::MonoStateType,                                              \
           ::crust::ZeroSizedType,                                              \
@@ -31,7 +31,7 @@ CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
 #define CRUST_ENUM_DISCRIMANT_VARIANT(NAME, VALUE)                             \
   struct crust_ebco NAME :                                                     \
       ::crust::_impl_enum::DiscriminantVariant<NAME>,                          \
-      ::crust::AutoImpl<                                                       \
+      ::crust::Derive<                                                         \
           NAME,                                                                \
           ::crust::MonoStateType,                                              \
           ::crust::ZeroSizedType,                                              \
@@ -47,7 +47,7 @@ struct DiscriminantImpl;
 
 template <class I, class T, class... Fields>
 using Discriminant =
-    DiscriminantImpl<I, Derive<T, DiscriminantVariant>::result, T, Fields...>;
+    DiscriminantImpl<I, Require<T, DiscriminantVariant>::result, T, Fields...>;
 
 template <class I, class T, class... Fields>
 struct DiscriminantImpl<I, false, T, Fields...> :
@@ -86,7 +86,7 @@ struct CheckDiscriminant<I, 0, Fields...> : BoolVal<true> {};
 #define CRUST_ENUM_TUPLE_VARIANT(NAME, FULL_NAME, ...)                         \
   struct crust_ebco NAME :                                                     \
       ::crust::TupleStruct<__VA_ARGS__>,                                       \
-      ::crust::AutoImpl<                                                       \
+      ::crust::Derive<                                                         \
           FULL_NAME,                                                           \
           ::crust::TupleStruct<__VA_ARGS__>,                                   \
           ::crust::ZeroSizedType,                                              \
@@ -345,7 +345,8 @@ struct crust_ebco EnumTagUnion :
   using IndexGetter =
       Discriminant<Index, typename RemoveConstOrRefType<T>::Result, Fields...>;
 
-  crust_static_assert(All<Not<Derive<Fields, DiscriminantVariant>>...>::result);
+  crust_static_assert(
+      All<Not<Require<Fields, DiscriminantVariant>>...>::result);
 
   struct Equal {
     const EnumTagUnion *other;
@@ -612,7 +613,7 @@ struct EnumSelectImpl<void, true, Fields...> : EnumTagOnly<i32, Fields...> {
 template <class hint, class... Fields>
 using EnumSelect = EnumSelectImpl<
     hint,
-    All<Derive<Fields, ZeroSizedType>...>::result,
+    All<Require<Fields, ZeroSizedType>...>::result,
     Fields...>;
 
 template <class T>
@@ -652,9 +653,9 @@ CRUST_TRAIT(EnumAs, class Inner) {
 
 template <class Inner, class... Fields>
 struct Enum :
-    Impl<
+    InheritIf<
         EnumAs<Enum<Inner, Fields...>, Inner>,
-        All<Derive<Fields, ZeroSizedType>...>> {
+        All<Require<Fields, ZeroSizedType>...>> {
 private:
   crust_static_assert(sizeof...(Fields) > 0);
   crust_static_assert(Not<_impl_types::TypesDuplicateVal<Fields...>>::result);
@@ -669,7 +670,7 @@ private:
   friend struct EnumAs;
 
   template <class, class, template <class...> class, class>
-  friend struct _auto_impl::AutoImpl;
+  friend struct _impl_derive::Derive;
 
 protected:
   constexpr Enum() : inner{} {}
@@ -745,7 +746,7 @@ template <class Inner, class... Fields>
 CRUST_IMPL_FOR(
     CRUST_MACRO(_impl_enum::EnumAs, Inner),
     CRUST_MACRO(_impl_enum::Enum<Inner, Fields...>),
-    Derive<Fields, ZeroSizedType>...){};
+    Require<Fields, ZeroSizedType>...){};
 
 template <class Type>
 struct EnumRepr : TmplType<Type> {};
@@ -766,14 +767,14 @@ struct crust_ebco Enum<EnumRepr<Type>, Fields...> :
       _impl_enum::Enum<_impl_enum::EnumSelect<Type, Fields...>, Fields...>);
 };
 
-namespace _auto_impl {
+namespace _impl_derive {
 template <class Self, class... Fields>
-struct AutoImpl<
+struct Derive<
     Self,
     Enum<Fields...>,
     clone::Clone,
-    EnableIf<Derive<Fields, clone::Clone>...>> : clone::Clone<Self> {
-  CRUST_TRAIT_USE_SELF(AutoImpl);
+    EnableIf<Require<Fields, clone::Clone>...>> : clone::Clone<Self> {
+  CRUST_TRAIT_USE_SELF(Derive);
 
 private:
   struct Clone {
@@ -788,12 +789,12 @@ public:
 };
 
 template <class Self, class... Fields>
-struct AutoImpl<
+struct Derive<
     Self,
     Enum<Fields...>,
     cmp::PartialEq,
-    EnableIf<Derive<Fields, cmp::PartialEq>...>> : cmp::PartialEq<Self> {
-  CRUST_TRAIT_USE_SELF(AutoImpl);
+    EnableIf<Require<Fields, cmp::PartialEq>...>> : cmp::PartialEq<Self> {
+  CRUST_TRAIT_USE_SELF(Derive);
 
   constexpr bool eq(const Self &other) const {
     return self().inner.eq(other.inner);
@@ -805,19 +806,19 @@ struct AutoImpl<
 };
 
 template <class Self, class... Fields>
-struct AutoImpl<
+struct Derive<
     Self,
     Enum<Fields...>,
     cmp::Eq,
-    EnableIf<Derive<Fields, cmp::Eq>...>> : cmp::Eq<Self> {};
+    EnableIf<Require<Fields, cmp::Eq>...>> : cmp::Eq<Self> {};
 
 template <class Self, class... Fields>
-struct AutoImpl<
+struct Derive<
     Self,
     Enum<Fields...>,
     cmp::PartialOrd,
-    EnableIf<Derive<Fields, cmp::Eq>...>> : cmp::PartialOrd<Self> {
-  CRUST_TRAIT_USE_SELF(AutoImpl);
+    EnableIf<Require<Fields, cmp::Eq>...>> : cmp::PartialOrd<Self> {
+  CRUST_TRAIT_USE_SELF(Derive);
 
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;
 
@@ -839,16 +840,16 @@ struct AutoImpl<
 };
 
 template <class Self, class... Fields>
-struct AutoImpl<
+struct Derive<
     Self,
     Enum<Fields...>,
     cmp::Ord,
-    EnableIf<Derive<Fields, cmp::Eq>...>> : cmp::Ord<Self> {
-  CRUST_TRAIT_USE_SELF(AutoImpl);
+    EnableIf<Require<Fields, cmp::Eq>...>> : cmp::Ord<Self> {
+  CRUST_TRAIT_USE_SELF(Derive);
 
   constexpr cmp::Ordering cmp(const Self &other) const;
 };
-} // namespace _auto_impl
+} // namespace _impl_derive
 } // namespace crust
 
 

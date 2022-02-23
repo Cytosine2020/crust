@@ -28,10 +28,10 @@ CRUST_TRAIT(PartialEq, class Rhs = Self) {
   constexpr bool operator!=(const Rhs &other) const { return self().ne(other); }
 };
 
-CRUST_TRAIT(Eq) { CRUST_TRAIT_USE_SELF(Eq, Derive<Self, PartialEq>); };
+CRUST_TRAIT(Eq) { CRUST_TRAIT_USE_SELF(Eq, Require<Self, PartialEq>); };
 
 CRUST_TRAIT(PartialOrd, class Rhs = Self) {
-  CRUST_TRAIT_USE_SELF(PartialOrd, Derive<Self, PartialEq>);
+  CRUST_TRAIT_USE_SELF(PartialOrd, Require<Self, PartialEq>);
 
   Option<Ordering> partial_cmp(const Rhs &other) const;
 
@@ -54,7 +54,10 @@ CRUST_TRAIT(PartialOrd, class Rhs = Self) {
 
 CRUST_TRAIT(Ord) {
   CRUST_TRAIT_USE_SELF(
-      Ord, Derive<Self, PartialEq>, Derive<Self, Eq>, Derive<Self, PartialOrd>);
+      Ord,
+      Require<Self, PartialEq>,
+      Require<Self, Eq>,
+      Require<Self, PartialOrd>);
 
   Ordering cmp(const Self &other) const;
 
@@ -75,7 +78,7 @@ CRUST_TRAIT(Ord) {
 };
 } // namespace cmp
 
-namespace _auto_impl {
+namespace _impl_derive {
 template <class Self, class Base, usize rev_index = TupleLikeSize<Base>::result>
 struct TupleLikePartialEqHelper {
   static constexpr usize index = TupleLikeSize<Base>::result - rev_index;
@@ -157,17 +160,17 @@ struct TupleLikeOrdHelper<Self, Base, 0> {
 };
 
 template <class Self>
-struct AutoImpl<Self, MonoStateType, cmp::PartialEq> : cmp::PartialEq<Self> {
+struct Derive<Self, MonoStateType, cmp::PartialEq> : cmp::PartialEq<Self> {
   constexpr bool eq(const Self &) const { return true; }
 
   constexpr bool ne(const Self &) const { return false; }
 };
 
 template <class Self>
-struct AutoImpl<Self, MonoStateType, cmp::Eq, void> : cmp::Eq<Self> {};
+struct Derive<Self, MonoStateType, cmp::Eq, void> : cmp::Eq<Self> {};
 
 template <class Self>
-struct AutoImpl<Self, MonoStateType, cmp::PartialOrd, void> :
+struct Derive<Self, MonoStateType, cmp::PartialOrd, void> :
     cmp::PartialOrd<Self> {
   constexpr Option<cmp::Ordering> partial_cmp(const Self &) const;
 
@@ -181,10 +184,10 @@ struct AutoImpl<Self, MonoStateType, cmp::PartialOrd, void> :
 };
 
 template <class Self>
-struct AutoImpl<Self, MonoStateType, cmp::Ord, void> : cmp::Ord<Self> {
+struct Derive<Self, MonoStateType, cmp::Ord, void> : cmp::Ord<Self> {
   constexpr cmp::Ordering cmp(const Self &) const;
 };
-} // namespace _auto_impl
+} // namespace _impl_derive
 } // namespace crust
 
 

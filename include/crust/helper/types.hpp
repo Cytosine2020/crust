@@ -113,14 +113,14 @@ struct ZeroSizedTypeHolderImpl<false, Field> {
 template <class Field, class... Fields>
 struct ZeroSizedTypeHolder<Field, Fields...> :
     ZeroSizedTypeHolderImpl<
-        All<Derive<Field, ZeroSizedType>,
+        All<Require<Field, ZeroSizedType>,
             Not<TypesIncludeVal<Field, Fields...>>>::result,
         Field,
         Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(
       ZeroSizedTypeHolder,
       ZeroSizedTypeHolderImpl<
-          All<Derive<Field, ::crust::ZeroSizedType>,
+          All<Require<Field, ::crust::ZeroSizedType>,
               Not<TypesIncludeVal<Field, Fields...>>>::result,
           Field,
           Fields...>);

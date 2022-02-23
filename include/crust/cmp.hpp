@@ -17,7 +17,7 @@ CRUST_ENUM_DISCRIMANT_VARIANT(Greater, 1);
 
 struct crust_ebco Ordering :
     Enum<EnumRepr<i8>, Less, Equal, Greater>,
-    AutoImpl<
+    Derive<
         Ordering,
         Enum<Less, Equal, Greater>,
         cmp::PartialEq,
@@ -142,20 +142,20 @@ constexpr bool PartialOrd<Self, Rhs>::ge(const Rhs &other) const {
 
 template <class T>
 constexpr T min(T &&v1, T &&v2) {
-  crust_static_assert(Derive<T, Ord>::result);
+  crust_static_assert(Require<T, Ord>::result);
   return move(v1).min(forward<T>(v2));
 }
 
 template <class T, class F>
 constexpr T
 min_by(T &&v1, T &&v2, ops::Fn<F, Ordering(const T &, const T &)> compare) {
-  crust_static_assert(Derive<T, Ord>::result);
+  crust_static_assert(Require<T, Ord>::result);
   return compare(v1, v2) == make_greater() ? forward<T>(v2) : forward<T>(v1);
 }
 
 template <class T, class F, class K>
 constexpr T min_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
-  crust_static_assert(Derive<T, Ord>::result);
+  crust_static_assert(Require<T, Ord>::result);
   return min_by(
       forward<T>(v1), forward<T>(v2), ops::bind([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
@@ -164,20 +164,20 @@ constexpr T min_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
 
 template <class T>
 constexpr T max(T &&v1, T &&v2) {
-  crust_static_assert(Derive<T, Ord>::result);
+  crust_static_assert(Require<T, Ord>::result);
   return move(v1).max(forward<T>(v2));
 }
 
 template <class T, class F>
 constexpr T
 max_by(T &&v1, T &&v2, ops::Fn<F, Ordering(const T &, const T &)> compare) {
-  crust_static_assert(Derive<T, Ord>::result);
+  crust_static_assert(Require<T, Ord>::result);
   return compare(v1, v2) == make_greater() ? forward<T>(v1) : forward<T>(v2);
 }
 
 template <class T, class F, class K>
 constexpr T max_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
-  crust_static_assert(Derive<T, Ord>::result);
+  crust_static_assert(Require<T, Ord>::result);
   return max_by(
       forward<T>(v1), forward<T>(v2), ops::bind([&](const T &v1, const T &v2) {
         return operator_cmp(f(v1), f(v2));
@@ -187,7 +187,7 @@ constexpr T max_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
 template <class T>
 struct crust_ebco Reverse :
     TupleStruct<T>,
-    AutoImpl<Reverse<T>, TupleStruct<T>, ZeroSizedType>,
+    Derive<Reverse<T>, TupleStruct<T>, ZeroSizedType>,
     Impl<
         Reverse<T>,
         Trait<PartialEq>,
@@ -199,7 +199,7 @@ struct crust_ebco Reverse :
 } // namespace cmp
 
 template <class T>
-CRUST_IMPL_FOR(cmp::PartialEq, cmp::Reverse<T>, Derive<T, cmp::PartialEq>) {
+CRUST_IMPL_FOR(cmp::PartialEq, cmp::Reverse<T>, Require<T, cmp::PartialEq>) {
   CRUST_IMPL_USE_SELF(cmp::Reverse<T>);
 
   constexpr bool eq(const Self &other) const {
@@ -208,10 +208,10 @@ CRUST_IMPL_FOR(cmp::PartialEq, cmp::Reverse<T>, Derive<T, cmp::PartialEq>) {
 };
 
 template <class T>
-CRUST_IMPL_FOR(cmp::Eq, cmp::Reverse<T>, Derive<T, cmp::Eq>){};
+CRUST_IMPL_FOR(cmp::Eq, cmp::Reverse<T>, Require<T, cmp::Eq>){};
 
 template <class T>
-CRUST_IMPL_FOR(cmp::PartialOrd, cmp::Reverse<T>, Derive<T, cmp::PartialOrd>) {
+CRUST_IMPL_FOR(cmp::PartialOrd, cmp::Reverse<T>, Require<T, cmp::PartialOrd>) {
   CRUST_IMPL_USE_SELF(cmp::Reverse<T>);
 
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const {
@@ -237,7 +237,7 @@ CRUST_IMPL_FOR(cmp::PartialOrd, cmp::Reverse<T>, Derive<T, cmp::PartialOrd>) {
 };
 
 template <class T>
-CRUST_IMPL_FOR(cmp::Ord, cmp::Reverse<T>, Derive<T, cmp::Ord>) {
+CRUST_IMPL_FOR(cmp::Ord, cmp::Reverse<T>, Require<T, cmp::Ord>) {
   CRUST_IMPL_USE_SELF(cmp::Reverse<T>);
 
   constexpr cmp::Ordering cmp(const Self &other) const {
@@ -246,7 +246,7 @@ CRUST_IMPL_FOR(cmp::Ord, cmp::Reverse<T>, Derive<T, cmp::Ord>) {
 };
 
 #define _DERIVE_PRIMITIVE(PRIMITIVE, TRAIT, ...)                               \
-  struct Derive<PRIMITIVE, TRAIT, ##__VA_ARGS__> : BoolVal<true> {}
+  struct Require<PRIMITIVE, TRAIT, ##__VA_ARGS__> : BoolVal<true> {}
 
 _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::PartialEq);
 _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::Eq);
@@ -258,7 +258,7 @@ _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::Ord);
 
 // todo: implement for float point numbers
 
-namespace _auto_impl {
+namespace _impl_derive {
 template <class Self, class Base, usize rev_index>
 constexpr Option<cmp::Ordering>
 TupleLikePartialOrdHelper<Self, Base, rev_index>::partial_cmp(
@@ -287,17 +287,16 @@ TupleLikeOrdHelper<Self, Base, 0>::cmp(const Self &, const Self &) {
 
 template <class Self>
 constexpr Option<cmp::Ordering>
-AutoImpl<Self, MonoStateType, cmp::PartialOrd>::partial_cmp(
-    const Self &) const {
+Derive<Self, MonoStateType, cmp::PartialOrd>::partial_cmp(const Self &) const {
   return make_some(cmp::make_equal());
 }
 
 template <class Self>
 constexpr cmp::Ordering
-AutoImpl<Self, MonoStateType, cmp::Ord>::cmp(const Self &) const {
+Derive<Self, MonoStateType, cmp::Ord>::cmp(const Self &) const {
   return cmp::make_equal();
 }
-} // namespace _auto_impl
+} // namespace _impl_derive
 } // namespace crust
 
 

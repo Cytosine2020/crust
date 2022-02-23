@@ -11,27 +11,27 @@
 
 
 namespace crust {
-namespace _auto_impl {
+namespace _impl_derive {
 template <class Self, class... Fields>
-constexpr Option<cmp::Ordering> AutoImpl<
+constexpr Option<cmp::Ordering> Derive<
     Self,
     TupleStruct<Fields...>,
     cmp::PartialOrd,
-    EnableIf<Derive<Fields, cmp::PartialOrd>...>>::partial_cmp(const Self
-                                                                   &other)
+    EnableIf<Require<Fields, cmp::PartialOrd>...>>::partial_cmp(const Self
+                                                                    &other)
     const {
   return PartialOrdHelper::partial_cmp(self(), other);
 }
 
 template <class Self, class... Fields>
-constexpr cmp::Ordering AutoImpl<
+constexpr cmp::Ordering Derive<
     Self,
     TupleStruct<Fields...>,
     cmp::Ord,
-    EnableIf<Derive<Fields, cmp::Ord>...>>::cmp(const Self &other) const {
+    EnableIf<Require<Fields, cmp::Ord>...>>::cmp(const Self &other) const {
   return TupleLikeOrdHelper<Self, TupleStruct<Fields...>>::cmp(self(), other);
 }
-} // namespace _auto_impl
+} // namespace _impl_derive
 
 template <class... Fields>
 constexpr Tuple<typename RemoveConstOrRefType<Fields>::Result...>
@@ -88,26 +88,26 @@ template <class... Fields>
 struct tuple_size<crust::Tuple<Fields...>> :
     integral_constant<
         crust::usize,
-        crust::_auto_impl::TupleLikeSize<
+        crust::_impl_derive::TupleLikeSize<
             crust::TupleStruct<Fields...>>::result> {};
 
 template <crust::usize index, class... Fields>
 struct tuple_element<index, crust::Tuple<Fields...>> {
-  using type = typename crust::_auto_impl::
+  using type = typename crust::_impl_derive::
       TupleLikeGetter<crust::TupleStruct<Fields...>, index>::Result;
 };
 
 template <crust::usize index, class... Fields>
 constexpr const typename tuple_element<index, crust::Tuple<Fields...>>::type &
 get(const crust::Tuple<Fields...> &object) {
-  return crust::_auto_impl::
+  return crust::_impl_derive::
       TupleLikeGetter<crust::TupleStruct<Fields...>, index>::get(object);
 }
 
 template <crust::usize index, class... Fields>
 constexpr typename tuple_element<index, crust::Tuple<Fields...>>::type &
 get(crust::Tuple<Fields...> &object) {
-  return crust::_auto_impl::
+  return crust::_impl_derive::
       TupleLikeGetter<crust::TupleStruct<Fields...>, index>::get(object);
 }
 } // namespace std

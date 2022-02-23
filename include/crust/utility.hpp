@@ -290,6 +290,7 @@ private:                                                                       \
                                                                                \
 protected:                                                                     \
   constexpr TRAIT() {                                                          \
+    crust_static_assert(::crust::IsBaseOfVal<TRAIT, Self>::result);            \
     crust_static_assert(::crust::All<__VA_ARGS__>::result);                    \
   }                                                                            \
                                                                                \
@@ -310,8 +311,6 @@ struct ImplFor {};
   struct ImplFor<Trait<TRAIT>, SELF, EnableIf<__VA_ARGS__>> :                  \
       _impl_utility::Trait<SELF, TRAIT>
 
-#define CRUST_IMPL(SELF, ...) struct ImplFor<void, SELF, EnableIf<__VA_ARGS__>>
-
 #define CRUST_IMPL_USE_SELF(...)                                               \
 private:                                                                       \
   using Self = __VA_ARGS__;                                                    \
@@ -321,22 +320,29 @@ private:                                                                       \
   crust_cxx14_constexpr Self &self() { return *static_cast<Self *>(this); }    \
                                                                                \
 protected:                                                                     \
-  constexpr ImplFor() {}                                                       \
+  constexpr ImplFor() {                                                        \
+    crust_static_assert(::crust::IsBaseOfVal<ImplFor, Self>::result);          \
+  }                                                                            \
                                                                                \
 public:
 
 template <class Self, class... Traits>
 struct crust_ebco Impl;
 
-template <class Self, class Trait, class... Traits>
-struct Impl<Self, Trait, Traits...> :
-    ImplFor<Trait, Self>,
+template <
+    class Self,
+    template <class, class...>
+    class T,
+    class... Args,
+    class... Traits>
+struct Impl<Self, Trait<T, Args...>, Traits...> :
+    ImplFor<Trait<T, Args...>, Self>,
     Impl<Self, Traits...> {};
 
 template <class Self>
-struct Impl<Self> : ImplFor<void, Self> {};
+struct Impl<Self> {};
 
-namespace _auto_impl {
+namespace _impl_derive {
 template <class Self>
 struct TupleLikeSize;
 
@@ -345,36 +351,36 @@ struct TupleLikeGetter;
 
 template <
     class Self,
-    class Base,
+    class BluePrint,
     template <class...>
     class Trait,
     class Enable = void>
-struct crust_ebco AutoImpl {};
-} // namespace _auto_impl
+struct crust_ebco Derive {};
+} // namespace _impl_derive
 
-template <class Self, class Base, template <class...> class... Traits>
-struct crust_ebco AutoImpl;
+template <class Self, class BluePrint, template <class...> class... Traits>
+struct crust_ebco Derive;
 
 template <
     class Self,
-    class Base,
+    class BluePrint,
     template <class, class...>
     class Trait,
     template <class, class...>
     class... Traits>
-struct AutoImpl<Self, Base, Trait, Traits...> :
-    _auto_impl::AutoImpl<Self, Base, Trait>,
-    AutoImpl<Self, Base, Traits...> {};
+struct Derive<Self, BluePrint, Trait, Traits...> :
+    _impl_derive::Derive<Self, BluePrint, Trait>,
+    Derive<Self, BluePrint, Traits...> {};
 
-template <class Self, class Base>
-struct AutoImpl<Self, Base> {};
+template <class Self, class BluePrint>
+struct Derive<Self, BluePrint> {};
 
 template <
     class Struct,
     template <class Self, class... Args>
     class Trait,
     class... Args>
-struct Derive : IsBaseOfVal<Trait<Struct, Args...>, Struct> {};
+struct Require : IsBaseOfVal<Trait<Struct, Args...>, Struct> {};
 
 /// this is used by Tuple, Enum and Slice for zero sized type optimization
 /// forign type can implement ZeroSizedType to be treated as zero sized type.
@@ -386,10 +392,10 @@ CRUST_TRAIT(ZeroSizedType) {
 
 struct MonoStateType {};
 
-namespace _auto_impl {
+namespace _impl_derive {
 template <class Self>
-struct AutoImpl<Self, MonoStateType, ZeroSizedType> : ZeroSizedType<Self> {};
-} // namespace _auto_impl
+struct Derive<Self, MonoStateType, ZeroSizedType> : ZeroSizedType<Self> {};
+} // namespace _impl_derive
 
 template <class T>
 struct Ref {

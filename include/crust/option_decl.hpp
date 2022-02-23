@@ -17,7 +17,7 @@ struct Some;
 template <class T>
 struct crust_ebco Option :
     Enum<None, Some<T>>,
-    AutoImpl<
+    Derive<
         Option<T>,
         Enum<None, Some<T>>,
         cmp::PartialEq,

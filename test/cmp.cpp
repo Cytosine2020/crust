@@ -11,57 +11,57 @@ using ops::bind;
 
 
 GTEST_TEST(cmp, derive) {
-  crust_static_assert(Derive<bool, PartialEq>::result);
-  crust_static_assert(Derive<char, PartialEq>::result);
-  crust_static_assert(Derive<u8, PartialEq>::result);
-  crust_static_assert(Derive<i8, PartialEq>::result);
-  crust_static_assert(Derive<u16, PartialEq>::result);
-  crust_static_assert(Derive<i16, PartialEq>::result);
-  crust_static_assert(Derive<u32, PartialEq>::result);
-  crust_static_assert(Derive<i32, PartialEq>::result);
-  crust_static_assert(Derive<u64, PartialEq>::result);
-  crust_static_assert(Derive<i64, PartialEq>::result);
-  crust_static_assert(Derive<usize, PartialEq>::result);
-  crust_static_assert(Derive<isize, PartialEq>::result);
+  crust_static_assert(Require<bool, PartialEq>::result);
+  crust_static_assert(Require<char, PartialEq>::result);
+  crust_static_assert(Require<u8, PartialEq>::result);
+  crust_static_assert(Require<i8, PartialEq>::result);
+  crust_static_assert(Require<u16, PartialEq>::result);
+  crust_static_assert(Require<i16, PartialEq>::result);
+  crust_static_assert(Require<u32, PartialEq>::result);
+  crust_static_assert(Require<i32, PartialEq>::result);
+  crust_static_assert(Require<u64, PartialEq>::result);
+  crust_static_assert(Require<i64, PartialEq>::result);
+  crust_static_assert(Require<usize, PartialEq>::result);
+  crust_static_assert(Require<isize, PartialEq>::result);
 
-  crust_static_assert(Derive<bool, Eq>::result);
-  crust_static_assert(Derive<char, Eq>::result);
-  crust_static_assert(Derive<u8, Eq>::result);
-  crust_static_assert(Derive<i8, Eq>::result);
-  crust_static_assert(Derive<u16, Eq>::result);
-  crust_static_assert(Derive<i16, Eq>::result);
-  crust_static_assert(Derive<u32, Eq>::result);
-  crust_static_assert(Derive<i32, Eq>::result);
-  crust_static_assert(Derive<u64, Eq>::result);
-  crust_static_assert(Derive<i64, Eq>::result);
-  crust_static_assert(Derive<usize, Eq>::result);
-  crust_static_assert(Derive<isize, Eq>::result);
+  crust_static_assert(Require<bool, Eq>::result);
+  crust_static_assert(Require<char, Eq>::result);
+  crust_static_assert(Require<u8, Eq>::result);
+  crust_static_assert(Require<i8, Eq>::result);
+  crust_static_assert(Require<u16, Eq>::result);
+  crust_static_assert(Require<i16, Eq>::result);
+  crust_static_assert(Require<u32, Eq>::result);
+  crust_static_assert(Require<i32, Eq>::result);
+  crust_static_assert(Require<u64, Eq>::result);
+  crust_static_assert(Require<i64, Eq>::result);
+  crust_static_assert(Require<usize, Eq>::result);
+  crust_static_assert(Require<isize, Eq>::result);
 
-  crust_static_assert(Derive<bool, PartialOrd>::result);
-  crust_static_assert(Derive<char, PartialOrd>::result);
-  crust_static_assert(Derive<u8, PartialOrd>::result);
-  crust_static_assert(Derive<i8, PartialOrd>::result);
-  crust_static_assert(Derive<u16, PartialOrd>::result);
-  crust_static_assert(Derive<i16, PartialOrd>::result);
-  crust_static_assert(Derive<u32, PartialOrd>::result);
-  crust_static_assert(Derive<i32, PartialOrd>::result);
-  crust_static_assert(Derive<u64, PartialOrd>::result);
-  crust_static_assert(Derive<i64, PartialOrd>::result);
-  crust_static_assert(Derive<usize, PartialOrd>::result);
-  crust_static_assert(Derive<isize, PartialOrd>::result);
+  crust_static_assert(Require<bool, PartialOrd>::result);
+  crust_static_assert(Require<char, PartialOrd>::result);
+  crust_static_assert(Require<u8, PartialOrd>::result);
+  crust_static_assert(Require<i8, PartialOrd>::result);
+  crust_static_assert(Require<u16, PartialOrd>::result);
+  crust_static_assert(Require<i16, PartialOrd>::result);
+  crust_static_assert(Require<u32, PartialOrd>::result);
+  crust_static_assert(Require<i32, PartialOrd>::result);
+  crust_static_assert(Require<u64, PartialOrd>::result);
+  crust_static_assert(Require<i64, PartialOrd>::result);
+  crust_static_assert(Require<usize, PartialOrd>::result);
+  crust_static_assert(Require<isize, PartialOrd>::result);
 
-  crust_static_assert(Derive<bool, Ord>::result);
-  crust_static_assert(Derive<char, Ord>::result);
-  crust_static_assert(Derive<u8, Ord>::result);
-  crust_static_assert(Derive<i8, Ord>::result);
-  crust_static_assert(Derive<u16, Ord>::result);
-  crust_static_assert(Derive<i16, Ord>::result);
-  crust_static_assert(Derive<u32, Ord>::result);
-  crust_static_assert(Derive<i32, Ord>::result);
-  crust_static_assert(Derive<u64, Ord>::result);
-  crust_static_assert(Derive<i64, Ord>::result);
-  crust_static_assert(Derive<usize, Ord>::result);
-  crust_static_assert(Derive<isize, Ord>::result);
+  crust_static_assert(Require<bool, Ord>::result);
+  crust_static_assert(Require<char, Ord>::result);
+  crust_static_assert(Require<u8, Ord>::result);
+  crust_static_assert(Require<i8, Ord>::result);
+  crust_static_assert(Require<u16, Ord>::result);
+  crust_static_assert(Require<i16, Ord>::result);
+  crust_static_assert(Require<u32, Ord>::result);
+  crust_static_assert(Require<i32, Ord>::result);
+  crust_static_assert(Require<u64, Ord>::result);
+  crust_static_assert(Require<i64, Ord>::result);
+  crust_static_assert(Require<usize, Ord>::result);
+  crust_static_assert(Require<isize, Ord>::result);
 }
 
 
@@ -122,10 +122,10 @@ GTEST_TEST(cmp, min_max) {
 
 GTEST_TEST(cmp, reverse) {
   crust_static_assert(sizeof(cmp::Reverse<i32>) == sizeof(i32));
-  crust_static_assert(Derive<cmp::Reverse<i32>, PartialEq>::result);
-  crust_static_assert(Derive<cmp::Reverse<i32>, Eq>::result);
-  crust_static_assert(Derive<cmp::Reverse<i32>, PartialOrd>::result);
-  crust_static_assert(Derive<cmp::Reverse<i32>, Ord>::result);
+  crust_static_assert(Require<cmp::Reverse<i32>, PartialEq>::result);
+  crust_static_assert(Require<cmp::Reverse<i32>, Eq>::result);
+  crust_static_assert(Require<cmp::Reverse<i32>, PartialOrd>::result);
+  crust_static_assert(Require<cmp::Reverse<i32>, Ord>::result);
 
   cmp::Reverse<i32> a{0};
   cmp::Reverse<i32> b{1};

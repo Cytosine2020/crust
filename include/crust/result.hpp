@@ -18,7 +18,7 @@ CRUST_ENUM_TUPLE_VARIANT(Err, Err<E>, E);
 template <class T, class E>
 struct crust_ebco Result :
     Enum<Ok<T>, Err<E>>,
-    AutoImpl<
+    Derive<
         Result<T, E>,
         Enum<Ok<T>, Err<E>>,
         cmp::PartialEq,

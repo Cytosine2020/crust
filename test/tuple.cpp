@@ -42,11 +42,11 @@ struct D : test::RAIIChecker<D>, Impl<D, Trait<clone::Clone>> {
 
 
 GTEST_TEST(tuple, size_zero) {
-  crust_static_assert(Derive<Tuple<>, ZeroSizedType>::result);
-  crust_static_assert(Derive<Tuple<Tuple<>>, ZeroSizedType>::result);
-  crust_static_assert(Derive<Tuple<Tuple<>, Tuple<>>, ZeroSizedType>::result);
+  crust_static_assert(Require<Tuple<>, ZeroSizedType>::result);
+  crust_static_assert(Require<Tuple<Tuple<>>, ZeroSizedType>::result);
+  crust_static_assert(Require<Tuple<Tuple<>, Tuple<>>, ZeroSizedType>::result);
   crust_static_assert(
-      Derive<Tuple<Tuple<>, Tuple<>, Tuple<>>, ZeroSizedType>::result);
+      Require<Tuple<Tuple<>, Tuple<>, Tuple<>>, ZeroSizedType>::result);
 
   crust_static_assert(sizeof(Tuple<>) == 1);
   crust_static_assert(sizeof(Tuple<Tuple<>>) == 1);
@@ -65,8 +65,8 @@ GTEST_TEST(tuple, size_zero) {
   crust_static_assert(empty_2.get<0>() == make_tuple());
   crust_static_assert(empty_2.get<1>() == 1);
 
-  crust_static_assert(Derive<Tuple<>, PartialEq>::result);
-  crust_static_assert(Derive<Tuple<>, Eq>::result);
+  crust_static_assert(Require<Tuple<>, PartialEq>::result);
+  crust_static_assert(Require<Tuple<>, Eq>::result);
 
   crust_static_assert(std::is_trivially_copyable<Tuple<>>::value);
   crust_static_assert(std::is_literal_type<Tuple<>>::value);
@@ -84,16 +84,16 @@ GTEST_TEST(tuple, size_zero) {
 }
 
 GTEST_TEST(tuple, size_one) {
-  crust_static_assert(!Derive<Tuple<A>, ZeroSizedType>::result);
+  crust_static_assert(!Require<Tuple<A>, ZeroSizedType>::result);
 
-  crust_static_assert(!Derive<Tuple<A>, PartialEq>::result);
-  crust_static_assert(!Derive<Tuple<A>, Eq>::result);
+  crust_static_assert(!Require<Tuple<A>, PartialEq>::result);
+  crust_static_assert(!Require<Tuple<A>, Eq>::result);
 
   crust_static_assert(std::is_trivially_copyable<Tuple<A>>::value);
   crust_static_assert(std::is_literal_type<Tuple<A>>::value);
 
-  crust_static_assert(Derive<Tuple<i32>, PartialEq>::result);
-  crust_static_assert(Derive<Tuple<i32>, Eq>::result);
+  crust_static_assert(Require<Tuple<i32>, PartialEq>::result);
+  crust_static_assert(Require<Tuple<i32>, Eq>::result);
 
   crust_static_assert(make_tuple(0) == make_tuple(0));
   crust_static_assert(!(make_tuple(0) != make_tuple(0)));
@@ -116,16 +116,16 @@ GTEST_TEST(tuple, size_one) {
 }
 
 GTEST_TEST(tuple, size_two) {
-  crust_static_assert(!Derive<Tuple<A, B>, ZeroSizedType>::result);
+  crust_static_assert(!Require<Tuple<A, B>, ZeroSizedType>::result);
 
-  crust_static_assert(!Derive<Tuple<A, B>, PartialEq>::result);
-  crust_static_assert(!Derive<Tuple<A, B>, Eq>::result);
+  crust_static_assert(!Require<Tuple<A, B>, PartialEq>::result);
+  crust_static_assert(!Require<Tuple<A, B>, Eq>::result);
 
   crust_static_assert(std::is_trivially_copyable<Tuple<A, B>>::value);
   crust_static_assert(std::is_literal_type<Tuple<A, B>>::value);
 
-  crust_static_assert(Derive<Tuple<i32, char>, PartialEq>::result);
-  crust_static_assert(Derive<Tuple<i32, char>, Eq>::result);
+  crust_static_assert(Require<Tuple<i32, char>, PartialEq>::result);
+  crust_static_assert(Require<Tuple<i32, char>, Eq>::result);
 
   auto tuple = make_tuple(0, 'a');
 

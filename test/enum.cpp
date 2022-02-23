@@ -44,14 +44,14 @@ struct ClassB : test::RAIIChecker<ClassB>, Impl<ClassB, Trait<clone::Clone>> {
 
 struct EnumA :
     Enum<ClassA, ClassB>,
-    AutoImpl<EnumA, Enum<ClassA, ClassB>, clone::Clone> {
+    Derive<EnumA, Enum<ClassA, ClassB>, clone::Clone> {
   CRUST_ENUM_USE_BASE(EnumA, Enum<ClassA, ClassB>);
 };
 } // namespace
 
 GTEST_TEST(enum_, enum_) {
-  crust_static_assert(!Derive<EnumA, cmp::PartialEq>::result);
-  crust_static_assert(!Derive<EnumA, cmp::Eq>::result);
+  crust_static_assert(!Require<EnumA, cmp::PartialEq>::result);
+  crust_static_assert(!Require<EnumA, cmp::Eq>::result);
 
   auto recorder = std::make_shared<test::RAIIRecorder>(test::RAIIRecorder{});
 
@@ -98,25 +98,25 @@ CRUST_ENUM_TUPLE_VARIANT(F, F, i32);
 
 struct crust_ebco EnumB :
     Enum<A, B>,
-    AutoImpl<EnumB, Enum<A, B>, cmp::PartialEq, cmp::Eq> {
+    Derive<EnumB, Enum<A, B>, cmp::PartialEq, cmp::Eq> {
   CRUST_ENUM_USE_BASE(EnumB, Enum<A, B>);
 };
 
 struct crust_ebco EnumC :
     Enum<A, B, C, D, E, F>,
-    AutoImpl<EnumC, Enum<A, B, C, D, E, F>, cmp::PartialEq, cmp::Eq> {
+    Derive<EnumC, Enum<A, B, C, D, E, F>, cmp::PartialEq, cmp::Eq> {
   CRUST_ENUM_USE_BASE(EnumC, Enum<A, B, C, D, E, F>);
 };
 
 struct crust_ebco EnumD :
     Enum<EnumRepr<i16>, A, B>,
-    AutoImpl<EnumD, Enum<EnumRepr<u16>, A, B>, cmp::PartialEq, cmp::Eq> {
+    Derive<EnumD, Enum<EnumRepr<u16>, A, B>, cmp::PartialEq, cmp::Eq> {
   CRUST_ENUM_USE_BASE(EnumD, Enum<EnumRepr<u16>, A, B>);
 };
 
 struct crust_ebco EnumE :
     Enum<EnumRepr<isize>, A, B, C, D, E, F>,
-    AutoImpl<
+    Derive<
         EnumE,
         Enum<EnumRepr<isize>, A, B, C, D, E, F>,
         cmp::PartialEq,
@@ -156,7 +156,7 @@ GTEST_TEST(enum_, raii) {
 namespace {
 struct crust_ebco EnumF :
     Enum<i32, char>,
-    AutoImpl<EnumF, Enum<i32, char>, cmp::PartialEq, cmp::Eq> {
+    Derive<EnumF, Enum<i32, char>, cmp::PartialEq, cmp::Eq> {
   CRUST_ENUM_USE_BASE(EnumF, Enum<i32, char>);
 };
 } // namespace

@@ -78,26 +78,24 @@ crust_cxx14_constexpr _impl_enum::LetEnum<T> let(T &ref) {
   return _impl_enum::LetEnum<T>{ref};
 }
 
-namespace _auto_impl {
+namespace _impl_derive {
 template <class Self, class... Fields>
-constexpr Option<cmp::Ordering> AutoImpl<
+constexpr Option<cmp::Ordering> Derive<
     Self,
     Enum<Fields...>,
     cmp::PartialOrd,
-    EnableIf<Derive<Fields, cmp::Eq>...>>::partial_cmp(const Self &other)
+    EnableIf<Require<Fields, cmp::Eq>...>>::partial_cmp(const Self &other)
     const {
   return operator_partial_cmp(self().inner, other.inner);
 }
 
 template <class Self, class... Fields>
-constexpr cmp::Ordering AutoImpl<
-    Self,
-    Enum<Fields...>,
-    cmp::Ord,
-    EnableIf<Derive<Fields, cmp::Eq>...>>::cmp(const Self &other) const {
+constexpr cmp::Ordering
+Derive<Self, Enum<Fields...>, cmp::Ord, EnableIf<Require<Fields, cmp::Eq>...>>::
+    cmp(const Self &other) const {
   return operator_cmp(self().inner, other.inner);
 }
-} // namespace _auto_impl
+} // namespace _impl_derive
 } // namespace crust
 
 
