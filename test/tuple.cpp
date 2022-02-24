@@ -69,7 +69,6 @@ GTEST_TEST(tuple, size_zero) {
   crust_static_assert(Require<Tuple<>, Eq>::result);
 
   crust_static_assert(std::is_trivially_copyable<Tuple<>>::value);
-  crust_static_assert(std::is_literal_type<Tuple<>>::value);
 
   crust_static_assert(make_tuple() == make_tuple());
   crust_static_assert(!(make_tuple() != make_tuple()));
@@ -90,7 +89,6 @@ GTEST_TEST(tuple, size_one) {
   crust_static_assert(!Require<Tuple<A>, Eq>::result);
 
   crust_static_assert(std::is_trivially_copyable<Tuple<A>>::value);
-  crust_static_assert(std::is_literal_type<Tuple<A>>::value);
 
   crust_static_assert(Require<Tuple<i32>, PartialEq>::result);
   crust_static_assert(Require<Tuple<i32>, Eq>::result);
@@ -122,7 +120,6 @@ GTEST_TEST(tuple, size_two) {
   crust_static_assert(!Require<Tuple<A, B>, Eq>::result);
 
   crust_static_assert(std::is_trivially_copyable<Tuple<A, B>>::value);
-  crust_static_assert(std::is_literal_type<Tuple<A, B>>::value);
 
   crust_static_assert(Require<Tuple<i32, char>, PartialEq>::result);
   crust_static_assert(Require<Tuple<i32, char>, Eq>::result);

@@ -136,7 +136,6 @@ GTEST_TEST(enum_, tag_only) {
 GTEST_TEST(enum_, raii) {
   crust_static_assert(std::is_trivially_copyable<EnumC>::value);
   crust_static_assert(std::is_standard_layout<EnumC>::value);
-  crust_static_assert(std::is_literal_type<EnumC>::value);
 
   EnumC a;
   a = A{};
