@@ -21,7 +21,11 @@ namespace crust {
 #define crust_cxx17_constexpr
 #endif
 
+#if __cplusplus > 201402L
+#define crust_static_assert(...) static_assert(__VA_ARGS__)
+#else
 #define crust_static_assert(...) static_assert(__VA_ARGS__, #__VA_ARGS__)
+#endif
 
 #if defined(_MSC_VER)
 #define crust_ebco __declspec(empty_bases)

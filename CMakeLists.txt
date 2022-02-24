@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 project(crust)
 
@@ -29,8 +29,6 @@ add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
     ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
     EXCLUDE_FROM_ALL)
 
-set(CMAKE_CXX_STANDARD 11)
-
 if (NOT MSVC)
   add_compile_options(-Wall -Wextra -fno-exceptions -fno-rtti)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
@@ -46,18 +44,20 @@ ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 include_directories(include)
 
-add_executable(test
-    test/raii_checker.hpp
-    test/test.cpp
-    test/tuple.cpp
-    test/slice.cpp
-    test/cmp.cpp
-    test/function.cpp
-    test/enum.cpp
-    test/option.cpp
-    test/iter.cpp
-    test/range.cpp
-    test/result.cpp
-)
-target_link_libraries(test gtest_main)
-add_test(NAME test COMMAND test)
+file(GLOB TEST_SRC "test/*.hpp" "test/*.cpp")
+
+add_executable(test-cxx11 ${TEST_SRC})
+target_compile_features(test-cxx11 PUBLIC cxx_std_11)
+target_link_libraries(test-cxx11 gtest_main)
+
+add_executable(test-cxx14 ${TEST_SRC})
+target_compile_features(test-cxx14 PUBLIC cxx_std_14)
+target_link_libraries(test-cxx14 gtest_main)
+
+add_executable(test-cxx17 ${TEST_SRC})
+target_compile_features(test-cxx17 PUBLIC cxx_std_17)
+target_link_libraries(test-cxx17 gtest_main)
+
+add_executable(test-cxx20 ${TEST_SRC})
+target_compile_features(test-cxx20 PUBLIC cxx_std_20)
+target_link_libraries(test-cxx20 gtest_main)

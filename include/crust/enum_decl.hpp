@@ -24,7 +24,9 @@ namespace _impl_enum {
           ::crust::cmp::PartialEq,                                             \
           ::crust::cmp::Eq,                                                    \
           ::crust::cmp::PartialOrd,                                            \
-          ::crust::cmp::Ord> {}
+          ::crust::cmp::Ord> {                                                 \
+    constexpr NAME() {}                                                        \
+  }
 
 CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
 
@@ -40,6 +42,7 @@ CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
           ::crust::cmp::PartialOrd,                                            \
           ::crust::cmp::Ord> {                                                 \
     static constexpr ::crust::isize result = VALUE;                            \
+    constexpr NAME() {}                                                        \
   }
 
 template <class I, bool is_spec, class T, class... Fields>
@@ -58,7 +61,7 @@ struct DiscriminantImpl<I, false, T, Fields...> :
 
 template <class I, class T, class... Fields>
 struct DiscriminantImpl<I, false, T, T, Fields...> : TmplVal<I, 0> {};
-
+// FIXME: use the real type
 template <class I, class T, class... Fields>
 struct DiscriminantImpl<I, true, T, Fields...> :
     TmplVal<I, static_cast<I>(T::result)> {
