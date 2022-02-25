@@ -410,7 +410,7 @@ public:
 
   explicit constexpr Ref(const T &ptr) : ptr{&ptr} {}
 
-  constexpr Ref(Ref<T> &&ptr) : ptr{*ptr} {}
+  constexpr Ref(RefMut<T> &&ptr) : ptr{&*ptr} {}
 
   Ref(const Ref &other) = default;
 

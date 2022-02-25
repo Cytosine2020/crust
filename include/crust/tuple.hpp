@@ -59,13 +59,13 @@ struct LetField<_impl_utility::Ignore> {
   constexpr LetField(const _impl_utility::Ignore &) {}
 
   template <class T>
-  constexpr void assign_ref(const T &) const {}
+  crust_cxx14_constexpr void assign_ref(const T &) const {}
 
   template <class T>
-  constexpr void assign_ref_mut(const T &) const {}
+  crust_cxx14_constexpr void assign_ref_mut(const T &) const {}
 
   template <class T>
-  constexpr void assign_move(const T &) const {}
+  crust_cxx14_constexpr void assign_move(const T &) const {}
 };
 
 template <>
@@ -73,13 +73,13 @@ struct LetField<_impl_utility::IgnoreRange> {
   constexpr LetField(const _impl_utility::IgnoreRange &) {}
 
   template <class T>
-  constexpr void assign_ref(const T &) const {}
+  crust_cxx14_constexpr void assign_ref(const T &) const {}
 
   template <class T>
-  constexpr void assign_ref_mut(const T &) const {}
+  crust_cxx14_constexpr void assign_ref_mut(const T &) const {}
 
   template <class T>
-  constexpr void assign_move(const T &) const {}
+  crust_cxx14_constexpr void assign_move(const T &) const {}
 };
 
 template <class T>
