@@ -34,11 +34,11 @@ namespace crust {
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-#define no_return __attribute__((noreturn))
+#define crust_no_return __attribute__((noreturn))
 #elif defined(_MSC_VER)
-#define no_return __declspec(noreturn)
+#define crust_no_return __declspec(noreturn)
 #else
-#define no_return
+#define crust_no_return
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -50,15 +50,15 @@ namespace crust {
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-#define always_inline inline __attribute__((always_inline))
+#define crust_always_inline inline __attribute__((always_inline))
 #elif defined(_MSC_VER)
-#define always_inline __forceinline
+#define crust_always_inline __forceinline
 #else
-#define always_inline inline
+#define crust_always_inline inline
 #endif
 
 namespace _impl_utility {
-no_return inline void
+crust_no_return inline void
 panic(const char *file, int line, const char *msg) noexcept {
   fprintf(stderr, "Panic at file %s, line %d: %s\n", file, line, msg);
   exit(1);
@@ -163,26 +163,6 @@ struct IsSame : BoolVal<false> {};
 
 template <class A>
 struct IsSame<A, A> : BoolVal<true> {};
-
-template <class A, class B>
-struct LTVal : BoolVal<(A::result < B::result)> {
-  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
-};
-
-template <class A, class B>
-struct LEVal : BoolVal<(A::result <= B::result)> {
-  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
-};
-
-template <class A, class B>
-struct GTVal : BoolVal<(A::result > B::result)> {
-  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
-};
-
-template <class A, class B>
-struct GEVal : BoolVal<(A::result >= B::result)> {
-  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
-};
 
 template <class T>
 struct RemoveRefType : TmplType<T> {};
@@ -356,7 +336,7 @@ struct TupleLikeGetter;
 template <
     class Self,
     class BluePrint,
-    template <class...>
+    template <class, class...>
     class Trait,
     class Enable = void>
 struct crust_ebco Derive {};
@@ -379,11 +359,7 @@ struct Derive<Self, BluePrint, Trait, Traits...> :
 template <class Self, class BluePrint>
 struct Derive<Self, BluePrint> {};
 
-template <
-    class Struct,
-    template <class Self, class... Args>
-    class Trait,
-    class... Args>
+template <class Struct, template <class, class...> class Trait, class... Args>
 struct Require : IsBaseOfVal<Trait<Struct, Args...>, Struct> {};
 
 /// this is used by Tuple, Enum and Slice for zero sized type optimization
@@ -402,12 +378,43 @@ struct Derive<Self, MonoStateType, ZeroSizedType> : ZeroSizedType<Self> {};
 } // namespace _impl_derive
 
 template <class T>
+struct RefMut {
+private:
+  T *ptr;
+
+public:
+  constexpr RefMut() : ptr{nullptr} {}
+
+  explicit constexpr RefMut(T &ptr) : ptr{&ptr} {}
+
+  RefMut(const RefMut &other) = default;
+
+  RefMut &operator=(const RefMut &other) = default;
+
+  crust_cxx14_constexpr T &operator*() {
+    return crust_debug_assert(ptr != nullptr), *ptr;
+  }
+
+  crust_cxx14_constexpr T *operator->() {
+    return crust_debug_assert(ptr != nullptr), ptr;
+  }
+};
+
+template <class T>
 struct Ref {
 private:
   const T *ptr;
 
 public:
-  constexpr Ref(const T *ptr) : ptr{ptr} {}
+  constexpr Ref() : ptr{nullptr} {}
+
+  explicit constexpr Ref(const T &ptr) : ptr{&ptr} {}
+
+  constexpr Ref(Ref<T> &&ptr) : ptr{*ptr} {}
+
+  Ref(const Ref &other) = default;
+
+  Ref &operator=(const Ref &other) = default;
 
   constexpr const T &operator*() const {
     return crust_debug_assert(ptr != nullptr), *ptr;
@@ -419,21 +426,25 @@ public:
 };
 
 template <class T>
-struct RefMut {
-private:
-  T *ptr;
+constexpr Ref<T> ref(const T &self) {
+  return Ref<T>{self};
+}
 
-public:
-  constexpr RefMut(T *ptr) : ptr{ptr} {}
 
-  crust_cxx14_constexpr T &operator*() {
-    return crust_debug_assert(ptr != nullptr), *ptr;
-  }
+template <class T>
+constexpr RefMut<T> ref_mut(T &self) {
+  return RefMut<T>{self};
+}
 
-  crust_cxx14_constexpr T *operator->() {
-    return crust_debug_assert(ptr != nullptr), ptr;
-  }
-};
+namespace _impl_utility {
+class Ignore {};
+
+class IgnoreRange {};
+} // namespace _impl_utility
+
+constexpr _impl_utility::Ignore _{};
+
+constexpr _impl_utility::IgnoreRange __{};
 } // namespace crust
 
 

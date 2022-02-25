@@ -15,7 +15,7 @@ CRUST_TRAIT(Iterator, class Item) {
   Option<Item> next();
 
   constexpr Tuple<usize, Option<usize>> size_hint() const {
-    return make_tuple<usize, Option<usize>>(0, None{});
+    return tuple<usize, Option<usize>>(0, None{});
   }
 
   template <class B, class F>

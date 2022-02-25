@@ -88,36 +88,36 @@ GTEST_TEST(cmp, ordering) {
 
 
 GTEST_TEST(cmp, min_max) {
-  EXPECT_EQ(make_tuple(0, 'b'), min(make_tuple(0, 'b'), make_tuple(1, 'a')));
-  EXPECT_EQ(make_tuple(1, 'a'), max(make_tuple(0, 'b'), make_tuple(1, 'a')));
+  EXPECT_EQ(tuple(0, 'b'), min(tuple(0, 'b'), tuple(1, 'a')));
+  EXPECT_EQ(tuple(1, 'a'), max(tuple(0, 'b'), tuple(1, 'a')));
 
   EXPECT_EQ(
-      make_tuple(0, 'b'),
+      tuple(0, 'b'),
       min_by_key(
-          make_tuple(0, 'b'),
-          make_tuple(1, 'a'),
-          bind([](const Tuple<i32, char> &value) { return value.get<0>(); })));
+          tuple(0, 'b'), tuple(1, 'a'), bind([](const Tuple<i32, char> &value) {
+            return value.get<0>();
+          })));
 
   EXPECT_EQ(
-      make_tuple(1, 'a'),
+      tuple(1, 'a'),
       min_by_key(
-          make_tuple(0, 'b'),
-          make_tuple(1, 'a'),
-          bind([](const Tuple<i32, char> &value) { return value.get<1>(); })));
+          tuple(0, 'b'), tuple(1, 'a'), bind([](const Tuple<i32, char> &value) {
+            return value.get<1>();
+          })));
 
   EXPECT_EQ(
-      make_tuple(1, 'a'),
+      tuple(1, 'a'),
       max_by_key(
-          make_tuple(0, 'b'),
-          make_tuple(1, 'a'),
-          bind([](const Tuple<i32, char> &value) { return value.get<0>(); })));
+          tuple(0, 'b'), tuple(1, 'a'), bind([](const Tuple<i32, char> &value) {
+            return value.get<0>();
+          })));
 
   EXPECT_EQ(
-      make_tuple(0, 'b'),
+      tuple(0, 'b'),
       max_by_key(
-          make_tuple(0, 'b'),
-          make_tuple(1, 'a'),
-          bind([](const Tuple<i32, char> &value) { return value.get<1>(); })));
+          tuple(0, 'b'), tuple(1, 'a'), bind([](const Tuple<i32, char> &value) {
+            return value.get<1>();
+          })));
 }
 
 GTEST_TEST(cmp, reverse) {

@@ -57,6 +57,36 @@ template <class T>
 struct DecVal : TmplVal<typename T::Result, T::result - 1> {
   crust_static_assert(T::result != num::Int<typename T::Result>::MIN);
 };
+
+template <class A, class B>
+struct EQVal : BoolVal<(A::result == B::result)> {
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
+};
+
+template <class A, class B>
+struct NEVal : BoolVal<(A::result != B::result)> {
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
+};
+
+template <class A, class B>
+struct LTVal : BoolVal<(A::result < B::result)> {
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
+};
+
+template <class A, class B>
+struct LEVal : BoolVal<(A::result <= B::result)> {
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
+};
+
+template <class A, class B>
+struct GTVal : BoolVal<(A::result > B::result)> {
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
+};
+
+template <class A, class B>
+struct GEVal : BoolVal<(A::result >= B::result)> {
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
+};
 } // namespace crust
 
 

@@ -13,13 +13,13 @@ template <class T>
 CRUST_ENUM_TUPLE_VARIANT(Some, Some<T>, T);
 
 template <class T>
-always_inline constexpr Option<typename RemoveConstOrRefType<T>::Result>
+crust_always_inline constexpr Option<typename RemoveConstOrRefType<T>::Result>
 make_some(T &&value) {
   return Some<typename RemoveConstOrRefType<T>::Result>{forward<T>(value)};
 }
 
 template <class T>
-always_inline constexpr Option<typename RemoveConstOrRefType<T>::Result>
+crust_always_inline constexpr Option<typename RemoveConstOrRefType<T>::Result>
 make_none() {
   return None{};
 }

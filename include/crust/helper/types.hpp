@@ -9,16 +9,21 @@
 namespace crust {
 namespace _impl_types {
 template <class T, class... Fields>
-struct TypesIncludeVal;
+struct TypesCountType;
 
 template <class T, class Field, class... Fields>
-struct TypesIncludeVal<T, Field, Fields...> : TypesIncludeVal<T, Fields...> {};
+struct TypesCountType<T, Field, Fields...> : TypesCountType<T, Fields...> {};
 
 template <class T, class... Fields>
-struct TypesIncludeVal<T, T, Fields...> : BoolVal<true> {};
+struct TypesCountType<T, T, Fields...> :
+    IncVal<TypesCountType<T, Fields...>> {};
 
 template <class T>
-struct TypesIncludeVal<T> : BoolVal<false> {};
+struct TypesCountType<T> : TmplVal<usize, 0> {};
+
+template <class T, class... Fields>
+struct TypesIncludeVal :
+    GTVal<TypesCountType<T, Fields...>, TmplVal<usize, 0>> {};
 
 template <class... Fields>
 struct TypesDuplicateVal;

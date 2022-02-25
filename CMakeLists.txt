@@ -32,7 +32,7 @@ add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
 if (NOT MSVC)
   add_compile_options(-Wall -Wextra -fno-exceptions -fno-rtti)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} \
-    -ggdb -g3 -fno-omit-frame-pointer")
+    -ggdb -g3 -fno-omit-frame-pointer -fprofile-arcs -ftest-coverage")
 else ()
   add_compile_options(/W 3 /sdl /EHr /GR-)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Z7")

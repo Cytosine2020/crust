@@ -21,6 +21,7 @@ namespace _impl_enum {
           NAME,                                                                \
           ::crust::MonoStateType,                                              \
           ::crust::ZeroSizedType,                                              \
+          ::crust::clone::Clone,                                               \
           ::crust::cmp::PartialEq,                                             \
           ::crust::cmp::Eq,                                                    \
           ::crust::cmp::PartialOrd,                                            \
@@ -37,6 +38,7 @@ CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
           NAME,                                                                \
           ::crust::MonoStateType,                                              \
           ::crust::ZeroSizedType,                                              \
+          ::crust::clone::Clone,                                               \
           ::crust::cmp::PartialEq,                                             \
           ::crust::cmp::Eq,                                                    \
           ::crust::cmp::PartialOrd,                                            \
@@ -93,6 +95,7 @@ struct CheckDiscriminant<I, 0, Fields...> : BoolVal<true> {};
           FULL_NAME,                                                           \
           ::crust::TupleStruct<__VA_ARGS__>,                                   \
           ::crust::ZeroSizedType,                                              \
+          ::crust::clone::Clone,                                               \
           ::crust::cmp::PartialEq,                                             \
           ::crust::cmp::Eq,                                                    \
           ::crust::cmp::PartialOrd,                                            \
@@ -672,7 +675,7 @@ private:
   template <class, class>
   friend struct EnumAs;
 
-  template <class, class, template <class...> class, class>
+  template <class, class, template <class, class...> class, class>
   friend struct _impl_derive::Derive;
 
 protected:

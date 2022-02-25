@@ -56,13 +56,13 @@ GTEST_TEST(tuple, size_zero) {
   crust_static_assert(sizeof(Tuple<Tuple<>, i32, Tuple<>>) == sizeof(i32));
   crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, i32>) == sizeof(i32));
 
-  constexpr auto empty_1 = make_tuple(make_tuple(), make_tuple(), make_tuple());
-  crust_static_assert(empty_1.get<0>() == make_tuple());
-  crust_static_assert(empty_1.get<1>() == make_tuple());
-  crust_static_assert(empty_1.get<2>() == make_tuple());
+  constexpr auto empty_1 = tuple(tuple(), tuple(), tuple());
+  crust_static_assert(empty_1.get<0>() == tuple());
+  crust_static_assert(empty_1.get<1>() == tuple());
+  crust_static_assert(empty_1.get<2>() == tuple());
 
-  constexpr auto empty_2 = make_tuple(make_tuple(), 1);
-  crust_static_assert(empty_2.get<0>() == make_tuple());
+  constexpr auto empty_2 = tuple(tuple(), 1);
+  crust_static_assert(empty_2.get<0>() == tuple());
   crust_static_assert(empty_2.get<1>() == 1);
 
   crust_static_assert(Require<Tuple<>, PartialEq>::result);
@@ -70,16 +70,14 @@ GTEST_TEST(tuple, size_zero) {
 
   crust_static_assert(std::is_trivially_copyable<Tuple<>>::value);
 
-  crust_static_assert(make_tuple() == make_tuple());
-  crust_static_assert(!(make_tuple() != make_tuple()));
-  crust_static_assert(!(make_tuple() < make_tuple()));
-  crust_static_assert(make_tuple() <= make_tuple());
-  crust_static_assert(!(make_tuple() > make_tuple()));
-  crust_static_assert(make_tuple() >= make_tuple());
-  EXPECT_EQ(
-      operator_partial_cmp(make_tuple(), make_tuple()),
-      make_some(make_equal()));
-  EXPECT_EQ(operator_cmp(make_tuple(), make_tuple()), make_equal());
+  crust_static_assert(tuple() == tuple());
+  crust_static_assert(!(tuple() != tuple()));
+  crust_static_assert(!(tuple() < tuple()));
+  crust_static_assert(tuple() <= tuple());
+  crust_static_assert(!(tuple() > tuple()));
+  crust_static_assert(tuple() >= tuple());
+  EXPECT_EQ(operator_partial_cmp(tuple(), tuple()), make_some(make_equal()));
+  EXPECT_EQ(operator_cmp(tuple(), tuple()), make_equal());
 }
 
 GTEST_TEST(tuple, size_one) {
@@ -93,24 +91,22 @@ GTEST_TEST(tuple, size_one) {
   crust_static_assert(Require<Tuple<i32>, PartialEq>::result);
   crust_static_assert(Require<Tuple<i32>, Eq>::result);
 
-  crust_static_assert(make_tuple(0) == make_tuple(0));
-  crust_static_assert(!(make_tuple(0) != make_tuple(0)));
-  crust_static_assert(!(make_tuple(0) < make_tuple(0)));
-  crust_static_assert(make_tuple(0) <= make_tuple(0));
-  crust_static_assert(!(make_tuple(0) > make_tuple(0)));
-  crust_static_assert(make_tuple(0) >= make_tuple(0));
-  EXPECT_EQ(
-      operator_partial_cmp(make_tuple(0), make_tuple(0)),
-      make_some(make_equal()));
-  EXPECT_EQ(operator_cmp(make_tuple(0), make_tuple(0)), make_equal());
+  crust_static_assert(tuple(0) == tuple(0));
+  crust_static_assert(!(tuple(0) != tuple(0)));
+  crust_static_assert(!(tuple(0) < tuple(0)));
+  crust_static_assert(tuple(0) <= tuple(0));
+  crust_static_assert(!(tuple(0) > tuple(0)));
+  crust_static_assert(tuple(0) >= tuple(0));
+  EXPECT_EQ(operator_partial_cmp(tuple(0), tuple(0)), make_some(make_equal()));
+  EXPECT_EQ(operator_cmp(tuple(0), tuple(0)), make_equal());
 
-  auto tuple = make_tuple(0);
+  auto value = tuple(0);
 
-  EXPECT_EQ(tuple.get<0>(), 0);
+  EXPECT_EQ(value.get<0>(), 0);
 
-  ++tuple.get<0>();
+  ++value.get<0>();
 
-  EXPECT_EQ(tuple.get<0>(), 1);
+  EXPECT_EQ(value.get<0>(), 1);
 }
 
 GTEST_TEST(tuple, size_two) {
@@ -124,30 +120,77 @@ GTEST_TEST(tuple, size_two) {
   crust_static_assert(Require<Tuple<i32, char>, PartialEq>::result);
   crust_static_assert(Require<Tuple<i32, char>, Eq>::result);
 
-  auto tuple = make_tuple(0, 'a');
+  auto value = tuple(0, 'a');
 
-  EXPECT_TRUE(tuple.get<0>() == 0);
-  EXPECT_TRUE(tuple.get<1>() == 'a');
+  EXPECT_TRUE(value.get<0>() == 0);
+  EXPECT_TRUE(value.get<1>() == 'a');
 
-  ++tuple.get<0>();
-  ++tuple.get<1>();
+  ++value.get<0>();
+  ++value.get<1>();
 
-  EXPECT_TRUE(std::get<0>(tuple) == 1);
-  EXPECT_TRUE(std::get<1>(tuple) == 'b');
+  EXPECT_TRUE(std::get<0>(value) == 1);
+  EXPECT_TRUE(std::get<1>(value) == 'b');
 
-  crust_static_assert(make_tuple(true) != make_tuple(false));
-  crust_static_assert(make_tuple(1) > make_tuple(0));
-  crust_static_assert(make_tuple(0, 'b') > make_tuple(0, 'a'));
+  crust_static_assert(tuple(true) != tuple(false));
+  crust_static_assert(tuple(1) > tuple(0));
+  crust_static_assert(tuple(0, 'b') > tuple(0, 'a'));
 
-  EXPECT_TRUE(make_tuple(0, 1).cmp(make_tuple(0, 0)) == make_greater());
+  EXPECT_TRUE(tuple(0, 1).cmp(tuple(0, 0)) == make_greater());
 }
 
 GTEST_TEST(tuple, raii) {
   auto recorder = std::make_shared<test::RAIIRecorder>(test::RAIIRecorder{});
 
-  auto a = make_tuple(C{recorder}, D{recorder}, C{recorder}, D{recorder});
+  auto a = tuple(C{recorder}, D{recorder}, C{recorder}, D{recorder});
   auto b = a;
   auto c = clone::clone(a);
   c.clone_from(b);
   auto d = move(a);
+}
+
+GTEST_TEST(tuple, let) {
+  const auto tuple2 = tuple(1, 2);
+  const auto tuple7 = tuple(1, 2, 3, 4, 5, 6, 7);
+
+  int a, b;
+  let(a, b) = tuple(1, 2);
+
+  EXPECT_EQ(a, 1);
+  EXPECT_EQ(b, 2);
+
+  Ref<int> c, d;
+  let(c, d) = tuple2;
+
+  EXPECT_EQ(*c, 1);
+  EXPECT_EQ(*d, 2);
+
+  int e, f;
+  let(e, _) = tuple(1, 2);
+  let(_, f) = tuple(1, 2);
+
+  EXPECT_EQ(e, 1);
+  EXPECT_EQ(f, 2);
+
+  int g, h;
+  Ref<int> i, j;
+  let(g, i, _, __, h, j) = tuple7;
+
+  EXPECT_EQ(g, 1);
+  EXPECT_EQ(*i, 2);
+  EXPECT_EQ(h, 6);
+  EXPECT_EQ(*j, 7);
+
+  int k, l;
+  let(k, __) = tuple(1, 2, 3, 4, 5, 6, 7);
+  let(__, l) = tuple(1, 2, 3, 4, 5, 6, 7);
+
+  EXPECT_EQ(k, 1);
+  EXPECT_EQ(l, 7);
+
+#if __cplusplus > 201402L
+  auto [a1, b1] = tuple(1, 2);
+
+  EXPECT_EQ(a1, 1);
+  EXPECT_EQ(b1, 2);
+#endif
 }

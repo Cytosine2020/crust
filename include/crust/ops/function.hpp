@@ -2,6 +2,7 @@
 #define CRUST_OPS_FUNCTION_HPP
 
 
+#include "crust/tuple_decl.hpp"
 #include "crust/utility.hpp"
 
 
@@ -69,32 +70,32 @@ public:
 };
 
 template <class F, F *f>
-always_inline Fn<_impl_fn::RawFn<F, f>> bind(TmplVal<F *, f>) {
+crust_always_inline Fn<_impl_fn::RawFn<F, f>> bind(TmplVal<F *, f>) {
   return Fn<_impl_fn::RawFn<F, f>>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class T, class F, F *f>
-always_inline Fn<_impl_fn::RawFn<F, f>, T> bind(TmplVal<F *, f>) {
+crust_always_inline Fn<_impl_fn::RawFn<F, f>, T> bind(TmplVal<F *, f>) {
   return Fn<_impl_fn::RawFn<F, f>, T>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class F, F f>
-always_inline Fn<_impl_fn::RawMemFn<F, f>> bind(TmplVal<F, f>) {
+crust_always_inline Fn<_impl_fn::RawMemFn<F, f>> bind(TmplVal<F, f>) {
   return Fn<_impl_fn::RawMemFn<F, f>>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T, class F, F f>
-always_inline Fn<_impl_fn::RawMemFn<F, f>, T> bind(TmplVal<F, f>) {
+crust_always_inline Fn<_impl_fn::RawMemFn<F, f>, T> bind(TmplVal<F, f>) {
   return Fn<_impl_fn::RawMemFn<F, f>, T>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T>
-always_inline constexpr Fn<T> bind(T &&f) {
+crust_always_inline constexpr Fn<T> bind(T &&f) {
   return Fn<T>{forward<T>(f)};
 }
 
 template <class F, class T>
-always_inline constexpr Fn<T, F> bind(T &&f) {
+crust_always_inline constexpr Fn<T, F> bind(T &&f) {
   return Fn<T, F>{forward<T>(f)};
 }
 
@@ -117,32 +118,32 @@ public:
 };
 
 template <class F, F *f>
-always_inline FnMut<_impl_fn::RawFn<F, f>> bind_mut(TmplVal<F *, f>) {
+crust_always_inline FnMut<_impl_fn::RawFn<F, f>> bind_mut(TmplVal<F *, f>) {
   return FnMut<_impl_fn::RawFn<F, f>>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class T, class F, F *f>
-always_inline FnMut<_impl_fn::RawFn<F, f>, T> bind_mut(TmplVal<F *, f>) {
+crust_always_inline FnMut<_impl_fn::RawFn<F, f>, T> bind_mut(TmplVal<F *, f>) {
   return FnMut<_impl_fn::RawFn<F, f>, T>{_impl_fn::RawFn<F, f>{}};
 }
 
 template <class F, F f>
-always_inline FnMut<_impl_fn::RawMemFn<F, f>> bind_mut(TmplVal<F, f>) {
+crust_always_inline FnMut<_impl_fn::RawMemFn<F, f>> bind_mut(TmplVal<F, f>) {
   return FnMut<_impl_fn::RawMemFn<F, f>>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T, class F, F f>
-always_inline FnMut<_impl_fn::RawMemFn<F, f>, T> bind_mut(TmplVal<F, f>) {
+crust_always_inline FnMut<_impl_fn::RawMemFn<F, f>, T> bind_mut(TmplVal<F, f>) {
   return FnMut<_impl_fn::RawMemFn<F, f>, T>{_impl_fn::RawMemFn<F, f>{}};
 }
 
 template <class T>
-always_inline constexpr FnMut<T> bind_mut(T &&f) {
+crust_always_inline constexpr FnMut<T> bind_mut(T &&f) {
   return FnMut<T>{forward<T>(f)};
 }
 
 template <class F, class T>
-always_inline constexpr FnMut<T, F> bind_mut(T &&f) {
+crust_always_inline constexpr FnMut<T, F> bind_mut(T &&f) {
   return FnMut<T, F>{forward<T>(f)};
 }
 

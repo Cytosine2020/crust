@@ -49,24 +49,25 @@ struct crust_ebco Ordering :
   }
 };
 
-always_inline constexpr Ordering make_less() { return Less{}; }
+crust_always_inline constexpr Ordering make_less() { return Less{}; }
 
-always_inline constexpr Ordering make_equal() { return Equal{}; }
+crust_always_inline constexpr Ordering make_equal() { return Equal{}; }
 
-always_inline constexpr Ordering make_greater() { return Greater{}; }
+crust_always_inline constexpr Ordering make_greater() { return Greater{}; }
 } // namespace cmp
 
 /// because c++ do not support add member function for primitive types,
 /// following two functions are used for invoking `partial_cmp' or `cmp' for
 /// both struct implemented `PartialOrd' or `Ord' trait and primitive types.
 template <class T, class U>
-always_inline constexpr Option<cmp::Ordering>
+crust_always_inline constexpr Option<cmp::Ordering>
 operator_partial_cmp(const T &v1, const U &v2) {
   return v1.partial_cmp(v2);
 }
 
 template <class T>
-always_inline constexpr cmp::Ordering operator_cmp(const T &v1, const T &v2) {
+crust_always_inline constexpr cmp::Ordering
+operator_cmp(const T &v1, const T &v2) {
   return v1.cmp(v2);
 }
 
@@ -95,7 +96,7 @@ always_inline constexpr cmp::Ordering operator_cmp(const T &v1, const T &v2) {
   FN(T *, ##__VA_ARGS__)
 
 #define _IMPL_OPERATOR_CMP(type, ...)                                          \
-  always_inline constexpr cmp::Ordering operator_cmp(                          \
+  crust_always_inline constexpr cmp::Ordering operator_cmp(                    \
       const type &v1, const type &v2) {                                        \
     return v1 < v2 ? cmp::make_less() :                                        \
         v1 > v2    ? cmp::make_greater() :                                     \
@@ -107,7 +108,7 @@ _IMPL_PRIMITIVE(_IMPL_OPERATOR_CMP);
 #undef _IMPL_OPERATOR_CMP
 
 #define _IMPL_OPERATOR_PARTIAL_CMP(type, ...)                                  \
-  always_inline constexpr Option<cmp::Ordering> operator_partial_cmp(          \
+  crust_always_inline constexpr Option<cmp::Ordering> operator_partial_cmp(    \
       const type &v1, const type &v2) {                                        \
     return make_some(operator_cmp(v1, v2));                                    \
   }
