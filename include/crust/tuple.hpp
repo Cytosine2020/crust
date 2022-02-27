@@ -41,6 +41,9 @@ tuple(Fields &&...fields) {
 }
 
 namespace _impl_tuple {
+template <class... Fields>
+struct TieTuple;
+
 template <class T>
 struct LetField {
   T *ptr;
@@ -52,6 +55,28 @@ struct LetField {
   crust_cxx14_constexpr void assign_ref_mut(const T &other) { *ptr = other; }
 
   crust_cxx14_constexpr void assign_move(T &other) { *ptr = move(other); }
+};
+
+template <class... Fields>
+struct LetField<TieTuple<Fields...>> {
+  TieTuple<Fields...> fields;
+
+  constexpr LetField(TieTuple<Fields...> &&fields) : fields{move(fields)} {}
+
+  template <class T>
+  crust_cxx14_constexpr void assign_ref(const T &other) {
+    fields = other;
+  }
+
+  template <class T>
+  crust_cxx14_constexpr void assign_ref_mut(T &other) {
+    fields = other;
+  }
+
+  template <class T>
+  crust_cxx14_constexpr void assign_move(T &other) {
+    fields = move(other);
+  }
 };
 
 template <>
@@ -127,10 +152,10 @@ struct LetField<RefMut<T>> {
 };
 
 template <bool is_range, usize r1_idx, usize r2_idx, class Self, class Base>
-struct LetTupleHelperRemain;
+struct TieTupleHelperRemain;
 
 template <usize r1_idx, usize r2_idx, class Self, class Base>
-struct LetTupleHelper {
+struct TieTupleHelper {
   static constexpr usize index1 =
       _impl_derive::TupleLikeSize<Self>::result - r1_idx;
   static constexpr usize index2 =
@@ -140,7 +165,7 @@ struct LetTupleHelper {
   static constexpr bool is_range =
       IsSame<This, LetField<_impl_utility::IgnoreRange>>::result;
   using Remains =
-      typename LetTupleHelperRemain<is_range, r1_idx, r2_idx, Self, Base>::
+      typename TieTupleHelperRemain<is_range, r1_idx, r2_idx, Self, Base>::
           Result;
 
   static crust_cxx14_constexpr void assign_ref(Self &ref, const Base &tuple) {
@@ -160,7 +185,7 @@ struct LetTupleHelper {
 };
 
 template <class Self, class Base>
-struct LetTupleHelper<0, 0, Self, Base> {
+struct TieTupleHelper<0, 0, Self, Base> {
   static crust_cxx14_constexpr void assign_ref(Self &, const Base &) {}
 
   static crust_cxx14_constexpr void assign_ref_mut(Self &, Base &) {}
@@ -169,18 +194,18 @@ struct LetTupleHelper<0, 0, Self, Base> {
 };
 
 template <usize r1_idx, usize r2_idx, class Self, class Base>
-struct LetTupleHelperRemain<false, r1_idx, r2_idx, Self, Base> {
-  using Result = LetTupleHelper<r1_idx - 1, r2_idx - 1, Self, Base>;
+struct TieTupleHelperRemain<false, r1_idx, r2_idx, Self, Base> {
+  using Result = TieTupleHelper<r1_idx - 1, r2_idx - 1, Self, Base>;
 };
 
 template <usize r1_idx, usize r2_idx, class Self, class Base>
-struct LetTupleHelperRemain<true, r1_idx, r2_idx, Self, Base> :
+struct TieTupleHelperRemain<true, r1_idx, r2_idx, Self, Base> :
     _impl_derive::TupleLikeSize<Self> {
-  using Result = LetTupleHelper<r1_idx - 1, r1_idx - 1, Self, Base>;
+  using Result = TieTupleHelper<r1_idx - 1, r1_idx - 1, Self, Base>;
 };
 
 template <class... Fields>
-struct LetTuple {
+struct TieTuple {
 private:
   crust_static_assert(!Any<IsConstOrRefVal<Fields>...>::result);
   crust_static_assert(
@@ -191,47 +216,45 @@ private:
 
 public:
   template <class... Fs>
-  explicit constexpr LetTuple(Fs &...fields) :
-      ref{LetField<Fields>{fields}...} {}
+  explicit constexpr TieTuple(Fs &&...fields) :
+      ref{LetField<Fields>{forward<Fs>(fields)}...} {}
 
   template <class... Fs>
-  crust_cxx14_constexpr LetTuple &operator=(const TupleStruct<Fs...> &tuple) {
-    LetTupleHelper<
+  crust_cxx14_constexpr void operator=(const TupleStruct<Fs...> &tuple) {
+    TieTupleHelper<
         sizeof...(Fields),
         sizeof...(Fs),
         TupleStruct<LetField<Fields>...>,
         TupleStruct<Fs...>>::assign_ref(ref, tuple);
-    return *this;
   }
 
   template <class... Fs>
-  crust_cxx14_constexpr LetTuple &operator=(TupleStruct<Fs...> &tuple) {
-    LetTupleHelper<
+  crust_cxx14_constexpr void operator=(TupleStruct<Fs...> &tuple) {
+    TieTupleHelper<
         sizeof...(Fields),
         sizeof...(Fs),
         TupleStruct<LetField<Fields>...>,
         TupleStruct<Fs...>>::assign_ref_mut(ref, tuple);
-    return *this;
   }
 
   template <class... Fs>
-  crust_cxx14_constexpr LetTuple &operator=(TupleStruct<Fs...> &&tuple) {
-    LetTupleHelper<
+  crust_cxx14_constexpr void operator=(TupleStruct<Fs...> &&tuple) {
+    TieTupleHelper<
         sizeof...(Fields),
         sizeof...(Fs),
         TupleStruct<LetField<Fields>...>,
         TupleStruct<Fs...>>::assign_move(ref, move(tuple));
-    return *this;
   }
 };
 } // namespace _impl_tuple
 
 template <class... Fields>
 crust_cxx14_constexpr
-    _impl_tuple::LetTuple<typename RemoveConstOrRefType<Fields>::Result...>
-    let(Fields &...fields) {
-  return _impl_tuple::LetTuple<
-      typename RemoveConstOrRefType<Fields>::Result...>{fields...};
+    _impl_tuple::TieTuple<typename RemoveConstOrRefType<Fields>::Result...>
+    tie(Fields &&...fields) {
+  return _impl_tuple::TieTuple<
+      typename RemoveConstOrRefType<Fields>::Result...>{
+      forward<Fields>(fields)...};
 }
 } // namespace crust
 
