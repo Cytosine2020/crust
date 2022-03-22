@@ -52,9 +52,9 @@ struct LetField {
 
   crust_cxx14_constexpr void assign_ref(const T &other) { *ptr = other; }
 
-  crust_cxx14_constexpr void assign_ref_mut(const T &other) { *ptr = other; }
+  crust_cxx14_constexpr void assign_ref_mut(T &other) { *ptr = other; }
 
-  crust_cxx14_constexpr void assign_move(T &other) { *ptr = move(other); }
+  crust_cxx14_constexpr void assign_move(T &&other) { *ptr = move(other); }
 };
 
 template <class... Fields>
@@ -74,7 +74,7 @@ struct LetField<TieTuple<Fields...>> {
   }
 
   template <class T>
-  crust_cxx14_constexpr void assign_move(T &other) {
+  crust_cxx14_constexpr void assign_move(T &&other) {
     fields = move(other);
   }
 };
@@ -87,10 +87,10 @@ struct LetField<_impl_utility::Ignore> {
   crust_cxx14_constexpr void assign_ref(const T &) const {}
 
   template <class T>
-  crust_cxx14_constexpr void assign_ref_mut(const T &) const {}
+  crust_cxx14_constexpr void assign_ref_mut(T &) const {}
 
   template <class T>
-  crust_cxx14_constexpr void assign_move(const T &) const {}
+  crust_cxx14_constexpr void assign_move(T &&) const {}
 };
 
 template <>
@@ -101,10 +101,10 @@ struct LetField<_impl_utility::IgnoreRange> {
   crust_cxx14_constexpr void assign_ref(const T &) const {}
 
   template <class T>
-  crust_cxx14_constexpr void assign_ref_mut(const T &) const {}
+  crust_cxx14_constexpr void assign_ref_mut(T &) const {}
 
   template <class T>
-  crust_cxx14_constexpr void assign_move(const T &) const {}
+  crust_cxx14_constexpr void assign_move(T &&) const {}
 };
 
 template <class T>
@@ -115,19 +115,13 @@ struct LetField<Ref<T>> {
 
   crust_cxx14_constexpr void assign_ref(const Ref<T> &other) { *ptr = other; }
 
-  crust_cxx14_constexpr void assign_ref_mut(const Ref<T> &other) {
-    *ptr = other;
-  }
+  crust_cxx14_constexpr void assign_ref_mut(Ref<T> &other) { *ptr = other; }
 
-  crust_cxx14_constexpr void assign(Ref<T> &other) { *ptr = move(other); }
+  crust_cxx14_constexpr void assign_move(Ref<T> &&other) { *ptr = move(other); }
 
   crust_cxx14_constexpr void assign_ref(const T &other) { *ptr = ref(other); }
 
-  crust_cxx14_constexpr void assign_ref_mut(const T &other) {
-    *ptr = ref(other);
-  }
-
-  crust_cxx14_constexpr void assign_move(T &other) { *ptr = ref(other); }
+  crust_cxx14_constexpr void assign_ref_mut(T &other) { *ptr = ref(other); }
 };
 
 template <class T>
@@ -140,15 +134,15 @@ struct LetField<RefMut<T>> {
     *ptr = other;
   }
 
-  crust_cxx14_constexpr void assign_ref_mut(const RefMut<T> &other) {
-    *ptr = other;
+  crust_cxx14_constexpr void assign_ref_mut(RefMut<T> &other) { *ptr = other; }
+
+  crust_cxx14_constexpr void assign_move(RefMut<T> &&other) {
+    *ptr = move(other);
   }
 
   crust_cxx14_constexpr void assign(RefMut<T> &other) { *ptr = move(other); }
 
   crust_cxx14_constexpr void assign_ref_mut(T &other) { *ptr = ref_mut(other); }
-
-  crust_cxx14_constexpr void assign_move(T &other) { *ptr = ref_mut(other); }
 };
 
 template <bool is_range, usize r1_idx, usize r2_idx, class Self, class Base>
@@ -179,7 +173,7 @@ struct TieTupleHelper {
   }
 
   static crust_cxx14_constexpr void assign_move(Self &ref, Base &&tuple) {
-    ref.template get<index1>().assign_move(Getter::get(tuple));
+    ref.template get<index1>().assign_move(move(Getter::get(tuple)));
     Remains::assign_move(ref, move(tuple));
   }
 };
@@ -194,15 +188,12 @@ struct TieTupleHelper<0, 0, Self, Base> {
 };
 
 template <usize r1_idx, usize r2_idx, class Self, class Base>
-struct TieTupleHelperRemain<false, r1_idx, r2_idx, Self, Base> {
-  using Result = TieTupleHelper<r1_idx - 1, r2_idx - 1, Self, Base>;
-};
+struct TieTupleHelperRemain<false, r1_idx, r2_idx, Self, Base> :
+    TmplType<TieTupleHelper<r1_idx - 1, r2_idx - 1, Self, Base>> {};
 
 template <usize r1_idx, usize r2_idx, class Self, class Base>
 struct TieTupleHelperRemain<true, r1_idx, r2_idx, Self, Base> :
-    _impl_derive::TupleLikeSize<Self> {
-  using Result = TieTupleHelper<r1_idx - 1, r1_idx - 1, Self, Base>;
-};
+    TmplType<TieTupleHelper<r1_idx - 1, r1_idx - 1, Self, Base>> {};
 
 template <class... Fields>
 struct TieTuple {
@@ -255,6 +246,44 @@ crust_cxx14_constexpr
   return _impl_tuple::TieTuple<
       typename RemoveConstOrRefType<Fields>::Result...>{
       forward<Fields>(fields)...};
+}
+
+namespace _impl_tuple {
+template <class... Fields>
+struct LetInfo {};
+
+template <class... Getter>
+struct LetGetter {};
+
+template <class T, class LetGetter>
+struct LetAssign;
+
+template <class T, class... Getter>
+struct LetAssign<T, LetGetter<Getter...>> {
+  template <class F>
+  void inner(T &self, F &&f) {
+    f(Getter::inner(self)...);
+  }
+};
+
+template <class T, class LetInfo>
+struct LetTuple {
+  T self;
+
+  constexpr LetTuple(T &&self) : self{move(self)} {}
+
+  template <class F>
+  crust_cxx14_constexpr void operator=(F &&f) {
+    LetAssign<T, typename LetInfo::Getter>::inner(self, forward<F>(f));
+  };
+};
+} // namespace _impl_tuple
+
+template <class T, class... Fields>
+crust_cxx14_constexpr _impl_tuple::LetTuple<T, _impl_tuple::LetInfo<Fields...>>
+let(T &&self, Fields &&...) {
+  return _impl_tuple::LetTuple<T, _impl_tuple::LetInfo<Fields...>>{
+      forward<T>(self)};
 }
 } // namespace crust
 
