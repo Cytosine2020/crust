@@ -110,17 +110,13 @@ struct crust_ebco EnumC :
 
 struct crust_ebco EnumD :
     Enum<EnumRepr<i16>, A, B>,
-    Derive<EnumD, Enum<EnumRepr<u16>, A, B>, cmp::PartialEq, cmp::Eq> {
+    Derive<EnumD, Enum<A, B>, cmp::PartialEq, cmp::Eq> {
   CRUST_ENUM_USE_BASE(EnumD, Enum<EnumRepr<u16>, A, B>);
 };
 
 struct crust_ebco EnumE :
     Enum<EnumRepr<isize>, A, B, C, D, E, F>,
-    Derive<
-        EnumE,
-        Enum<EnumRepr<isize>, A, B, C, D, E, F>,
-        cmp::PartialEq,
-        cmp::Eq> {
+    Derive<EnumE, Enum<A, B, C, D, E, F>, cmp::PartialEq, cmp::Eq> {
   CRUST_ENUM_USE_BASE(EnumE, Enum<EnumRepr<isize>, A, B, C, D, E, F>);
 };
 } // namespace

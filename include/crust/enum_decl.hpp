@@ -313,14 +313,14 @@ private:
 public:
   constexpr EnumTrivial() {}
 
-  EnumTrivial(const EnumTrivial &other) { clone_from(move(other.self())); }
+  EnumTrivial(const EnumTrivial &other) { clone_from(other.self()); }
 
   EnumTrivial(EnumTrivial &&other) noexcept { move_from(move(other.self())); }
 
   EnumTrivial &operator=(const EnumTrivial &other) {
     if (this != &other) {
       drop();
-      clone_from(move(other.self()));
+      clone_from(other.self());
     }
 
     return *this;

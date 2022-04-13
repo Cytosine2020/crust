@@ -148,32 +148,32 @@ GTEST_TEST(tuple, raii) {
   auto d = move(a);
 }
 
-GTEST_TEST(tuple, let) {
+GTEST_TEST(tuple, tie) {
   const auto tuple2 = tuple(1, 2);
   const auto tuple7 = tuple(1, 2, 3, 4, 5, 6, 7);
 
   int a, b;
-  let(a, b) = tuple(1, 2);
+  tie(a, b) = tuple(1, 2);
 
   EXPECT_EQ(a, 1);
   EXPECT_EQ(b, 2);
 
   Ref<int> c, d;
-  let(c, d) = tuple2;
+  tie(c, d) = tuple2;
 
   EXPECT_EQ(*c, 1);
   EXPECT_EQ(*d, 2);
 
   int e, f;
-  let(e, _) = tuple(1, 2);
-  let(_, f) = tuple(1, 2);
+  tie(e, _) = tuple(1, 2);
+  tie(_, f) = tuple(1, 2);
 
   EXPECT_EQ(e, 1);
   EXPECT_EQ(f, 2);
 
   int g, h;
   Ref<int> i, j;
-  let(g, i, _, __, h, j) = tuple7;
+  tie(g, i, _, __, h, j) = tuple7;
 
   EXPECT_EQ(g, 1);
   EXPECT_EQ(*i, 2);
@@ -181,11 +181,19 @@ GTEST_TEST(tuple, let) {
   EXPECT_EQ(*j, 7);
 
   int k, l;
-  let(k, __) = tuple(1, 2, 3, 4, 5, 6, 7);
-  let(__, l) = tuple(1, 2, 3, 4, 5, 6, 7);
+  tie(k, __) = tuple(1, 2, 3, 4, 5, 6, 7);
+  tie(__, l) = tuple(1, 2, 3, 4, 5, 6, 7);
 
   EXPECT_EQ(k, 1);
   EXPECT_EQ(l, 7);
+
+  int m, n, o, p;
+  tie(tie(m, n), tie(o, p)) = tuple(tuple(1, 2), tuple(3, 4));
+
+  EXPECT_EQ(m, 1);
+  EXPECT_EQ(n, 2);
+  EXPECT_EQ(o, 3);
+  EXPECT_EQ(p, 4);
 
 #if __cplusplus > 201402L
   auto [a1, b1] = tuple(1, 2);

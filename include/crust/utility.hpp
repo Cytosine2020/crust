@@ -440,11 +440,15 @@ namespace _impl_utility {
 class Ignore {};
 
 class IgnoreRange {};
+
+class Argument {};
 } // namespace _impl_utility
 
 constexpr _impl_utility::Ignore _{};
 
 constexpr _impl_utility::IgnoreRange __{};
+
+constexpr _impl_utility::Argument arg{};
 } // namespace crust
 
 

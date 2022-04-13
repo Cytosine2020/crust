@@ -23,9 +23,13 @@ CRUST_TRAIT(PartialEq, class Rhs = Self) {
 
   constexpr bool ne(const Rhs &other) const { return !self().eq(other); }
 
-  constexpr bool operator==(const Rhs &other) const { return self().eq(other); }
+  constexpr friend bool operator==(const Self &self_, const Rhs &other) {
+    return self_.eq(other);
+  }
 
-  constexpr bool operator!=(const Rhs &other) const { return self().ne(other); }
+  constexpr friend bool operator!=(const Self &self_, const Rhs &other) {
+    return self_.ne(other);
+  }
 };
 
 CRUST_TRAIT(Eq) { CRUST_TRAIT_USE_SELF(Eq, Require<Self, PartialEq>); };
@@ -43,13 +47,21 @@ CRUST_TRAIT(PartialOrd, class Rhs = Self) {
 
   constexpr bool ge(const Rhs &other) const;
 
-  constexpr bool operator<(const Rhs &other) const { return self().lt(other); }
+  constexpr friend bool operator<(const Self &self_, const Rhs &other) {
+    return self_.lt(other);
+  }
 
-  constexpr bool operator<=(const Rhs &other) const { return self().le(other); }
+  constexpr friend bool operator<=(const Self &self_, const Rhs &other) {
+    return self_.le(other);
+  }
 
-  constexpr bool operator>(const Rhs &other) const { return self().gt(other); }
+  constexpr friend bool operator>(const Self &self_, const Rhs &other) {
+    return self_.gt(other);
+  }
 
-  constexpr bool operator>=(const Rhs &other) const { return self().ge(other); }
+  constexpr friend bool operator>=(const Self &self_, const Rhs &other) {
+    return self_.ge(other);
+  }
 };
 
 CRUST_TRAIT(Ord) {

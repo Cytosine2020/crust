@@ -2,6 +2,7 @@
 #define CRUST_ITER_MOD_HPP
 
 
+#include "crust/enum.hpp"
 #include "crust/option.hpp"
 #include "crust/tuple.hpp"
 #include "crust/utility.hpp"
