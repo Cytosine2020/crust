@@ -148,6 +148,9 @@ struct Any<Bool, Bools...> : BoolVal<Bool::result || Any<Bools...>::result> {};
 template <>
 struct Any<> : BoolVal<false> {};
 
+template <class U, class A>
+struct AsVal : TmplVal<U, A::result> {};
+
 template <class T, template <class> class... Tmpls>
 struct CompositionType;
 
@@ -211,7 +214,8 @@ template <class T>
 struct IsConstOrRefVal : Any<IsRefVal<T>, IsConstVal<T>> {};
 
 template <class B, class T>
-struct IsBaseOfVal : BoolVal<std::is_base_of<B, T>::value> {};
+struct IsBaseOfVal :
+    All<BoolVal<std::is_base_of<B, T>::value>, Not<IsSame<B, T>>> {};
 
 template <class T>
 struct IsTriviallyCopyable : BoolVal<std::is_trivially_copyable<T>::value> {};

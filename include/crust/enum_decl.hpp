@@ -75,7 +75,8 @@ template <class I, isize index, class... Fields>
 struct IndexToDiscriminant :
     Discriminant<
         I,
-        typename _impl_types::TypesIndexToType<index, Fields...>::Result,
+        typename _impl_types::
+            TypesIndexToType<index, _impl_types::Types<Fields...>>::Result,
         Fields...> {};
 
 template <class I, isize index, class... Fields>
@@ -164,8 +165,8 @@ struct EnumGetter;
 template <isize index, class Field, class... Fields>
 struct EnumGetter<index, Field, Fields...> {
   using Self = EnumHolder<Field, Fields...>;
-  using Result =
-      typename _impl_types::TypesIndexToType<index, Field, Fields...>::Result;
+  using Result = typename _impl_types::
+      TypesIndexToType<index, _impl_types::Types<Field, Fields...>>::Result;
 
   static constexpr const Result &inner(const Self &self) {
     return EnumGetter<index - 1, Fields...>::inner(self.remains);
@@ -222,8 +223,9 @@ struct EnumVisitor {
     using GetIndex =                                                           \
         IndexToDiscriminant<typename Self::Index, offset + index, Fields...>;  \
     template <isize index>                                                     \
-    using GetType = typename _impl_types::                                     \
-        TypesIndexToType<offset + index, Fields...>::Result;                   \
+    using GetType = typename _impl_types::TypesIndexToType<                    \
+        offset + index,                                                        \
+        _impl_types::Types<Fields...>>::Result;                                \
     template <class R, class V>                                                \
     static crust_cxx14_constexpr R inner(const Self &self, V &&impl) {         \
       switch (self.get_index()) {                                              \
@@ -448,14 +450,14 @@ struct crust_ebco EnumTagUnion :
   template <class T>
   constexpr const T &unsafe_get_variant() const {
     return EnumGetter<
-        _impl_types::TypesTypeToIndex<T, Fields...>::result,
+        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(holder);
   }
 
   template <class T>
   crust_cxx14_constexpr T &unsafe_get_variant() {
     return EnumGetter<
-        _impl_types::TypesTypeToIndex<T, Fields...>::result,
+        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(holder);
   }
 
@@ -536,14 +538,14 @@ struct crust_ebco EnumTagOnly : _impl_types::ZeroSizedTypeHolder<Fields...> {
   template <class T>
   constexpr const T &unsafe_get_variant() const {
     return _impl_types::ZeroSizedTypeGetter<
-        _impl_types::TypesTypeToIndex<T, Fields...>::result,
+        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(*this);
   }
 
   template <class T>
   crust_cxx14_constexpr T &unsafe_get_variant() {
     return _impl_types::ZeroSizedTypeGetter<
-        _impl_types::TypesTypeToIndex<T, Fields...>::result,
+        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(*this);
   }
 
@@ -664,7 +666,8 @@ struct Enum :
         All<Require<Fields, ZeroSizedType>...>> {
 private:
   crust_static_assert(sizeof...(Fields) > 0);
-  crust_static_assert(Not<_impl_types::TypesDuplicateVal<Fields...>>::result);
+  crust_static_assert(Not<_impl_types::TypesDuplicateVal<
+                          _impl_types::Types<Fields...>>>::result);
   crust_static_assert(All<Not<IsConstOrRefVal<Fields>>...>::result);
 
   Inner inner;

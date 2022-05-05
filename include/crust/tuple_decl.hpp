@@ -110,7 +110,8 @@ template <usize index, class... Fields>
 using TupleGetter = TupleGetterImpl<
     index,
     Require<
-        typename _impl_types::TypesIndexToType<index, Fields...>::Result,
+        typename _impl_types::
+            TypesIndexToType<index, _impl_types::Types<Fields...>>::Result,
         ZeroSizedType>::result,
     Fields...>;
 
@@ -121,8 +122,8 @@ struct TupleGetterImpl<index, true, Fields...> :
 template <usize index, class Field, class... Fields>
 struct TupleGetterImpl<index, false, Field, Fields...> {
   using Self = TupleSizedHolder<Field, Fields...>;
-  using Result =
-      typename _impl_types::TypesIndexToType<index, Field, Fields...>::Result;
+  using Result = typename _impl_types::
+      TypesIndexToType<index, _impl_types::Types<Field, Fields...>>::Result;
 
   static constexpr const Result &inner(const Self &self) {
     return TupleGetterImpl<index - 1, false, Fields...>::inner(self.remains);
@@ -183,8 +184,8 @@ struct TupleLikeSize<TupleStruct<Fields...>> :
 
 template <usize index, class... Fields>
 struct TupleLikeGetter<TupleStruct<Fields...>, index> {
-  using Result =
-      typename _impl_types::TypesIndexToType<index, Fields...>::Result;
+  using Result = typename _impl_types::
+      TypesIndexToType<index, _impl_types::Types<Fields...>>::Result;
 
   static constexpr const Result &get(const TupleStruct<Fields...> &self) {
     return self.template get<index>();

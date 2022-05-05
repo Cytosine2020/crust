@@ -48,15 +48,25 @@ struct Int<i64> :
         0x7FFFFFFFFFFFFFFFLL> {};
 } // namespace num
 
-template <class T>
-struct IncVal : TmplVal<typename T::Result, T::result + 1> {
-  crust_static_assert(T::result != num::Int<typename T::Result>::MAX);
+template <class A, class B>
+struct AddVal : TmplVal<typename A::Result, A::result + B::result> {
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
+  crust_static_assert(
+      A::result <= num::Int<typename A::Result>::MAX - B::result);
+};
+
+template <class A, class B>
+struct SubVal : TmplVal<typename A::Result, A::result - B::result> {
+  crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);
+  crust_static_assert(
+      A::result >= num::Int<typename A::Result>::MIN + B::result);
 };
 
 template <class T>
-struct DecVal : TmplVal<typename T::Result, T::result - 1> {
-  crust_static_assert(T::result != num::Int<typename T::Result>::MIN);
-};
+struct IncVal : AddVal<T, TmplVal<typename T::Result, 1>> {};
+
+template <class T>
+struct DecVal : SubVal<T, TmplVal<typename T::Result, 1>> {};
 
 template <class A, class B>
 struct EQVal : BoolVal<(A::result == B::result)> {

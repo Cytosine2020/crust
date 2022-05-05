@@ -200,8 +200,9 @@ struct TieTuple {
 private:
   crust_static_assert(!Any<IsConstOrRefVal<Fields>...>::result);
   crust_static_assert(
-      _impl_types::TypesCountType<_impl_utility::IgnoreRange, Fields...>::
-          result <= 1);
+      _impl_types::TypesCountType<
+          _impl_utility::IgnoreRange,
+          _impl_types::Types<Fields...>>::result <= 1);
 
   Tuple<LetField<Fields>...> ref;
 
