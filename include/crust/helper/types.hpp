@@ -8,69 +8,81 @@
 
 namespace crust {
 namespace _impl_types {
-template <class T, class... Fields>
+template <class... Fields>
+struct Types {};
+
+template <class T, class Ts>
 struct TypesCountType;
 
 template <class T, class Field, class... Fields>
-struct TypesCountType<T, Field, Fields...> : TypesCountType<T, Fields...> {};
-
-template <class T, class... Fields>
-struct TypesCountType<T, T, Fields...> :
-    IncVal<TypesCountType<T, Fields...>> {};
+struct TypesCountType<T, Types<Field, Fields...>> :
+    AddVal<
+        TypesCountType<T, Types<Fields...>>,
+        AsVal<usize, IsSame<T, Field>>> {};
 
 template <class T>
-struct TypesCountType<T> : TmplVal<usize, 0> {};
+struct TypesCountType<T, Types<>> : TmplVal<usize, 0> {};
 
-template <class T, class... Fields>
-struct TypesIncludeVal :
-    GTVal<TypesCountType<T, Fields...>, TmplVal<usize, 0>> {};
+template <class T, class Ts>
+struct TypesIncludeVal : GTVal<TypesCountType<T, Ts>, TmplVal<usize, 0>> {};
 
-template <class... Fields>
+template <class T, class Ts>
+struct TypesContainVal;
+
+template <class T, class Field, class... Fields>
+struct TypesContainVal<T, Types<Field, Fields...>> :
+    Any<IsBaseOfVal<T, Field>, TypesContainVal<T, Types<Fields...>>> {};
+
+template <class T>
+struct TypesContainVal<T, Types<>> : BoolVal<false> {};
+
+template <class Ts>
 struct TypesDuplicateVal;
 
 template <class Field, class... Fields>
-struct TypesDuplicateVal<Field, Fields...> :
-    Any<TypesIncludeVal<Field, Fields...>, TypesDuplicateVal<Fields...>> {};
+struct TypesDuplicateVal<Types<Field, Fields...>> :
+    Any<TypesIncludeVal<Field, Types<Fields...>>,
+        TypesDuplicateVal<Types<Fields...>>> {};
 
 template <>
-struct TypesDuplicateVal<> : BoolVal<false> {};
+struct TypesDuplicateVal<Types<>> : BoolVal<false> {};
 
-template <usize index, class... Fields>
+template <usize index, class Ts>
 struct TypesIndexToType;
 
 template <usize index, class Field, class... Fields>
-struct TypesIndexToType<index, Field, Fields...> :
-    TypesIndexToType<index - 1, Fields...> {};
+struct TypesIndexToType<index, Types<Field, Fields...>> :
+    TypesIndexToType<index - 1, Types<Fields...>> {};
 
 template <class Field, class... Fields>
-struct TypesIndexToType<0, Field, Fields...> : TmplType<Field> {};
+struct TypesIndexToType<0, Types<Field, Fields...>> : TmplType<Field> {};
 
-template <class T, class... Fields>
+template <class T, class Ts>
 struct TypesTypeToIndex;
 
 template <class T, class Field, class... Fields>
-struct TypesTypeToIndex<T, Field, Fields...> :
-    IncVal<TypesTypeToIndex<T, Fields...>> {};
+struct TypesTypeToIndex<T, Types<Field, Fields...>> :
+    IncVal<TypesTypeToIndex<T, Types<Fields...>>> {};
 
 template <class T, class... Fields>
-struct TypesTypeToIndex<T, T, Fields...> : TmplVal<usize, 0> {};
+struct TypesTypeToIndex<T, Types<T, Fields...>> : TmplVal<usize, 0> {};
 
 template <class T, class... Fields>
 struct TypesPrevType :
     TypesIndexToType<
-        DecVal<TypesTypeToIndex<T, Fields...>>::result,
-        Fields...> {};
+        DecVal<TypesTypeToIndex<T, Types<Fields...>>>::result,
+        Types<Fields...>> {};
 
-template <bool is_zst, class... Fields>
+template <class Ts, bool is_zst, class... Fields>
 struct crust_ebco ZeroSizedTypeHolderImpl;
 
-template <class... Fields>
-struct crust_ebco ZeroSizedTypeHolder;
+template <class Ts, class... Fields>
+struct crust_ebco ZeroSizedTypeHolderHelper;
 
-template <class Field, class... Fields>
-struct ZeroSizedTypeHolderImpl<true, Field, Fields...> :
+template <class Ts, class Field, class... Fields>
+struct ZeroSizedTypeHolderImpl<Ts, true, Field, Fields...> :
     Field,
-    ZeroSizedTypeHolder<Fields...> {
+    ZeroSizedTypeHolderHelper<Ts, Fields...> {
   constexpr ZeroSizedTypeHolderImpl() {}
 
   constexpr ZeroSizedTypeHolderImpl(Field &&field) :
@@ -78,64 +90,75 @@ struct ZeroSizedTypeHolderImpl<true, Field, Fields...> :
 
   template <class T>
   constexpr ZeroSizedTypeHolderImpl(T &&t) :
-      ZeroSizedTypeHolder<Fields...>{forward<T>(t)} {}
+      ZeroSizedTypeHolderHelper<Ts, Fields...>{forward<T>(t)} {}
 
   constexpr ZeroSizedTypeHolderImpl(Field &&field, Fields &&...fields) :
-      Field{forward<Field>(field)}, ZeroSizedTypeHolder<Fields...>{
+      Field{forward<Field>(field)}, ZeroSizedTypeHolderHelper<Ts, Fields...>{
                                         forward<Fields>(fields)...} {}
 };
 
-template <class Field>
-struct ZeroSizedTypeHolderImpl<true, Field> : Field {
+template <class Ts, class Field>
+struct ZeroSizedTypeHolderImpl<Ts, true, Field> : Field {
   constexpr ZeroSizedTypeHolderImpl() {}
 
   constexpr ZeroSizedTypeHolderImpl(Field &&field) :
       Field{forward<Field>(field)} {}
 };
 
-template <class Field, class... Fields>
-struct ZeroSizedTypeHolderImpl<false, Field, Fields...> :
-    ZeroSizedTypeHolder<Fields...> {
+template <class Ts, class Field, class... Fields>
+struct ZeroSizedTypeHolderImpl<Ts, false, Field, Fields...> :
+    ZeroSizedTypeHolderHelper<Ts, Fields...> {
   constexpr ZeroSizedTypeHolderImpl() {}
 
   constexpr ZeroSizedTypeHolderImpl(Field &&) {}
 
   template <class T>
   constexpr ZeroSizedTypeHolderImpl(T &&t) :
-      ZeroSizedTypeHolder<Fields...>{forward<T>(t)} {}
+      ZeroSizedTypeHolderHelper<Ts, Fields...>{forward<T>(t)} {}
 
   constexpr ZeroSizedTypeHolderImpl(Field &&, Fields &&...fields) :
-      ZeroSizedTypeHolder<Fields...>{forward<Fields>(fields)...} {}
+      ZeroSizedTypeHolderHelper<Ts, Fields...>{forward<Fields>(fields)...} {}
 };
 
-template <class Field>
-struct ZeroSizedTypeHolderImpl<false, Field> {
+template <class Ts, class Field>
+struct ZeroSizedTypeHolderImpl<Ts, false, Field> {
   constexpr ZeroSizedTypeHolderImpl() {}
 
   constexpr ZeroSizedTypeHolderImpl(Field &&) {}
 };
 
-template <class Field, class... Fields>
-struct ZeroSizedTypeHolder<Field, Fields...> :
+template <class Ts, class Field, class... Fields>
+struct ZeroSizedTypeHolderHelper<Ts, Field, Fields...> :
     ZeroSizedTypeHolderImpl<
+        Ts,
         All<Require<Field, ZeroSizedType>,
-            Not<TypesIncludeVal<Field, Fields...>>>::result,
+            Not<TypesIncludeVal<Field, Types<Fields...>>>,
+            Not<TypesContainVal<Field, Ts>>>::result,
         Field,
         Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(
-      ZeroSizedTypeHolder,
+      ZeroSizedTypeHolderHelper,
       ZeroSizedTypeHolderImpl<
-          All<Require<Field, ::crust::ZeroSizedType>,
-              Not<TypesIncludeVal<Field, Fields...>>>::result,
+          Ts,
+          All<Require<Field, ZeroSizedType>,
+              Not<TypesIncludeVal<Field, Types<Fields...>>>,
+              Not<TypesContainVal<Field, Ts>>>::result,
           Field,
           Fields...>);
 };
 
+template <class... Fields>
+struct ZeroSizedTypeHolder :
+    ZeroSizedTypeHolderHelper<Types<Fields...>, Fields...> {
+  CRUST_USE_BASE_CONSTRUCTORS(
+      ZeroSizedTypeHolder,
+      ZeroSizedTypeHolderHelper<Types<Fields...>, Fields...>);
+};
+
 template <usize index, class... Fields>
 struct ZeroSizedTypeGetter {
-  using Self = _impl_types::ZeroSizedTypeHolder<Fields...>;
-  using Result =
-      typename _impl_types::TypesIndexToType<index, Fields...>::Result;
+  using Self = ZeroSizedTypeHolder<Fields...>;
+  using Result = typename TypesIndexToType<index, Types<Fields...>>::Result;
 
   static constexpr const Result &inner(const Self &self) { return self; }
 
