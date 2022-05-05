@@ -140,7 +140,7 @@ struct ZeroSizedTypeHolderHelper<Ts, Field, Fields...> :
       ZeroSizedTypeHolderHelper,
       ZeroSizedTypeHolderImpl<
           Ts,
-          All<Require<Field, ZeroSizedType>,
+          All<Require<Field, ::crust::ZeroSizedType>,
               Not<TypesIncludeVal<Field, Types<Fields...>>>,
               Not<TypesContainVal<Field, Ts>>>::result,
           Field,
