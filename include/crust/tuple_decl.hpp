@@ -144,7 +144,7 @@ struct TupleGetterImpl<0, false, Field, Fields...> {
   static constexpr Result &inner(Self &self) { return self.field; }
 };
 } // namespace _impl_tuple
-// todo: repr(transparent)
+
 template <class... Fields>
 struct TupleStruct :
     private _impl_tuple::

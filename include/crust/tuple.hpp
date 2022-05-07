@@ -248,44 +248,6 @@ crust_cxx14_constexpr
       typename RemoveConstOrRefType<Fields>::Result...>{
       forward<Fields>(fields)...};
 }
-
-namespace _impl_tuple {
-template <class... Fields>
-struct LetInfo {};
-
-template <class... Getter>
-struct LetGetter {};
-
-template <class T, class LetGetter>
-struct LetAssign;
-
-template <class T, class... Getter>
-struct LetAssign<T, LetGetter<Getter...>> {
-  template <class F>
-  void inner(T &self, F &&f) {
-    f(Getter::inner(self)...);
-  }
-};
-
-template <class T, class LetInfo>
-struct LetTuple {
-  T self;
-
-  constexpr LetTuple(T &&self) : self{move(self)} {}
-
-  template <class F>
-  crust_cxx14_constexpr void operator=(F &&f) {
-    LetAssign<T, typename LetInfo::Getter>::inner(self, forward<F>(f));
-  };
-};
-} // namespace _impl_tuple
-
-template <class T, class... Fields>
-crust_cxx14_constexpr _impl_tuple::LetTuple<T, _impl_tuple::LetInfo<Fields...>>
-let(T &&self, Fields &&...) {
-  return _impl_tuple::LetTuple<T, _impl_tuple::LetInfo<Fields...>>{
-      forward<T>(self)};
-}
 } // namespace crust
 
 namespace std {
