@@ -11,9 +11,9 @@
 
 namespace crust {
 namespace cmp {
-CRUST_ENUM_DISCRIMANT_VARIANT(Less, -1);
-CRUST_ENUM_DISCRIMANT_VARIANT(Equal, 0);
-CRUST_ENUM_DISCRIMANT_VARIANT(Greater, 1);
+CRUST_DISCRIMINANT_VARIANT(Less, -1);
+CRUST_DISCRIMINANT_VARIANT(Equal, 0);
+CRUST_DISCRIMINANT_VARIANT(Greater, 1);
 
 struct crust_ebco Ordering :
     Enum<EnumRepr<i8>, Less, Equal, Greater>,

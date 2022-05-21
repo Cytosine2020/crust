@@ -31,7 +31,7 @@ namespace _impl_enum {
 
 CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
 
-#define CRUST_ENUM_DISCRIMANT_VARIANT(NAME, VALUE)                             \
+#define CRUST_DISCRIMINANT_VARIANT(NAME, VALUE)                                \
   struct crust_ebco NAME :                                                     \
       ::crust::_impl_enum::DiscriminantVariant<NAME>,                          \
       ::crust::Derive<                                                         \
@@ -75,8 +75,8 @@ template <class I, isize index, class... Fields>
 struct IndexToDiscriminant :
     Discriminant<
         I,
-        typename _impl_types::
-            TypesIndexToType<index, _impl_types::Types<Fields...>>::Result,
+        typename _impl_types::TypesIndex<index, _impl_types::Types<Fields...>>::
+            Result,
         Fields...> {};
 
 template <class I, isize index, class... Fields>
@@ -166,7 +166,7 @@ template <isize index, class Field, class... Fields>
 struct EnumGetter<index, Field, Fields...> {
   using Self = EnumHolder<Field, Fields...>;
   using Result = typename _impl_types::
-      TypesIndexToType<index, _impl_types::Types<Field, Fields...>>::Result;
+      TypesIndex<index, _impl_types::Types<Field, Fields...>>::Result;
 
   static constexpr const Result &inner(const Self &self) {
     return EnumGetter<index - 1, Fields...>::inner(self.remains);
@@ -223,9 +223,8 @@ struct EnumVisitor {
     using GetIndex =                                                           \
         IndexToDiscriminant<typename Self::Index, offset + index, Fields...>;  \
     template <isize index>                                                     \
-    using GetType = typename _impl_types::TypesIndexToType<                    \
-        offset + index,                                                        \
-        _impl_types::Types<Fields...>>::Result;                                \
+    using GetType = typename _impl_types::                                     \
+        TypesIndex<offset + index, _impl_types::Types<Fields...>>::Result;     \
     template <class R, class V>                                                \
     static crust_cxx14_constexpr R inner(const Self &self, V &&impl) {         \
       switch (self.get_index()) {                                              \
@@ -450,14 +449,14 @@ struct crust_ebco EnumTagUnion :
   template <class T>
   constexpr const T &unsafe_get_variant() const {
     return EnumGetter<
-        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
+        _impl_types::TypesFirstIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(holder);
   }
 
   template <class T>
   crust_cxx14_constexpr T &unsafe_get_variant() {
     return EnumGetter<
-        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
+        _impl_types::TypesFirstIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(holder);
   }
 
@@ -527,9 +526,7 @@ struct crust_ebco EnumTagOnly : _impl_types::ZeroSizedTypeHolder<Fields...> {
   constexpr EnumTagOnly() : index{0} {}
 
   template <class T>
-  explicit constexpr EnumTagOnly(T &&t) :
-      _impl_types::ZeroSizedTypeHolder<Fields...>{forward<T>(t)},
-      index{IndexGetter<T>::result} {}
+  explicit constexpr EnumTagOnly(T &&) : index{IndexGetter<T>::result} {}
 
   constexpr Index get_index() const { return index; }
 
@@ -538,14 +535,14 @@ struct crust_ebco EnumTagOnly : _impl_types::ZeroSizedTypeHolder<Fields...> {
   template <class T>
   constexpr const T &unsafe_get_variant() const {
     return _impl_types::ZeroSizedTypeGetter<
-        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
+        _impl_types::TypesFirstIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(*this);
   }
 
   template <class T>
   crust_cxx14_constexpr T &unsafe_get_variant() {
     return _impl_types::ZeroSizedTypeGetter<
-        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
+        _impl_types::TypesFirstIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(*this);
   }
 

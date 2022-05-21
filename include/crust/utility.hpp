@@ -220,30 +220,6 @@ struct IsBaseOfVal :
 template <class T>
 struct IsTriviallyCopyable : BoolVal<std::is_trivially_copyable<T>::value> {};
 
-namespace _impl_utility {
-template <bool enable>
-struct EnableIf {};
-
-template <>
-struct EnableIf<true> : TmplType<void> {};
-
-template <class T, bool Bool>
-struct InheritIf;
-
-template <class T>
-struct InheritIf<T, true> : T {};
-
-template <class T>
-struct InheritIf<T, false> {};
-} // namespace _impl_utility
-
-template <class... Enable>
-using EnableIf =
-    typename _impl_utility::EnableIf<All<Enable...>::result>::Result;
-
-template <class T, class... Bools>
-using InheritIf = _impl_utility::InheritIf<T, All<Bools...>::result>;
-
 template <class T>
 constexpr typename RemoveRefType<T>::Result &&move(T &&t) {
   return static_cast<typename RemoveRefType<T>::Result &&>(t);
@@ -366,8 +342,38 @@ struct Derive<Self, BluePrint> {};
 template <class Struct, template <class, class...> class Trait, class... Args>
 struct Require : IsBaseOfVal<Trait<Struct, Args...>, Struct> {};
 
+namespace _impl_utility {
+template <bool enable>
+struct EnableIf {};
+
+template <>
+struct EnableIf<true> : TmplType<void> {};
+
+template <class T, bool Bool, class>
+struct InheritIf;
+
+template <class T, class Marker>
+struct InheritIf<T, true, Marker> : T {
+  CRUST_USE_BASE_CONSTRUCTORS(InheritIf, T);
+};
+
+template <class T, class Marker>
+struct InheritIf<T, false, Marker> {
+  constexpr InheritIf() {}
+
+  constexpr InheritIf(T &&) {}
+};
+} // namespace _impl_utility
+
+template <class... Enable>
+using EnableIf =
+    typename _impl_utility::EnableIf<All<Enable...>::result>::Result;
+
+template <class T, class Bools, class Marker = void>
+using InheritIf = _impl_utility::InheritIf<T, Bools::result, Marker>;
+
 /// this is used by Tuple, Enum and Slice for zero sized type optimization
-/// forign type can implement ZeroSizedType to be treated as zero sized type.
+/// foreign type can implement ZeroSizedType to be treated as zero sized type.
 
 CRUST_TRAIT(ZeroSizedType) {
   CRUST_TRAIT_USE_SELF(
