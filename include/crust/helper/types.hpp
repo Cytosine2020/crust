@@ -52,14 +52,9 @@ struct TypesBefore<0, Types<Field, Fields...>> : TmplType<Types<>> {};
 template <class T, class Ts>
 struct TypesCountType;
 
-template <class T, class Field, class... Fields>
-struct TypesCountType<T, Types<Field, Fields...>> :
-    AddVal<
-        TypesCountType<T, Types<Fields...>>,
-        AsVal<usize, IsSame<T, Field>>> {};
-
-template <class T>
-struct TypesCountType<T, Types<>> : TmplVal<usize, 0> {};
+template <class T, class... Fields>
+struct TypesCountType<T, Types<Fields...>> :
+    SumVal<usize, AsVal<usize, IsSame<T, Fields>>...> {};
 
 template <class T, class Ts>
 struct TypesIncludeVal : GTVal<TypesCountType<T, Ts>, TmplVal<usize, 0>> {};
@@ -97,12 +92,9 @@ struct TypesContainHelper : BoolVal<false> {};
 template <class T, class Ts>
 struct TypesContainVal;
 
-template <class T, class Field, class... Fields>
-struct TypesContainVal<T, Types<Field, Fields...>> :
-    Any<TypesContainHelper<T, Field>, TypesContainVal<T, Types<Fields...>>> {};
-
-template <class T>
-struct TypesContainVal<T, Types<>> : BoolVal<false> {};
+template <class T, class... Fields>
+struct TypesContainVal<T, Types<Fields...>> :
+    Any<TypesContainHelper<T, Fields>...> {};
 
 template <usize index, class Ts>
 using ZeroSizedTypeHolderFieldEnable =
@@ -136,15 +128,17 @@ template <usize index, class... Fields>
 struct ZeroSizedTypeGetter {
   using Self = ZeroSizedTypeHolder<Fields...>;
   using Result = typename TypesIndex<index, Types<Fields...>>::Result;
-  using F = ZeroSizedTypeHolderField<
+  using Field = ZeroSizedTypeHolderField<
       TypesFirstIndex<Result, Types<Fields...>>::result,
       Types<Fields...>>;
 
   static constexpr const Result &inner(const Self &self) {
-    return static_cast<const F &>(self);
+    return static_cast<const Field &>(self);
   }
 
-  static constexpr Result &inner(Self &self) { return static_cast<F &>(self); }
+  static constexpr Result &inner(Self &self) {
+    return static_cast<Field &>(self);
+  }
 };
 } // namespace _impl_types
 } // namespace crust

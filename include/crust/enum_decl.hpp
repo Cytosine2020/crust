@@ -17,26 +17,28 @@ namespace crust {
 namespace _impl_enum {
 #define CRUST_ENUM_VARIANT(NAME)                                               \
   struct crust_ebco NAME :                                                     \
+      ::crust::TupleStruct<>,                                                  \
       ::crust::Derive<                                                         \
           NAME,                                                                \
-          ::crust::MonoStateType,                                              \
+          ::crust::TupleStruct<>,                                              \
           ::crust::ZeroSizedType,                                              \
           ::crust::clone::Clone,                                               \
           ::crust::cmp::PartialEq,                                             \
           ::crust::cmp::Eq,                                                    \
           ::crust::cmp::PartialOrd,                                            \
           ::crust::cmp::Ord> {                                                 \
-    constexpr NAME() {}                                                        \
+    CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::TupleStruct<>);                 \
   }
 
 CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
 
 #define CRUST_DISCRIMINANT_VARIANT(NAME, VALUE)                                \
   struct crust_ebco NAME :                                                     \
+      ::crust::TupleStruct<>,                                                  \
       ::crust::_impl_enum::DiscriminantVariant<NAME>,                          \
       ::crust::Derive<                                                         \
           NAME,                                                                \
-          ::crust::MonoStateType,                                              \
+          ::crust::TupleStruct<>,                                              \
           ::crust::ZeroSizedType,                                              \
           ::crust::clone::Clone,                                               \
           ::crust::cmp::PartialEq,                                             \
@@ -44,7 +46,7 @@ CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
           ::crust::cmp::PartialOrd,                                            \
           ::crust::cmp::Ord> {                                                 \
     static constexpr ::crust::isize result = VALUE;                            \
-    constexpr NAME() {}                                                        \
+    CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::TupleStruct<>);                 \
   }
 
 template <class I, bool is_spec, class T, class... Fields>

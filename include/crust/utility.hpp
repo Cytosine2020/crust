@@ -380,13 +380,6 @@ CRUST_TRAIT(ZeroSizedType) {
       ZeroSizedType, IsEmptyType<Self>, IsTriviallyCopyable<Self>);
 };
 
-struct MonoStateType {};
-
-namespace _impl_derive {
-template <class Self>
-struct Derive<Self, MonoStateType, ZeroSizedType> : ZeroSizedType<Self> {};
-} // namespace _impl_derive
-
 template <class T>
 struct RefMut {
 private:

@@ -170,35 +170,6 @@ template <class Self, class Base>
 struct TupleLikeOrdHelper<Self, Base, 0> {
   static constexpr cmp::Ordering cmp(const Self &, const Self &);
 };
-
-template <class Self>
-struct Derive<Self, MonoStateType, cmp::PartialEq> : cmp::PartialEq<Self> {
-  constexpr bool eq(const Self &) const { return true; }
-
-  constexpr bool ne(const Self &) const { return false; }
-};
-
-template <class Self>
-struct Derive<Self, MonoStateType, cmp::Eq, void> : cmp::Eq<Self> {};
-
-template <class Self>
-struct Derive<Self, MonoStateType, cmp::PartialOrd, void> :
-    cmp::PartialOrd<Self> {
-  constexpr Option<cmp::Ordering> partial_cmp(const Self &) const;
-
-  constexpr bool lt(const Self &) const { return false; }
-
-  constexpr bool le(const Self &) const { return true; }
-
-  constexpr bool gt(const Self &) const { return false; }
-
-  constexpr bool ge(const Self &) const { return true; }
-};
-
-template <class Self>
-struct Derive<Self, MonoStateType, cmp::Ord, void> : cmp::Ord<Self> {
-  constexpr cmp::Ordering cmp(const Self &) const;
-};
 } // namespace _impl_derive
 } // namespace crust
 

@@ -20,15 +20,18 @@ struct AllZeroSizedType<_impl_types::Types<Fields...>> :
 template <bool is_zst, bool remain_is_zst, class Ts>
 struct TupleSizedHolderImpl;
 
+template <class Ts>
+using TupleSizedHolderIsZST =
+    Require<typename _impl_types::TypesIndex<0, Ts>::Result, ZeroSizedType>;
+
+template <class Ts>
+using TupleSizedHolderRemainZST =
+    AllZeroSizedType<typename _impl_types::TypesAfter<0, Ts>::Result>;
+
 template <class... Fields>
 using TupleSizedHolder = TupleSizedHolderImpl<
-    Require<
-        typename _impl_types::TypesIndex<0, _impl_types::Types<Fields...>>::
-            Result,
-        ZeroSizedType>::result,
-    AllZeroSizedType<typename _impl_types::TypesAfter<
-        0,
-        _impl_types::Types<Fields...>>::Result>::result,
+    TupleSizedHolderIsZST<_impl_types::Types<Fields...>>::result,
+    TupleSizedHolderRemainZST<_impl_types::Types<Fields...>>::result,
     _impl_types::Types<Fields...>>;
 
 template <class Field, class... Fields>
@@ -221,7 +224,7 @@ struct Derive<
 
 private:
   using PartialEqHelper =
-      _impl_derive::TupleLikePartialEqHelper<Self, TupleStruct<Fields...>>;
+      TupleLikePartialEqHelper<Self, TupleStruct<Fields...>>;
 
 public:
   constexpr bool eq(const Self &other) const {
@@ -250,7 +253,7 @@ struct Derive<
 
 private:
   using PartialOrdHelper =
-      _impl_derive::TupleLikePartialOrdHelper<Self, TupleStruct<Fields...>>;
+      TupleLikePartialOrdHelper<Self, TupleStruct<Fields...>>;
 
 public:
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;

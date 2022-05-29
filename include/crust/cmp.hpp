@@ -285,18 +285,6 @@ constexpr cmp::Ordering
 TupleLikeOrdHelper<Self, Base, 0>::cmp(const Self &, const Self &) {
   return cmp::make_equal();
 }
-
-template <class Self>
-constexpr Option<cmp::Ordering>
-Derive<Self, MonoStateType, cmp::PartialOrd>::partial_cmp(const Self &) const {
-  return make_some(cmp::make_equal());
-}
-
-template <class Self>
-constexpr cmp::Ordering
-Derive<Self, MonoStateType, cmp::Ord>::cmp(const Self &) const {
-  return cmp::make_equal();
-}
 } // namespace _impl_derive
 } // namespace crust
 
