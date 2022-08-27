@@ -15,15 +15,7 @@ template <class T>
 struct Some;
 
 template <class T>
-struct crust_ebco Option :
-    Enum<None, Some<T>>,
-    Derive<
-        Option<T>,
-        Enum<None, Some<T>>,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
+struct crust_ebco Option : Enum<None, Some<T>>, AutoDerive<Option<T>> {
   CRUST_ENUM_USE_BASE(Option, Enum<None, Some<T>>)
 
   constexpr bool is_some() const {
@@ -82,6 +74,36 @@ struct crust_ebco Option :
 using option::None;
 using option::Option;
 using option::Some;
+
+template <>
+struct NewDerive<None> :
+    DeriveInfo<
+        None,
+        TupleStruct<>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {};
+
+template <class T>
+struct NewDerive<Some<T>> :
+    DeriveInfo<
+        Some<T>,
+        TupleStruct<T>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {};
+
+template <class T>
+struct NewDerive<Option<T>> :
+    DeriveInfo<
+        Option<T>,
+        Enum<None, Some<T>>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {};
 } // namespace crust
 
 

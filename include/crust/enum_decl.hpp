@@ -669,8 +669,6 @@ private:
                           _impl_types::Types<Fields...>>>::result);
   crust_static_assert(All<Not<IsConstOrRefVal<Fields>>...>::result);
 
-  Inner inner;
-
   template <class>
   friend struct LetEnum;
 
@@ -708,6 +706,8 @@ protected:
   }
 
 public:
+  Inner inner; // FIXME:
+
   template <
       class T,
       class = EnableIf<
@@ -796,13 +796,40 @@ public:
   Self clone() const { return self().template visit<Self>(Clone{}); }
 };
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
+template <class T>
+struct ImplPartialEqForEnum : TmplVal<bool, false> {};
+
+template <class... Fields>
+struct ImplPartialEqForEnum<Enum<Fields...>> :
+    All<Require<Fields, cmp::PartialEq>...> {};
+
+template <class T>
+struct ImplEqForEnum : TmplVal<bool, false> {};
+
+template <class... Fields>
+struct ImplEqForEnum<Enum<Fields...>> : All<Require<Fields, cmp::Eq>...> {};
+
+template <class T>
+struct ImplPartialOrdForEnum : TmplVal<bool, false> {};
+
+template <class... Fields>
+struct ImplPartialOrdForEnum<Enum<Fields...>> :
+    All<Require<Fields, cmp::PartialOrd>...> {};
+
+template <class T>
+struct ImplOrdForEnum : TmplVal<bool, false> {};
+
+template <class... Fields>
+struct ImplOrdForEnum<Enum<Fields...>> :
+    All<Require<Fields, cmp::PartialEq>...> {};
+} // namespace _impl_derive
+
+template <class S>
+CRUST_IMPL_FOR(
     cmp::PartialEq,
-    EnableIf<Require<Fields, cmp::PartialEq>...>> : cmp::PartialEq<Self> {
-  CRUST_TRAIT_USE_SELF(Derive);
+    S,
+    _impl_derive::ImplPartialEqForEnum<typename NewDerive<S>::BluePrint>) {
+  CRUST_IMPL_USE_SELF(S);
 
   constexpr bool eq(const Self &other) const {
     return self().inner.eq(other.inner);
@@ -813,20 +840,18 @@ struct Derive<
   }
 };
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
+template <class S>
+CRUST_IMPL_FOR(
     cmp::Eq,
-    EnableIf<Require<Fields, cmp::Eq>...>> : cmp::Eq<Self> {};
+    S,
+    _impl_derive::ImplEqForEnum<typename NewDerive<S>::BluePrint>){};
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
+template <class S>
+CRUST_IMPL_FOR(
     cmp::PartialOrd,
-    EnableIf<Require<Fields, cmp::Eq>...>> : cmp::PartialOrd<Self> {
-  CRUST_TRAIT_USE_SELF(Derive);
+    S,
+    _impl_derive::ImplPartialOrdForEnum<typename NewDerive<S>::BluePrint>) {
+  CRUST_IMPL_USE_SELF(S);
 
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;
 
@@ -847,17 +872,15 @@ struct Derive<
   }
 };
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
+template <class S>
+CRUST_IMPL_FOR(
     cmp::Ord,
-    EnableIf<Require<Fields, cmp::Eq>...>> : cmp::Ord<Self> {
-  CRUST_TRAIT_USE_SELF(Derive);
+    S,
+    _impl_derive::ImplOrdForEnum<typename NewDerive<S>::BluePrint>) {
+  CRUST_IMPL_USE_SELF(S);
 
   constexpr cmp::Ordering cmp(const Self &other) const;
 };
-} // namespace _impl_derive
 } // namespace crust
 
 

@@ -84,11 +84,11 @@ GTEST_TEST(tuple, size_zero) {
 
   constexpr auto empty_3 = tuple(tuple(), tuple(tuple()));
   crust_static_assert(empty_3.get<0>() == tuple());
-  // crust_static_assert(empty_3.get<1>() == tuple(tuple()));
+  crust_static_assert(empty_3.get<1>() == tuple(tuple()));
   crust_static_assert(empty_3.get<1>().get<0>() == tuple());
 
   constexpr auto empty_4 = tuple(tuple(tuple()), tuple());
-  // crust_static_assert(empty_4.get<0>() == tuple(tuple()));
+  crust_static_assert(empty_4.get<0>() == tuple(tuple()));
   crust_static_assert(empty_4.get<1>() == tuple());
   crust_static_assert(empty_4.get<0>().get<0>() == tuple());
 

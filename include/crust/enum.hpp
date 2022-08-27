@@ -28,7 +28,7 @@ EnumTagUnion<Index, Fields...>::Cmp::operator()(const T &value) const {
 template <class Index, class... Fields>
 constexpr Option<cmp::Ordering>
 EnumTagUnion<Index, Fields...>::partial_cmp(const EnumTagUnion &other) const {
-  return make_some(operator_cmp(*this, other)); // FIXME
+  return make_some(operator_cmp(*this, other)); // FIXME:
 }
 
 template <class Index, class... Fields>
@@ -78,24 +78,24 @@ crust_cxx14_constexpr _impl_enum::LetEnum<T> let(T &ref) {
   return _impl_enum::LetEnum<T>{ref};
 }
 
-namespace _impl_derive {
-template <class Self, class... Fields>
-constexpr Option<cmp::Ordering> Derive<
-    Self,
-    Enum<Fields...>,
-    cmp::PartialOrd,
-    EnableIf<Require<Fields, cmp::Eq>...>>::partial_cmp(const Self &other)
+template <class S>
+constexpr Option<cmp::Ordering> ImplFor<
+    Trait<cmp::PartialOrd>,
+    S,
+    EnableIf<_impl_derive::ImplPartialOrdForEnum<
+        typename NewDerive<S>::BluePrint>>>::partial_cmp(const Self &other)
     const {
   return operator_partial_cmp(self().inner, other.inner);
 }
 
-template <class Self, class... Fields>
-constexpr cmp::Ordering
-Derive<Self, Enum<Fields...>, cmp::Ord, EnableIf<Require<Fields, cmp::Eq>...>>::
+template <class S>
+constexpr cmp::Ordering ImplFor<
+    Trait<cmp::Ord>,
+    S,
+    EnableIf<_impl_derive::ImplOrdForEnum<typename NewDerive<S>::BluePrint>>>::
     cmp(const Self &other) const {
   return operator_cmp(self().inner, other.inner);
 }
-} // namespace _impl_derive
 } // namespace crust
 
 

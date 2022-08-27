@@ -11,27 +11,24 @@
 
 
 namespace crust {
-namespace _impl_derive {
-template <class Self, class... Fields>
-constexpr Option<cmp::Ordering> Derive<
-    Self,
-    TupleStruct<Fields...>,
-    cmp::PartialOrd,
-    EnableIf<Require<Fields, cmp::PartialOrd>...>>::partial_cmp(const Self
-                                                                    &other)
+template <class S>
+constexpr Option<cmp::Ordering> ImplFor<
+    Trait<cmp::PartialOrd>,
+    S,
+    EnableIf<_impl_derive::ImplPartialOrdForTupleStruct<
+        typename NewDerive<S>::BluePrint>>>::partial_cmp(const Self &other)
     const {
   return PartialOrdHelper::partial_cmp(self(), other);
 }
 
-template <class Self, class... Fields>
-constexpr cmp::Ordering Derive<
-    Self,
-    TupleStruct<Fields...>,
-    cmp::Ord,
-    EnableIf<Require<Fields, cmp::Ord>...>>::cmp(const Self &other) const {
-  return TupleLikeOrdHelper<Self, TupleStruct<Fields...>>::cmp(self(), other);
+template <class S>
+constexpr cmp::Ordering ImplFor<
+    Trait<cmp::Ord>,
+    S,
+    EnableIf<_impl_derive::ImplOrdForTupleStruct<
+        typename NewDerive<S>::BluePrint>>>::cmp(const Self &other) const {
+  return OrdHelper::cmp(self(), other);
 }
-} // namespace _impl_derive
 
 template <class... Fields>
 constexpr Tuple<typename RemoveConstOrRefType<Fields>::Result...>

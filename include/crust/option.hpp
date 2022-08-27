@@ -7,10 +7,20 @@
 
 namespace crust {
 namespace option {
-CRUST_ENUM_VARIANT(None);
+struct crust_ebco None :
+    TupleStruct<>,
+    AutoDerive<None>,
+    Derive<None, TupleStruct<>, ZeroSizedType, clone::Clone> {
+  CRUST_USE_BASE_CONSTRUCTORS(None, TupleStruct<>);
+};
 
 template <class T>
-CRUST_ENUM_TUPLE_VARIANT(Some, Some<T>, T);
+struct crust_ebco Some :
+    TupleStruct<T>,
+    AutoDerive<Some<T>>,
+    Derive<None, TupleStruct<>, ZeroSizedType, clone::Clone> {
+  CRUST_USE_BASE_CONSTRUCTORS(Some, TupleStruct<T>);
+};
 
 template <class T>
 crust_always_inline constexpr Option<typename RemoveConstOrRefType<T>::Result>

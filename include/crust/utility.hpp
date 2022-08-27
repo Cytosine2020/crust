@@ -339,6 +339,31 @@ struct Derive<Self, BluePrint, Trait, Traits...> :
 template <class Self, class BluePrint>
 struct Derive<Self, BluePrint> {};
 
+template <class S, class B, class... T>
+struct DeriveInfo {
+  using Result = DeriveInfo;
+  using BluePrint = B;
+};
+
+template <class Self>
+struct NewDerive;
+
+namespace _impl_derive {
+template <class Info>
+struct AutoDerive;
+
+template <class Self, class BluePrint, class T, class... Ts>
+struct AutoDerive<DeriveInfo<Self, BluePrint, T, Ts...>> :
+    ImplFor<T, Self>,
+    AutoDerive<DeriveInfo<Self, BluePrint, Ts...>> {};
+
+template <class Self, class BluePrint>
+struct AutoDerive<DeriveInfo<Self, BluePrint>> {};
+} // namespace _impl_derive
+
+template <class Self>
+using AutoDerive = _impl_derive::AutoDerive<typename NewDerive<Self>::Result>;
+
 template <class Struct, template <class, class...> class Trait, class... Args>
 struct Require : IsBaseOfVal<Trait<Struct, Args...>, Struct> {};
 

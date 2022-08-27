@@ -87,8 +87,6 @@ GTEST_TEST(enum_, enum_) {
   EXPECT_TRUE(d.visit<bool>(VisitType<ClassB>{}));
 }
 
-
-namespace {
 CRUST_ENUM_VARIANT(A);
 CRUST_ENUM_VARIANT(B);
 CRUST_ENUM_TUPLE_VARIANT(C, C, i32);
@@ -96,30 +94,66 @@ CRUST_ENUM_TUPLE_VARIANT(D, D, i32);
 CRUST_ENUM_TUPLE_VARIANT(E, E, i32);
 CRUST_ENUM_TUPLE_VARIANT(F, F, i32);
 
-struct crust_ebco EnumB :
-    Enum<A, B>,
-    Derive<EnumB, Enum<A, B>, cmp::PartialEq, cmp::Eq> {
+struct EnumB;
+struct EnumC;
+struct EnumD;
+struct EnumE;
+
+namespace crust {
+template <>
+struct NewDerive<EnumB> :
+    DeriveInfo<
+        EnumB,
+        Enum<A, B>,
+        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>> {};
+
+template <>
+struct NewDerive<EnumC> :
+    DeriveInfo<
+        EnumC,
+        Enum<A, B, C, D, E, F>,
+        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>> {};
+
+template <>
+struct NewDerive<EnumD> :
+    DeriveInfo<
+        EnumD,
+        Enum<A, B>,
+        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>> {};
+
+template <>
+struct NewDerive<EnumE> :
+    DeriveInfo<
+        EnumE,
+        Enum<A, B, C, D, E, F>,
+        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>> {};
+} // namespace crust
+
+struct crust_ebco EnumB : Enum<A, B>, AutoDerive<EnumB> {
   CRUST_ENUM_USE_BASE(EnumB, Enum<A, B>);
 };
 
-struct crust_ebco EnumC :
-    Enum<A, B, C, D, E, F>,
-    Derive<EnumC, Enum<A, B, C, D, E, F>, cmp::PartialEq, cmp::Eq> {
+struct crust_ebco EnumC : Enum<A, B, C, D, E, F>, AutoDerive<EnumC> {
   CRUST_ENUM_USE_BASE(EnumC, Enum<A, B, C, D, E, F>);
 };
 
-struct crust_ebco EnumD :
-    Enum<EnumRepr<i16>, A, B>,
-    Derive<EnumD, Enum<A, B>, cmp::PartialEq, cmp::Eq> {
+struct crust_ebco EnumD : Enum<EnumRepr<i16>, A, B>, AutoDerive<EnumD> {
   CRUST_ENUM_USE_BASE(EnumD, Enum<EnumRepr<u16>, A, B>);
 };
 
 struct crust_ebco EnumE :
     Enum<EnumRepr<isize>, A, B, C, D, E, F>,
-    Derive<EnumE, Enum<A, B, C, D, E, F>, cmp::PartialEq, cmp::Eq> {
+    AutoDerive<EnumE> {
   CRUST_ENUM_USE_BASE(EnumE, Enum<EnumRepr<isize>, A, B, C, D, E, F>);
 };
-} // namespace
 
 
 GTEST_TEST(enum_, tag_only) {
@@ -148,13 +182,24 @@ GTEST_TEST(enum_, raii) {
   EXPECT_TRUE(a.visit<bool>(VisitType<F>{}));
 }
 
-namespace {
-struct crust_ebco EnumF :
-    Enum<i32, char>,
-    Derive<EnumF, Enum<i32, char>, cmp::PartialEq, cmp::Eq> {
+struct EnumF;
+
+namespace crust {
+template <>
+struct NewDerive<EnumF> :
+    DeriveInfo<
+        EnumF,
+        Enum<i32, char>,
+        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>> {};
+} // namespace crust
+
+
+struct crust_ebco EnumF : Enum<i32, char>, AutoDerive<EnumF> {
   CRUST_ENUM_USE_BASE(EnumF, Enum<i32, char>);
 };
-} // namespace
+
 
 GTEST_TEST(enum_, cmp) {
   EXPECT_TRUE(EnumF{0} == EnumF{0});

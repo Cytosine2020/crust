@@ -24,7 +24,9 @@ CRUST_TRAIT(PartialEq, class Rhs = Self) {
   constexpr bool ne(const Rhs &other) const { return !self().eq(other); }
 
   constexpr friend bool operator==(const Self &self_, const Rhs &other) {
-    return self_.eq(other);
+    return static_cast<const ImplFor<Trait<PartialEq>, Self> &>(self_).eq(
+        other);
+    // return self_.eq(other);
   }
 
   constexpr friend bool operator!=(const Self &self_, const Rhs &other) {
