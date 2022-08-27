@@ -350,7 +350,7 @@ struct NewDerive;
 
 namespace _impl_derive {
 template <class Info>
-struct AutoDerive;
+struct crust_ebco AutoDerive;
 
 template <class Self, class BluePrint, class T, class... Ts>
 struct AutoDerive<DeriveInfo<Self, BluePrint, T, Ts...>> :
