@@ -27,10 +27,10 @@ struct EnumA;
 
 namespace crust {
 template <>
-CRUST_IMPL_FOR(clone::Clone, ClassA){};
+CRUST_IMPL_FOR(clone::Clone<ClassA>){};
 
 template <>
-CRUST_IMPL_FOR(clone::Clone, ClassB){};
+CRUST_IMPL_FOR(clone::Clone<ClassB>){};
 
 template <>
 struct BluePrint<EnumA> : TmplType<Enum<ClassA, ClassB>> {};

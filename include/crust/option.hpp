@@ -11,7 +11,6 @@ struct crust_ebco None :
     TupleStruct<>,
     Derive<
         None,
-        TupleStruct<>,
         Trait<ZeroSizedType>,
         Trait<clone::Clone>,
         Trait<cmp::PartialEq>,

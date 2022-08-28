@@ -137,7 +137,7 @@ _IMPL_PRIMITIVE(_IMPL_OPERATOR_PARTIAL_CMP);
 #undef _IMPL_OPERATOR_PARTIAL_CMP
 
 namespace cmp {
-// todo: refactor
+// TODO: refactor
 template <class Self, class Rhs>
 constexpr bool PartialOrd<Self, Rhs>::lt(const Rhs &other) const {
   return operator_partial_cmp(self(), other) == make_some(make_less());
@@ -219,7 +219,7 @@ struct crust_ebco Reverse :
 } // namespace cmp
 
 template <class T>
-CRUST_IMPL_FOR(cmp::PartialEq, cmp::Reverse<T>, Require<T, cmp::PartialEq>) {
+CRUST_IMPL_FOR(cmp::PartialEq<cmp::Reverse<T>>, Require<T, cmp::PartialEq>) {
   CRUST_IMPL_USE_SELF(cmp::Reverse<T>);
 
   constexpr bool eq(const Self &other) const {
@@ -228,10 +228,10 @@ CRUST_IMPL_FOR(cmp::PartialEq, cmp::Reverse<T>, Require<T, cmp::PartialEq>) {
 };
 
 template <class T>
-CRUST_IMPL_FOR(cmp::Eq, cmp::Reverse<T>, Require<T, cmp::Eq>){};
+CRUST_IMPL_FOR(cmp::Eq<cmp::Reverse<T>>, Require<T, cmp::Eq>){};
 
 template <class T>
-CRUST_IMPL_FOR(cmp::PartialOrd, cmp::Reverse<T>, Require<T, cmp::PartialOrd>) {
+CRUST_IMPL_FOR(cmp::PartialOrd<cmp::Reverse<T>>, Require<T, cmp::PartialOrd>) {
   CRUST_IMPL_USE_SELF(cmp::Reverse<T>);
 
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const {
@@ -257,7 +257,7 @@ CRUST_IMPL_FOR(cmp::PartialOrd, cmp::Reverse<T>, Require<T, cmp::PartialOrd>) {
 };
 
 template <class T>
-CRUST_IMPL_FOR(cmp::Ord, cmp::Reverse<T>, Require<T, cmp::Ord>) {
+CRUST_IMPL_FOR(cmp::Ord<cmp::Reverse<T>>, Require<T, cmp::Ord>) {
   CRUST_IMPL_USE_SELF(cmp::Reverse<T>);
 
   constexpr cmp::Ordering cmp(const Self &other) const {
@@ -276,7 +276,7 @@ _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::Ord);
 #undef _DERIVE_PRIMITIVE
 #undef _IMPL_PRIMITIVE
 
-// todo: implement for float point numbers
+// TODO: implement for float point numbers
 
 namespace _impl_derive {
 template <class Self, class Base, usize rev_index>

@@ -205,15 +205,13 @@ struct ImplForTupleStruct<TupleStruct<Fields...>, Trait, Args...> :
 
 template <class S>
 CRUST_IMPL_FOR(
-    ZeroSizedType,
-    S,
+    ZeroSizedType<S>,
     _impl_derive::
         ImplForTupleStruct<typename BluePrint<S>::Result, ZeroSizedType>){};
 
 template <class S>
 CRUST_IMPL_FOR(
-    clone::Clone,
-    S,
+    clone::Clone<S>,
     _impl_derive::
         ImplForTupleStruct<typename BluePrint<S>::Result, clone::Clone>) {
   CRUST_IMPL_USE_SELF(S);
@@ -230,8 +228,7 @@ public:
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::PartialEq,
-    S,
+    cmp::PartialEq<S>,
     _impl_derive::
         ImplForTupleStruct<typename BluePrint<S>::Result, cmp::PartialEq>) {
   CRUST_IMPL_USE_SELF(S);
@@ -252,14 +249,12 @@ public:
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::Eq,
-    S,
+    cmp::Eq<S>,
     _impl_derive::ImplForTupleStruct<typename BluePrint<S>::Result, cmp::Eq>){};
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::PartialOrd,
-    S,
+    cmp::PartialOrd<S>,
     _impl_derive::
         ImplForTupleStruct<typename BluePrint<S>::Result, cmp::PartialOrd>) {
   CRUST_IMPL_USE_SELF(S);
@@ -290,8 +285,7 @@ public:
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::Ord,
-    S,
+    cmp::Ord<S>,
     _impl_derive::ImplForTupleStruct<typename BluePrint<S>::Result, cmp::Ord>) {
   CRUST_IMPL_USE_SELF(S);
 

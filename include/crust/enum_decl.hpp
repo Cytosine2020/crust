@@ -603,7 +603,7 @@ struct EnumSelectImpl<hint, true, Fields...> : EnumTagOnly<hint, Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(EnumSelectImpl, EnumTagOnly<hint, Fields...>);
 };
 
-// todo: auto detect
+// TODO: auto detect
 template <class... Fields>
 struct EnumSelectImpl<void, false, Fields...> : EnumTagUnion<i32, Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(EnumSelectImpl, EnumTagUnion<i32, Fields...>);
@@ -672,6 +672,11 @@ private:
   template <class, class>
   friend struct EnumAs;
 
+  template <class, class>
+  friend struct ::crust::ImplFor;
+
+  Inner inner;
+
 protected:
   constexpr Enum() : inner{} {}
 
@@ -700,8 +705,6 @@ protected:
   }
 
 public:
-  Inner inner; // FIXME:
-
   template <
       class T,
       class = EnableIf<
@@ -736,18 +739,17 @@ public:
   }
 };
 
-// todo: option like enum
+// TODO: option like enum
 
 // template<class Field>
 // struct Enum<void, Field> {
-//   // todo: only one possibility, this is just Field
+//   // TODO: only one possibility, this is just Field
 // };
 } // namespace _impl_enum
 
 template <class Inner, class... Fields>
 CRUST_IMPL_FOR(
-    CRUST_MACRO(_impl_enum::EnumAs, Inner),
-    CRUST_MACRO(_impl_enum::Enum<Inner, Fields...>),
+    CRUST_MACRO(_impl_enum::EnumAs<_impl_enum::Enum<Inner, Fields...>, Inner>),
     Require<Fields, ZeroSizedType>...){};
 
 template <class Type>
@@ -784,8 +786,7 @@ struct ImplForEnum<Enum<Fields...>, Trait, Args...> :
 
 template <class S>
 CRUST_IMPL_FOR(
-    clone::Clone,
-    S,
+    clone::Clone<S>,
     _impl_derive::ImplForEnum<typename BluePrint<S>::Result, clone::Clone>) {
   CRUST_IMPL_USE_SELF(S);
 
@@ -803,8 +804,7 @@ public:
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::PartialEq,
-    S,
+    cmp::PartialEq<S>,
     _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::PartialEq>) {
   CRUST_IMPL_USE_SELF(S);
 
@@ -819,14 +819,12 @@ CRUST_IMPL_FOR(
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::Eq,
-    S,
+    cmp::Eq<S>,
     _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::Eq>){};
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::PartialOrd,
-    S,
+    cmp::PartialOrd<S>,
     _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::PartialOrd>) {
   CRUST_IMPL_USE_SELF(S);
 
@@ -851,8 +849,7 @@ CRUST_IMPL_FOR(
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::Ord,
-    S,
+    cmp::Ord<S>,
     _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::Ord>) {
   CRUST_IMPL_USE_SELF(S);
 

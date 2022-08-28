@@ -13,8 +13,7 @@
 namespace crust {
 template <class S>
 constexpr Option<cmp::Ordering> ImplFor<
-    Trait<cmp::PartialOrd>,
-    S,
+    cmp::PartialOrd<S>,
     EnableIf<_impl_derive::ImplForTupleStruct<
         typename BluePrint<S>::Result,
         cmp::PartialOrd>>>::partial_cmp(const Self &other) const {
@@ -23,8 +22,7 @@ constexpr Option<cmp::Ordering> ImplFor<
 
 template <class S>
 constexpr cmp::Ordering ImplFor<
-    Trait<cmp::Ord>,
-    S,
+    cmp::Ord<S>,
     EnableIf<_impl_derive::
                  ImplForTupleStruct<typename BluePrint<S>::Result, cmp::Ord>>>::
     cmp(const Self &other) const {

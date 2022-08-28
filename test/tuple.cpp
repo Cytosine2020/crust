@@ -22,10 +22,10 @@ struct D;
 
 namespace crust {
 template <>
-CRUST_IMPL_FOR(clone::Clone, C){};
+CRUST_IMPL_FOR(clone::Clone<C>){};
 
 template <>
-CRUST_IMPL_FOR(clone::Clone, D){};
+CRUST_IMPL_FOR(clone::Clone<D>){};
 } // namespace crust
 
 namespace {

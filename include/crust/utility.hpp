@@ -247,33 +247,33 @@ constexpr T &&forward(typename RemoveRefType<T>::Result &&t) {
 
 #define CRUST_TRAIT_USE_SELF(TRAIT, ...)                                       \
 private:                                                                       \
-  constexpr const Self &self() const {                                         \
-    return *static_cast<const Self *>(this);                                   \
+  template <class Trait = TRAIT>                                               \
+  constexpr const ::crust::ImplFor<Trait> &self() const {                      \
+    return *static_cast<const ::crust::ImplFor<Trait> *>(                      \
+        static_cast<const Self *>(this));                                      \
   }                                                                            \
-  crust_cxx14_constexpr Self &self() { return *static_cast<Self *>(this); }    \
+  template <class Trait = TRAIT>                                               \
+  crust_cxx14_constexpr ::crust::ImplFor<Trait> &self() {                      \
+    return *static_cast<::crust::ImplFor<Trait> *>(static_cast<Self *>(this)); \
+  }                                                                            \
                                                                                \
 protected:                                                                     \
   constexpr TRAIT() {                                                          \
+    crust_static_assert(!::crust::IsConstOrRefVal<Self>::result);              \
     crust_static_assert(::crust::IsBaseOfVal<TRAIT, Self>::result);            \
     crust_static_assert(::crust::All<__VA_ARGS__>::result);                    \
   }                                                                            \
                                                                                \
 public:
 
-namespace _impl_utility {
-template <class Self, template <class, class...> class T, class... Args>
-using Trait = T<Self, Args...>;
-} // namespace _impl_utility
-
 template <template <class, class...> class T, class... Args>
 struct Trait {};
 
-template <class Trait, class Self, class Enable = void>
+template <class Trait, class Enable = void>
 struct ImplFor {};
 
-#define CRUST_IMPL_FOR(TRAIT, SELF, ...)                                       \
-  struct ImplFor<Trait<TRAIT>, SELF, EnableIf<__VA_ARGS__>> :                  \
-      _impl_utility::Trait<SELF, TRAIT>
+#define CRUST_IMPL_FOR(TRAIT, ...)                                             \
+  struct ImplFor<TRAIT, EnableIf<__VA_ARGS__>> : TRAIT
 
 #define CRUST_IMPL_USE_SELF(...)                                               \
 private:                                                                       \
@@ -300,7 +300,7 @@ template <
     class... Args,
     class... Traits>
 struct Impl<Self, Trait<T, Args...>, Traits...> :
-    ImplFor<Trait<T, Args...>, Self>,
+    ImplFor<T<Self, Args...>>,
     Impl<Self, Traits...> {};
 
 template <class Self>
@@ -320,9 +320,14 @@ struct BluePrint;
 template <class Self, class... Ts>
 struct crust_ebco Derive;
 
-template <class Self, class Trait, class... Traits>
-struct Derive<Self, Trait, Traits...> :
-    ImplFor<Trait, Self>,
+template <
+    class Self,
+    template <class, class...>
+    class T,
+    class... Args,
+    class... Traits>
+struct Derive<Self, Trait<T, Args...>, Traits...> :
+    ImplFor<T<Self, Args...>>,
     Derive<Self, Traits...> {};
 
 template <class Self>
