@@ -82,9 +82,9 @@ template <class S>
 constexpr Option<cmp::Ordering> ImplFor<
     Trait<cmp::PartialOrd>,
     S,
-    EnableIf<_impl_derive::ImplPartialOrdForEnum<
-        typename NewDerive<S>::BluePrint>>>::partial_cmp(const Self &other)
-    const {
+    EnableIf<_impl_derive::
+                 ImplForEnum<typename BluePrint<S>::Result, cmp::PartialOrd>>>::
+    partial_cmp(const Self &other) const {
   return operator_partial_cmp(self().inner, other.inner);
 }
 
@@ -92,7 +92,8 @@ template <class S>
 constexpr cmp::Ordering ImplFor<
     Trait<cmp::Ord>,
     S,
-    EnableIf<_impl_derive::ImplOrdForEnum<typename NewDerive<S>::BluePrint>>>::
+    EnableIf<
+        _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::Ord>>>::
     cmp(const Self &other) const {
   return operator_cmp(self().inner, other.inner);
 }

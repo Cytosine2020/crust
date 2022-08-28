@@ -312,57 +312,21 @@ struct TupleLikeSize;
 
 template <class Self, usize index>
 struct TupleLikeGetter;
-
-template <
-    class Self,
-    class BluePrint,
-    template <class, class...>
-    class Trait,
-    class Enable = void>
-struct crust_ebco Derive {};
 } // namespace _impl_derive
 
-template <class Self, class BluePrint, template <class...> class... Traits>
+template <class Self>
+struct BluePrint;
+
+template <class Self, class... Ts>
 struct crust_ebco Derive;
 
-template <
-    class Self,
-    class BluePrint,
-    template <class, class...>
-    class Trait,
-    template <class, class...>
-    class... Traits>
-struct Derive<Self, BluePrint, Trait, Traits...> :
-    _impl_derive::Derive<Self, BluePrint, Trait>,
-    Derive<Self, BluePrint, Traits...> {};
-
-template <class Self, class BluePrint>
-struct Derive<Self, BluePrint> {};
-
-template <class S, class B, class... T>
-struct DeriveInfo {
-  using Result = DeriveInfo;
-  using BluePrint = B;
-};
+template <class Self, class Trait, class... Traits>
+struct Derive<Self, Trait, Traits...> :
+    ImplFor<Trait, Self>,
+    Derive<Self, Traits...> {};
 
 template <class Self>
-struct NewDerive;
-
-namespace _impl_derive {
-template <class Info>
-struct crust_ebco AutoDerive;
-
-template <class Self, class BluePrint, class T, class... Ts>
-struct AutoDerive<DeriveInfo<Self, BluePrint, T, Ts...>> :
-    ImplFor<T, Self>,
-    AutoDerive<DeriveInfo<Self, BluePrint, Ts...>> {};
-
-template <class Self, class BluePrint>
-struct AutoDerive<DeriveInfo<Self, BluePrint>> {};
-} // namespace _impl_derive
-
-template <class Self>
-using AutoDerive = _impl_derive::AutoDerive<typename NewDerive<Self>::Result>;
+struct Derive<Self> {};
 
 template <class Struct, template <class, class...> class Trait, class... Args>
 struct Require : IsBaseOfVal<Trait<Struct, Args...>, Struct> {};

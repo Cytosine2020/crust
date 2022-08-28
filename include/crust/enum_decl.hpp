@@ -20,13 +20,12 @@ namespace _impl_enum {
       ::crust::TupleStruct<>,                                                  \
       ::crust::Derive<                                                         \
           NAME,                                                                \
-          ::crust::TupleStruct<>,                                              \
-          ::crust::ZeroSizedType,                                              \
-          ::crust::clone::Clone,                                               \
-          ::crust::cmp::PartialEq,                                             \
-          ::crust::cmp::Eq,                                                    \
-          ::crust::cmp::PartialOrd,                                            \
-          ::crust::cmp::Ord> {                                                 \
+          ::crust::Trait<::crust::ZeroSizedType>,                              \
+          ::crust::Trait<::crust::clone::Clone>,                               \
+          ::crust::Trait<::crust::cmp::PartialEq>,                             \
+          ::crust::Trait<::crust::cmp::Eq>,                                    \
+          ::crust::Trait<::crust::cmp::PartialOrd>,                            \
+          ::crust::Trait<::crust::cmp::Ord>> {                                 \
     CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::TupleStruct<>);                 \
   }
 
@@ -38,13 +37,12 @@ CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
       ::crust::_impl_enum::DiscriminantVariant<NAME>,                          \
       ::crust::Derive<                                                         \
           NAME,                                                                \
-          ::crust::TupleStruct<>,                                              \
-          ::crust::ZeroSizedType,                                              \
-          ::crust::clone::Clone,                                               \
-          ::crust::cmp::PartialEq,                                             \
-          ::crust::cmp::Eq,                                                    \
-          ::crust::cmp::PartialOrd,                                            \
-          ::crust::cmp::Ord> {                                                 \
+          ::crust::Trait<::crust::ZeroSizedType>,                              \
+          ::crust::Trait<::crust::clone::Clone>,                               \
+          ::crust::Trait<::crust::cmp::PartialEq>,                             \
+          ::crust::Trait<::crust::cmp::Eq>,                                    \
+          ::crust::Trait<::crust::cmp::PartialOrd>,                            \
+          ::crust::Trait<::crust::cmp::Ord>> {                                 \
     static constexpr ::crust::isize result = VALUE;                            \
     CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::TupleStruct<>);                 \
   }
@@ -96,13 +94,12 @@ struct CheckDiscriminant<I, 0, Fields...> : BoolVal<true> {};
       ::crust::TupleStruct<__VA_ARGS__>,                                       \
       ::crust::Derive<                                                         \
           FULL_NAME,                                                           \
-          ::crust::TupleStruct<__VA_ARGS__>,                                   \
-          ::crust::ZeroSizedType,                                              \
-          ::crust::clone::Clone,                                               \
-          ::crust::cmp::PartialEq,                                             \
-          ::crust::cmp::Eq,                                                    \
-          ::crust::cmp::PartialOrd,                                            \
-          ::crust::cmp::Ord> {                                                 \
+          ::crust::Trait<::crust::ZeroSizedType>,                              \
+          ::crust::Trait<::crust::clone::Clone>,                               \
+          ::crust::Trait<::crust::cmp::PartialEq>,                             \
+          ::crust::Trait<::crust::cmp::Eq>,                                    \
+          ::crust::Trait<::crust::cmp::PartialOrd>,                            \
+          ::crust::Trait<::crust::cmp::Ord>> {                                 \
     CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::TupleStruct<__VA_ARGS__>);      \
   }
 
@@ -675,9 +672,6 @@ private:
   template <class, class>
   friend struct EnumAs;
 
-  template <class, class, template <class, class...> class, class>
-  friend struct _impl_derive::Derive;
-
 protected:
   constexpr Enum() : inner{} {}
 
@@ -776,13 +770,24 @@ struct crust_ebco Enum<EnumRepr<Type>, Fields...> :
 };
 
 namespace _impl_derive {
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
+template <class T, template <class, class...> class Trait, class... Args>
+struct ImplForEnum : TmplVal<bool, false> {};
+
+template <
+    class... Fields,
+    template <class, class...>
+    class Trait,
+    class... Args>
+struct ImplForEnum<Enum<Fields...>, Trait, Args...> :
+    All<Require<Fields, Trait, Args...>...> {};
+} // namespace _impl_derive
+
+template <class S>
+CRUST_IMPL_FOR(
     clone::Clone,
-    EnableIf<Require<Fields, clone::Clone>...>> : clone::Clone<Self> {
-  CRUST_TRAIT_USE_SELF(Derive);
+    S,
+    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, clone::Clone>) {
+  CRUST_IMPL_USE_SELF(S);
 
 private:
   struct Clone {
@@ -796,39 +801,11 @@ public:
   Self clone() const { return self().template visit<Self>(Clone{}); }
 };
 
-template <class T>
-struct ImplPartialEqForEnum : TmplVal<bool, false> {};
-
-template <class... Fields>
-struct ImplPartialEqForEnum<Enum<Fields...>> :
-    All<Require<Fields, cmp::PartialEq>...> {};
-
-template <class T>
-struct ImplEqForEnum : TmplVal<bool, false> {};
-
-template <class... Fields>
-struct ImplEqForEnum<Enum<Fields...>> : All<Require<Fields, cmp::Eq>...> {};
-
-template <class T>
-struct ImplPartialOrdForEnum : TmplVal<bool, false> {};
-
-template <class... Fields>
-struct ImplPartialOrdForEnum<Enum<Fields...>> :
-    All<Require<Fields, cmp::PartialOrd>...> {};
-
-template <class T>
-struct ImplOrdForEnum : TmplVal<bool, false> {};
-
-template <class... Fields>
-struct ImplOrdForEnum<Enum<Fields...>> :
-    All<Require<Fields, cmp::PartialEq>...> {};
-} // namespace _impl_derive
-
 template <class S>
 CRUST_IMPL_FOR(
     cmp::PartialEq,
     S,
-    _impl_derive::ImplPartialEqForEnum<typename NewDerive<S>::BluePrint>) {
+    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::PartialEq>) {
   CRUST_IMPL_USE_SELF(S);
 
   constexpr bool eq(const Self &other) const {
@@ -844,13 +821,13 @@ template <class S>
 CRUST_IMPL_FOR(
     cmp::Eq,
     S,
-    _impl_derive::ImplEqForEnum<typename NewDerive<S>::BluePrint>){};
+    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::Eq>){};
 
 template <class S>
 CRUST_IMPL_FOR(
     cmp::PartialOrd,
     S,
-    _impl_derive::ImplPartialOrdForEnum<typename NewDerive<S>::BluePrint>) {
+    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::PartialOrd>) {
   CRUST_IMPL_USE_SELF(S);
 
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;
@@ -876,7 +853,7 @@ template <class S>
 CRUST_IMPL_FOR(
     cmp::Ord,
     S,
-    _impl_derive::ImplOrdForEnum<typename NewDerive<S>::BluePrint>) {
+    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::Ord>) {
   CRUST_IMPL_USE_SELF(S);
 
   constexpr cmp::Ordering cmp(const Self &other) const;

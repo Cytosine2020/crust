@@ -9,16 +9,29 @@ namespace crust {
 namespace option {
 struct crust_ebco None :
     TupleStruct<>,
-    AutoDerive<None>,
-    Derive<None, TupleStruct<>, ZeroSizedType, clone::Clone> {
+    Derive<
+        None,
+        TupleStruct<>,
+        Trait<ZeroSizedType>,
+        Trait<clone::Clone>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {
   CRUST_USE_BASE_CONSTRUCTORS(None, TupleStruct<>);
 };
 
 template <class T>
 struct crust_ebco Some :
     TupleStruct<T>,
-    AutoDerive<Some<T>>,
-    Derive<None, TupleStruct<>, ZeroSizedType, clone::Clone> {
+    Derive<
+        Some<T>,
+        Trait<ZeroSizedType>,
+        Trait<clone::Clone>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {
   CRUST_USE_BASE_CONSTRUCTORS(Some, TupleStruct<T>);
 };
 

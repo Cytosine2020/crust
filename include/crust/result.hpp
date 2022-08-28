@@ -10,6 +10,30 @@
 namespace crust {
 namespace result {
 template <class T>
+struct Ok;
+
+template <class E>
+struct Err;
+
+template <class T, class E>
+struct Result;
+} // namespace result
+
+using result::Err;
+using result::Ok;
+using result::Result;
+
+template <class T>
+struct BluePrint<Ok<T>> : TmplType<TupleStruct<T>> {};
+
+template <class E>
+struct BluePrint<Err<E>> : TmplType<TupleStruct<E>> {};
+
+template <class T, class E>
+struct BluePrint<Result<T, E>> : TmplType<Enum<Ok<T>, Err<E>>> {};
+
+namespace result {
+template <class T>
 CRUST_ENUM_TUPLE_VARIANT(Ok, Ok<T>, T);
 
 template <class E>
@@ -20,11 +44,10 @@ struct crust_ebco Result :
     Enum<Ok<T>, Err<E>>,
     Derive<
         Result<T, E>,
-        Enum<Ok<T>, Err<E>>,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {
   CRUST_ENUM_USE_BASE(Result, Enum<Ok<T>, Err<E>>);
 
   constexpr bool is_ok() const { return this->template is_variant<Ok<T>>(); }
@@ -52,8 +75,6 @@ struct crust_ebco Result :
   }
 };
 } // namespace result
-
-using result::Result;
 } // namespace crust
 
 

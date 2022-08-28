@@ -169,13 +169,6 @@ struct TupleLikeGetter<TupleStruct<Fields...>, index> {
   }
 };
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    TupleStruct<Fields...>,
-    ZeroSizedType,
-    EnableIf<Require<Fields, ZeroSizedType>...>> : ZeroSizedType<Self> {};
-
 template <usize... indexs>
 struct IndexSequence {};
 
@@ -198,62 +191,54 @@ struct TupleLikeCloneHelper<Self, IndexSequence<indexs...>> {
   }
 };
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    TupleStruct<Fields...>,
+template <class T, template <class, class...> class Trait, class... Args>
+struct ImplForTupleStruct : TmplVal<bool, false> {};
+
+template <
+    class... Fields,
+    template <class, class...>
+    class Trait,
+    class... Args>
+struct ImplForTupleStruct<TupleStruct<Fields...>, Trait, Args...> :
+    All<Require<Fields, Trait, Args...>...> {};
+} // namespace _impl_derive
+
+template <class S>
+CRUST_IMPL_FOR(
+    ZeroSizedType,
+    S,
+    _impl_derive::
+        ImplForTupleStruct<typename BluePrint<S>::Result, ZeroSizedType>){};
+
+template <class S>
+CRUST_IMPL_FOR(
     clone::Clone,
-    EnableIf<Require<Fields, clone::Clone>...>> : clone::Clone<Self> {
-  CRUST_TRAIT_USE_SELF(Derive);
+    S,
+    _impl_derive::
+        ImplForTupleStruct<typename BluePrint<S>::Result, clone::Clone>) {
+  CRUST_IMPL_USE_SELF(S);
 
 private:
-  using CloneHelper =
-      TupleLikeCloneHelper<Self, MakeIndexSequence<sizeof...(Fields)>>;
+  using CloneHelper = _impl_derive::TupleLikeCloneHelper<
+      Self,
+      _impl_derive::MakeIndexSequence<
+          _impl_derive::TupleLikeSize<typename BluePrint<S>::Result>::result>>;
 
 public:
   Self clone() const { return CloneHelper::clone(self()); }
 };
 
-template <class T>
-struct ImplPartialEqForTupleStruct : TmplVal<bool, false> {};
-
-template <class... Fields>
-struct ImplPartialEqForTupleStruct<TupleStruct<Fields...>> :
-    All<Require<Fields, cmp::PartialEq>...> {};
-
-template <class T>
-struct ImplEqForTupleStruct : TmplVal<bool, false> {};
-
-template <class... Fields>
-struct ImplEqForTupleStruct<TupleStruct<Fields...>> :
-    All<Require<Fields, cmp::Eq>...> {};
-
-template <class T>
-struct ImplPartialOrdForTupleStruct : TmplVal<bool, false> {};
-
-template <class... Fields>
-struct ImplPartialOrdForTupleStruct<TupleStruct<Fields...>> :
-    All<Require<Fields, cmp::PartialOrd>...> {};
-
-template <class T>
-struct ImplOrdForTupleStruct : TmplVal<bool, false> {};
-
-template <class... Fields>
-struct ImplOrdForTupleStruct<TupleStruct<Fields...>> :
-    All<Require<Fields, cmp::PartialEq>...> {};
-} // namespace _impl_derive
-
 template <class S>
 CRUST_IMPL_FOR(
     cmp::PartialEq,
     S,
-    _impl_derive::ImplPartialEqForTupleStruct<
-        typename NewDerive<S>::BluePrint>) {
+    _impl_derive::
+        ImplForTupleStruct<typename BluePrint<S>::Result, cmp::PartialEq>) {
   CRUST_IMPL_USE_SELF(S);
 
 private:
   using PartialEqHelper = _impl_derive::
-      TupleLikePartialEqHelper<Self, typename NewDerive<S>::BluePrint>;
+      TupleLikePartialEqHelper<Self, typename BluePrint<S>::Result>;
 
 public:
   constexpr bool eq(const Self &other) const {
@@ -269,19 +254,19 @@ template <class S>
 CRUST_IMPL_FOR(
     cmp::Eq,
     S,
-    _impl_derive::ImplEqForTupleStruct<typename NewDerive<S>::BluePrint>){};
+    _impl_derive::ImplForTupleStruct<typename BluePrint<S>::Result, cmp::Eq>){};
 
 template <class S>
 CRUST_IMPL_FOR(
     cmp::PartialOrd,
     S,
-    _impl_derive::ImplPartialOrdForTupleStruct<
-        typename NewDerive<S>::BluePrint>) {
+    _impl_derive::
+        ImplForTupleStruct<typename BluePrint<S>::Result, cmp::PartialOrd>) {
   CRUST_IMPL_USE_SELF(S);
 
 private:
   using PartialOrdHelper = _impl_derive::
-      TupleLikePartialOrdHelper<Self, typename NewDerive<S>::BluePrint>;
+      TupleLikePartialOrdHelper<Self, typename BluePrint<S>::Result>;
 
 public:
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;
@@ -307,12 +292,12 @@ template <class S>
 CRUST_IMPL_FOR(
     cmp::Ord,
     S,
-    _impl_derive::ImplOrdForTupleStruct<typename NewDerive<S>::BluePrint>) {
+    _impl_derive::ImplForTupleStruct<typename BluePrint<S>::Result, cmp::Ord>) {
   CRUST_IMPL_USE_SELF(S);
 
 private:
   using OrdHelper =
-      _impl_derive::TupleLikeOrdHelper<Self, typename NewDerive<S>::BluePrint>;
+      _impl_derive::TupleLikeOrdHelper<Self, typename BluePrint<S>::Result>;
 
 public:
   constexpr cmp::Ordering cmp(const Self &other) const;
@@ -321,24 +306,19 @@ public:
 template <class... Fields>
 struct crust_ebco Tuple :
     TupleStruct<Fields...>,
-    AutoDerive<Tuple<Fields...>>,
     Derive<
         Tuple<Fields...>,
-        TupleStruct<Fields...>,
-        ZeroSizedType,
-        clone::Clone> {
+        Trait<ZeroSizedType>,
+        Trait<clone::Clone>,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {
   CRUST_USE_BASE_CONSTRUCTORS(Tuple, TupleStruct<Fields...>);
 };
 
 template <class... Fields>
-struct NewDerive<Tuple<Fields...>> :
-    DeriveInfo<
-        Tuple<Fields...>,
-        TupleStruct<Fields...>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>,
-        Trait<cmp::PartialOrd>,
-        Trait<cmp::Ord>> {};
+struct BluePrint<Tuple<Fields...>> : TmplType<TupleStruct<Fields...>> {};
 } // namespace crust
 
 

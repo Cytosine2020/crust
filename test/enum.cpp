@@ -9,21 +9,6 @@
 
 using namespace crust;
 
-namespace {
-struct ClassA;
-
-struct ClassB;
-} // namespace
-
-namespace crust {
-template <>
-CRUST_IMPL_FOR(clone::Clone, ClassA){};
-
-template <>
-CRUST_IMPL_FOR(clone::Clone, ClassB){};
-} // namespace crust
-
-namespace {
 template <class T>
 struct VisitType {
   constexpr bool operator()(const T &) const { return true; }
@@ -34,6 +19,23 @@ struct VisitType {
   }
 };
 
+struct ClassA;
+
+struct ClassB;
+
+struct EnumA;
+
+namespace crust {
+template <>
+CRUST_IMPL_FOR(clone::Clone, ClassA){};
+
+template <>
+CRUST_IMPL_FOR(clone::Clone, ClassB){};
+
+template <>
+struct BluePrint<EnumA> : TmplType<Enum<ClassA, ClassB>> {};
+} // namespace crust
+
 struct ClassA : test::RAIIChecker<ClassA>, Impl<ClassA, Trait<clone::Clone>> {
   CRUST_USE_BASE_CONSTRUCTORS(ClassA, test::RAIIChecker<ClassA>);
 };
@@ -42,12 +44,9 @@ struct ClassB : test::RAIIChecker<ClassB>, Impl<ClassB, Trait<clone::Clone>> {
   CRUST_USE_BASE_CONSTRUCTORS(ClassB, test::RAIIChecker<ClassB>);
 };
 
-struct EnumA :
-    Enum<ClassA, ClassB>,
-    Derive<EnumA, Enum<ClassA, ClassB>, clone::Clone> {
+struct EnumA : Enum<ClassA, ClassB>, Derive<EnumA, Trait<clone::Clone>> {
   CRUST_ENUM_USE_BASE(EnumA, Enum<ClassA, ClassB>);
 };
-} // namespace
 
 GTEST_TEST(enum_, enum_) {
   crust_static_assert(!Require<EnumA, cmp::PartialEq>::result);
@@ -87,13 +86,12 @@ GTEST_TEST(enum_, enum_) {
   EXPECT_TRUE(d.visit<bool>(VisitType<ClassB>{}));
 }
 
-CRUST_ENUM_VARIANT(A);
-CRUST_ENUM_VARIANT(B);
-CRUST_ENUM_TUPLE_VARIANT(C, C, i32);
-CRUST_ENUM_TUPLE_VARIANT(D, D, i32);
-CRUST_ENUM_TUPLE_VARIANT(E, E, i32);
-CRUST_ENUM_TUPLE_VARIANT(F, F, i32);
-
+class A;
+class B;
+class C;
+class D;
+class E;
+class F;
 struct EnumB;
 struct EnumC;
 struct EnumD;
@@ -101,57 +99,64 @@ struct EnumE;
 
 namespace crust {
 template <>
-struct NewDerive<EnumB> :
-    DeriveInfo<
-        EnumB,
-        Enum<A, B>,
-        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>> {};
+struct BluePrint<A> : TmplType<TupleStruct<>> {};
 
 template <>
-struct NewDerive<EnumC> :
-    DeriveInfo<
-        EnumC,
-        Enum<A, B, C, D, E, F>,
-        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>> {};
+struct BluePrint<B> : TmplType<TupleStruct<>> {};
 
 template <>
-struct NewDerive<EnumD> :
-    DeriveInfo<
-        EnumD,
-        Enum<A, B>,
-        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>> {};
+struct BluePrint<C> : TmplType<TupleStruct<i32>> {};
 
 template <>
-struct NewDerive<EnumE> :
-    DeriveInfo<
-        EnumE,
-        Enum<A, B, C, D, E, F>,
-        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>> {};
+struct BluePrint<D> : TmplType<TupleStruct<i32>> {};
+
+template <>
+struct BluePrint<E> : TmplType<TupleStruct<i32>> {};
+
+template <>
+struct BluePrint<F> : TmplType<TupleStruct<i32>> {};
+
+template <>
+struct BluePrint<EnumB> : TmplType<Enum<A, B>> {};
+
+template <>
+struct BluePrint<EnumC> : TmplType<Enum<A, B, C, D, E, F>> {};
+
+template <>
+struct BluePrint<EnumD> : TmplType<Enum<A, B>> {};
+
+template <>
+struct BluePrint<EnumE> : TmplType<Enum<A, B, C, D, E, F>> {};
 } // namespace crust
 
-struct crust_ebco EnumB : Enum<A, B>, AutoDerive<EnumB> {
+CRUST_ENUM_VARIANT(A);
+CRUST_ENUM_VARIANT(B);
+CRUST_ENUM_TUPLE_VARIANT(C, C, i32);
+CRUST_ENUM_TUPLE_VARIANT(D, D, i32);
+CRUST_ENUM_TUPLE_VARIANT(E, E, i32);
+CRUST_ENUM_TUPLE_VARIANT(F, F, i32);
+
+struct crust_ebco EnumB :
+    Enum<A, B>,
+    Derive<EnumB, Trait<cmp::PartialEq>, Trait<cmp::Eq>> {
   CRUST_ENUM_USE_BASE(EnumB, Enum<A, B>);
 };
 
-struct crust_ebco EnumC : Enum<A, B, C, D, E, F>, AutoDerive<EnumC> {
+struct crust_ebco EnumC :
+    Enum<A, B, C, D, E, F>,
+    Derive<EnumC, Trait<cmp::PartialEq>, Trait<cmp::Eq>> {
   CRUST_ENUM_USE_BASE(EnumC, Enum<A, B, C, D, E, F>);
 };
 
-struct crust_ebco EnumD : Enum<EnumRepr<i16>, A, B>, AutoDerive<EnumD> {
+struct crust_ebco EnumD :
+    Enum<EnumRepr<i16>, A, B>,
+    Derive<EnumD, Trait<cmp::PartialEq>, Trait<cmp::Eq>> {
   CRUST_ENUM_USE_BASE(EnumD, Enum<EnumRepr<u16>, A, B>);
 };
 
 struct crust_ebco EnumE :
     Enum<EnumRepr<isize>, A, B, C, D, E, F>,
-    AutoDerive<EnumE> {
+    Derive<EnumE, Trait<cmp::PartialEq>, Trait<cmp::Eq>> {
   CRUST_ENUM_USE_BASE(EnumE, Enum<EnumRepr<isize>, A, B, C, D, E, F>);
 };
 
@@ -186,17 +191,13 @@ struct EnumF;
 
 namespace crust {
 template <>
-struct NewDerive<EnumF> :
-    DeriveInfo<
-        EnumF,
-        Enum<i32, char>,
-        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>> {};
+struct BluePrint<EnumF> : TmplType<Enum<i32, char>> {};
 } // namespace crust
 
 
-struct crust_ebco EnumF : Enum<i32, char>, AutoDerive<EnumF> {
+struct crust_ebco EnumF :
+    Enum<i32, char>,
+    Derive<EnumF, Trait<cmp::PartialEq>, Trait<cmp::Eq>> {
   CRUST_ENUM_USE_BASE(EnumF, Enum<i32, char>);
 };
 

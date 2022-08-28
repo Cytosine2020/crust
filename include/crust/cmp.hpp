@@ -18,76 +18,31 @@ struct Ordering;
 } // namespace cmp
 
 template <>
-struct NewDerive<cmp::Less> :
-    DeriveInfo<
-        cmp::Less,
-        TupleStruct<>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>,
-        Trait<cmp::PartialOrd>,
-        Trait<cmp::Ord>> {};
+struct BluePrint<cmp::Less> : TmplType<TupleStruct<>> {};
 
 template <>
-struct NewDerive<cmp::Equal> :
-    DeriveInfo<
-        cmp::Equal,
-        TupleStruct<>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>,
-        Trait<cmp::PartialOrd>,
-        Trait<cmp::Ord>> {};
+struct BluePrint<cmp::Equal> : TmplType<TupleStruct<>> {};
 
 template <>
-struct NewDerive<cmp::Greater> :
-    DeriveInfo<
-        cmp::Greater,
-        TupleStruct<>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>,
-        Trait<cmp::PartialOrd>,
-        Trait<cmp::Ord>> {};
+struct BluePrint<cmp::Greater> : TmplType<TupleStruct<>> {};
 
 template <>
-struct NewDerive<cmp::Ordering> :
-    DeriveInfo<
-        cmp::Ordering,
-        Enum<cmp::Less, cmp::Equal, cmp::Greater>,
-        Trait<cmp::PartialEq>,
-        Trait<cmp::Eq>,
-        Trait<cmp::PartialOrd>,
-        Trait<cmp::Ord>> {};
+struct BluePrint<cmp::Ordering> :
+    TmplType<Enum<cmp::Less, cmp::Equal, cmp::Greater>> {};
 
 namespace cmp {
-struct crust_ebco Less :
-    TupleStruct<>,
-    _impl_enum::DiscriminantVariant<Less>,
-    AutoDerive<Less>,
-    Derive<Less, TupleStruct<>, ZeroSizedType, clone::Clone> {
-  static constexpr isize result = -1;
-  CRUST_USE_BASE_CONSTRUCTORS(Less, TupleStruct<>);
-};
-
-struct crust_ebco Equal :
-    TupleStruct<>,
-    _impl_enum::DiscriminantVariant<Equal>,
-    AutoDerive<Equal>,
-    Derive<Equal, TupleStruct<>, ZeroSizedType, clone::Clone> {
-  static constexpr isize result = 0;
-  CRUST_USE_BASE_CONSTRUCTORS(Equal, TupleStruct<>);
-};
-
-struct crust_ebco Greater :
-    TupleStruct<>,
-    _impl_enum::DiscriminantVariant<Greater>,
-    AutoDerive<Greater>,
-    Derive<Greater, TupleStruct<>, ZeroSizedType, clone::Clone> {
-  static constexpr isize result = 1;
-  CRUST_USE_BASE_CONSTRUCTORS(Greater, TupleStruct<>);
-};
+CRUST_DISCRIMINANT_VARIANT(Less, -1);
+CRUST_DISCRIMINANT_VARIANT(Equal, 0);
+CRUST_DISCRIMINANT_VARIANT(Greater, 1);
 
 struct crust_ebco Ordering :
     Enum<EnumRepr<i8>, Less, Equal, Greater>,
-    AutoDerive<Ordering> {
+    Derive<
+        Ordering,
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {
   CRUST_ENUM_USE_BASE(Ordering, Enum<EnumRepr<i8>, Less, Equal, Greater>);
 
   crust_cxx17_constexpr Ordering reverse() const {
@@ -252,7 +207,7 @@ constexpr T max_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
 template <class T>
 struct crust_ebco Reverse :
     TupleStruct<T>,
-    Derive<Reverse<T>, TupleStruct<T>, ZeroSizedType>,
+    Derive<Reverse<T>, Trait<ZeroSizedType>>,
     Impl<
         Reverse<T>,
         Trait<PartialEq>,
