@@ -24,11 +24,11 @@ CRUST_TRAIT(PartialEq, class Rhs = Self) {
   constexpr bool ne(const Rhs &other) const { return !self().eq(other); }
 
   constexpr friend bool operator==(const Self &self_, const Rhs &other) {
-    return self_.eq(other);
+    return static_cast<const ImplFor<PartialEq<Self>> &>(self_).eq(other);
   }
 
   constexpr friend bool operator!=(const Self &self_, const Rhs &other) {
-    return self_.ne(other);
+    return static_cast<const ImplFor<PartialEq<Self>> &>(self_).ne(other);
   }
 };
 
@@ -48,19 +48,19 @@ CRUST_TRAIT(PartialOrd, class Rhs = Self) {
   constexpr bool ge(const Rhs &other) const;
 
   constexpr friend bool operator<(const Self &self_, const Rhs &other) {
-    return self_.lt(other);
+    return static_cast<const ImplFor<PartialOrd<Self>> &>(self_).lt(other);
   }
 
   constexpr friend bool operator<=(const Self &self_, const Rhs &other) {
-    return self_.le(other);
+    return static_cast<const ImplFor<PartialOrd<Self>> &>(self_).le(other);
   }
 
   constexpr friend bool operator>(const Self &self_, const Rhs &other) {
-    return self_.gt(other);
+    return static_cast<const ImplFor<PartialOrd<Self>> &>(self_).gt(other);
   }
 
   constexpr friend bool operator>=(const Self &self_, const Rhs &other) {
-    return self_.ge(other);
+    return static_cast<const ImplFor<PartialOrd<Self>> &>(self_).ge(other);
   }
 };
 
@@ -74,18 +74,24 @@ CRUST_TRAIT(Ord) {
   Ordering cmp(const Self &other) const;
 
   crust_cxx14_constexpr Self max(Self && other) && {
-    return self() > other ? move(self()) : move(other);
+    return self<PartialOrd<Self>>().gt(other) ?
+        move(*static_cast<Self *>(this)) :
+        move(other);
   }
 
   crust_cxx14_constexpr Self min(Self && other) && {
-    return self() > other ? move(other) : move(self());
+    return self<PartialOrd<Self>>().gt(other) ?
+        move(other) :
+        move(*static_cast<Self *>(this));
   }
 
   crust_cxx14_constexpr Self clamp(Self && min, Self && max) && {
     return crust_debug_assert(min <= max),
-           self() < min     ? move(min) :
-               self() > max ? move(max) :
-                              move(self());
+           self<PartialOrd<Self>>().lt(min) ?
+               move(min) :
+               (self<PartialOrd<Self>>().gt(max) ?
+                    move(max) :
+                    move(*static_cast<Self *>(this)));
   }
 };
 } // namespace cmp
@@ -169,35 +175,6 @@ struct TupleLikeOrdHelper {
 template <class Self, class Base>
 struct TupleLikeOrdHelper<Self, Base, 0> {
   static constexpr cmp::Ordering cmp(const Self &, const Self &);
-};
-
-template <class Self>
-struct Derive<Self, MonoStateType, cmp::PartialEq> : cmp::PartialEq<Self> {
-  constexpr bool eq(const Self &) const { return true; }
-
-  constexpr bool ne(const Self &) const { return false; }
-};
-
-template <class Self>
-struct Derive<Self, MonoStateType, cmp::Eq, void> : cmp::Eq<Self> {};
-
-template <class Self>
-struct Derive<Self, MonoStateType, cmp::PartialOrd, void> :
-    cmp::PartialOrd<Self> {
-  constexpr Option<cmp::Ordering> partial_cmp(const Self &) const;
-
-  constexpr bool lt(const Self &) const { return false; }
-
-  constexpr bool le(const Self &) const { return true; }
-
-  constexpr bool gt(const Self &) const { return false; }
-
-  constexpr bool ge(const Self &) const { return true; }
-};
-
-template <class Self>
-struct Derive<Self, MonoStateType, cmp::Ord, void> : cmp::Ord<Self> {
-  constexpr cmp::Ordering cmp(const Self &) const;
 };
 } // namespace _impl_derive
 } // namespace crust

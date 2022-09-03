@@ -55,6 +55,15 @@ struct AddVal : TmplVal<typename A::Result, A::result + B::result> {
       A::result <= num::Int<typename A::Result>::MAX - B::result);
 };
 
+template <class T, class... Vs>
+struct SumVal;
+
+template <class T, class V, class... Vs>
+struct SumVal<T, V, Vs...> : AddVal<V, SumVal<T, Vs...>> {};
+
+template <class T>
+struct SumVal<T> : TmplVal<T, 0> {};
+
 template <class A, class B>
 struct SubVal : TmplVal<typename A::Result, A::result - B::result> {
   crust_static_assert(IsSame<typename A::Result, typename B::Result>::result);

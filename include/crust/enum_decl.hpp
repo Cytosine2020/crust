@@ -17,34 +17,34 @@ namespace crust {
 namespace _impl_enum {
 #define CRUST_ENUM_VARIANT(NAME)                                               \
   struct crust_ebco NAME :                                                     \
+      ::crust::TupleStruct<>,                                                  \
       ::crust::Derive<                                                         \
           NAME,                                                                \
-          ::crust::MonoStateType,                                              \
-          ::crust::ZeroSizedType,                                              \
-          ::crust::clone::Clone,                                               \
-          ::crust::cmp::PartialEq,                                             \
-          ::crust::cmp::Eq,                                                    \
-          ::crust::cmp::PartialOrd,                                            \
-          ::crust::cmp::Ord> {                                                 \
-    constexpr NAME() {}                                                        \
+          ::crust::Trait<::crust::ZeroSizedType>,                              \
+          ::crust::Trait<::crust::clone::Clone>,                               \
+          ::crust::Trait<::crust::cmp::PartialEq>,                             \
+          ::crust::Trait<::crust::cmp::Eq>,                                    \
+          ::crust::Trait<::crust::cmp::PartialOrd>,                            \
+          ::crust::Trait<::crust::cmp::Ord>> {                                 \
+    CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::TupleStruct<>);                 \
   }
 
 CRUST_TRAIT(DiscriminantVariant) { CRUST_TRAIT_USE_SELF(DiscriminantVariant); };
 
-#define CRUST_ENUM_DISCRIMANT_VARIANT(NAME, VALUE)                             \
+#define CRUST_DISCRIMINANT_VARIANT(NAME, VALUE)                                \
   struct crust_ebco NAME :                                                     \
+      ::crust::TupleStruct<>,                                                  \
       ::crust::_impl_enum::DiscriminantVariant<NAME>,                          \
       ::crust::Derive<                                                         \
           NAME,                                                                \
-          ::crust::MonoStateType,                                              \
-          ::crust::ZeroSizedType,                                              \
-          ::crust::clone::Clone,                                               \
-          ::crust::cmp::PartialEq,                                             \
-          ::crust::cmp::Eq,                                                    \
-          ::crust::cmp::PartialOrd,                                            \
-          ::crust::cmp::Ord> {                                                 \
+          ::crust::Trait<::crust::ZeroSizedType>,                              \
+          ::crust::Trait<::crust::clone::Clone>,                               \
+          ::crust::Trait<::crust::cmp::PartialEq>,                             \
+          ::crust::Trait<::crust::cmp::Eq>,                                    \
+          ::crust::Trait<::crust::cmp::PartialOrd>,                            \
+          ::crust::Trait<::crust::cmp::Ord>> {                                 \
     static constexpr ::crust::isize result = VALUE;                            \
-    constexpr NAME() {}                                                        \
+    CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::TupleStruct<>);                 \
   }
 
 template <class I, bool is_spec, class T, class... Fields>
@@ -75,8 +75,8 @@ template <class I, isize index, class... Fields>
 struct IndexToDiscriminant :
     Discriminant<
         I,
-        typename _impl_types::
-            TypesIndexToType<index, _impl_types::Types<Fields...>>::Result,
+        typename _impl_types::TypesIndex<index, _impl_types::Types<Fields...>>::
+            Result,
         Fields...> {};
 
 template <class I, isize index, class... Fields>
@@ -94,13 +94,12 @@ struct CheckDiscriminant<I, 0, Fields...> : BoolVal<true> {};
       ::crust::TupleStruct<__VA_ARGS__>,                                       \
       ::crust::Derive<                                                         \
           FULL_NAME,                                                           \
-          ::crust::TupleStruct<__VA_ARGS__>,                                   \
-          ::crust::ZeroSizedType,                                              \
-          ::crust::clone::Clone,                                               \
-          ::crust::cmp::PartialEq,                                             \
-          ::crust::cmp::Eq,                                                    \
-          ::crust::cmp::PartialOrd,                                            \
-          ::crust::cmp::Ord> {                                                 \
+          ::crust::Trait<::crust::ZeroSizedType>,                              \
+          ::crust::Trait<::crust::clone::Clone>,                               \
+          ::crust::Trait<::crust::cmp::PartialEq>,                             \
+          ::crust::Trait<::crust::cmp::Eq>,                                    \
+          ::crust::Trait<::crust::cmp::PartialOrd>,                            \
+          ::crust::Trait<::crust::cmp::Ord>> {                                 \
     CRUST_USE_BASE_CONSTRUCTORS(NAME, ::crust::TupleStruct<__VA_ARGS__>);      \
   }
 
@@ -166,7 +165,7 @@ template <isize index, class Field, class... Fields>
 struct EnumGetter<index, Field, Fields...> {
   using Self = EnumHolder<Field, Fields...>;
   using Result = typename _impl_types::
-      TypesIndexToType<index, _impl_types::Types<Field, Fields...>>::Result;
+      TypesIndex<index, _impl_types::Types<Field, Fields...>>::Result;
 
   static constexpr const Result &inner(const Self &self) {
     return EnumGetter<index - 1, Fields...>::inner(self.remains);
@@ -223,9 +222,8 @@ struct EnumVisitor {
     using GetIndex =                                                           \
         IndexToDiscriminant<typename Self::Index, offset + index, Fields...>;  \
     template <isize index>                                                     \
-    using GetType = typename _impl_types::TypesIndexToType<                    \
-        offset + index,                                                        \
-        _impl_types::Types<Fields...>>::Result;                                \
+    using GetType = typename _impl_types::                                     \
+        TypesIndex<offset + index, _impl_types::Types<Fields...>>::Result;     \
     template <class R, class V>                                                \
     static crust_cxx14_constexpr R inner(const Self &self, V &&impl) {         \
       switch (self.get_index()) {                                              \
@@ -450,14 +448,14 @@ struct crust_ebco EnumTagUnion :
   template <class T>
   constexpr const T &unsafe_get_variant() const {
     return EnumGetter<
-        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
+        _impl_types::TypesFirstIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(holder);
   }
 
   template <class T>
   crust_cxx14_constexpr T &unsafe_get_variant() {
     return EnumGetter<
-        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
+        _impl_types::TypesFirstIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(holder);
   }
 
@@ -527,9 +525,7 @@ struct crust_ebco EnumTagOnly : _impl_types::ZeroSizedTypeHolder<Fields...> {
   constexpr EnumTagOnly() : index{0} {}
 
   template <class T>
-  explicit constexpr EnumTagOnly(T &&t) :
-      _impl_types::ZeroSizedTypeHolder<Fields...>{forward<T>(t)},
-      index{IndexGetter<T>::result} {}
+  explicit constexpr EnumTagOnly(T &&) : index{IndexGetter<T>::result} {}
 
   constexpr Index get_index() const { return index; }
 
@@ -538,14 +534,14 @@ struct crust_ebco EnumTagOnly : _impl_types::ZeroSizedTypeHolder<Fields...> {
   template <class T>
   constexpr const T &unsafe_get_variant() const {
     return _impl_types::ZeroSizedTypeGetter<
-        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
+        _impl_types::TypesFirstIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(*this);
   }
 
   template <class T>
   crust_cxx14_constexpr T &unsafe_get_variant() {
     return _impl_types::ZeroSizedTypeGetter<
-        _impl_types::TypesTypeToIndex<T, _impl_types::Types<Fields...>>::result,
+        _impl_types::TypesFirstIndex<T, _impl_types::Types<Fields...>>::result,
         Fields...>::inner(*this);
   }
 
@@ -607,7 +603,7 @@ struct EnumSelectImpl<hint, true, Fields...> : EnumTagOnly<hint, Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(EnumSelectImpl, EnumTagOnly<hint, Fields...>);
 };
 
-// todo: auto detect
+// TODO: auto detect
 template <class... Fields>
 struct EnumSelectImpl<void, false, Fields...> : EnumTagUnion<i32, Fields...> {
   CRUST_USE_BASE_CONSTRUCTORS(EnumSelectImpl, EnumTagUnion<i32, Fields...>);
@@ -670,16 +666,16 @@ private:
                           _impl_types::Types<Fields...>>>::result);
   crust_static_assert(All<Not<IsConstOrRefVal<Fields>>...>::result);
 
-  Inner inner;
-
   template <class>
   friend struct LetEnum;
 
   template <class, class>
   friend struct EnumAs;
 
-  template <class, class, template <class, class...> class, class>
-  friend struct _impl_derive::Derive;
+  template <class, class>
+  friend struct ::crust::ImplFor;
+
+  Inner inner;
 
 protected:
   constexpr Enum() : inner{} {}
@@ -743,18 +739,17 @@ public:
   }
 };
 
-// todo: option like enum
+// TODO: option like enum
 
 // template<class Field>
 // struct Enum<void, Field> {
-//   // todo: only one possibility, this is just Field
+//   // TODO: only one possibility, this is just Field
 // };
 } // namespace _impl_enum
 
 template <class Inner, class... Fields>
 CRUST_IMPL_FOR(
-    CRUST_MACRO(_impl_enum::EnumAs, Inner),
-    CRUST_MACRO(_impl_enum::Enum<Inner, Fields...>),
+    CRUST_MACRO(_impl_enum::EnumAs<_impl_enum::Enum<Inner, Fields...>, Inner>),
     Require<Fields, ZeroSizedType>...){};
 
 template <class Type>
@@ -777,13 +772,25 @@ struct crust_ebco Enum<EnumRepr<Type>, Fields...> :
 };
 
 namespace _impl_derive {
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
-    clone::Clone,
-    EnableIf<Require<Fields, clone::Clone>...>> : clone::Clone<Self> {
-  CRUST_TRAIT_USE_SELF(Derive);
+template <class T, template <class, class...> class Trait, class... Args>
+struct ImplForEnumHelper : TmplVal<bool, false> {};
+
+template <
+    class... Fields,
+    template <class, class...>
+    class Trait,
+    class... Args>
+struct ImplForEnumHelper<Enum<Fields...>, Trait, Args...> :
+    All<Require<Fields, Trait, Args...>...> {};
+
+template <class T, template <class, class...> class Trait, class... Args>
+using ImplForEnum =
+    ImplForEnumHelper<typename BluePrint<T>::Result, Trait, Args...>;
+} // namespace _impl_derive
+
+template <class S>
+CRUST_IMPL_FOR(clone::Clone<S>, _impl_derive::ImplForEnum<S, clone::Clone>) {
+  CRUST_IMPL_USE_SELF(S);
 
 private:
   struct Clone {
@@ -797,13 +804,10 @@ public:
   Self clone() const { return self().template visit<Self>(Clone{}); }
 };
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
-    cmp::PartialEq,
-    EnableIf<Require<Fields, cmp::PartialEq>...>> : cmp::PartialEq<Self> {
-  CRUST_TRAIT_USE_SELF(Derive);
+template <class S>
+CRUST_IMPL_FOR(
+    cmp::PartialEq<S>, _impl_derive::ImplForEnum<S, cmp::PartialEq>) {
+  CRUST_IMPL_USE_SELF(S);
 
   constexpr bool eq(const Self &other) const {
     return self().inner.eq(other.inner);
@@ -814,20 +818,13 @@ struct Derive<
   }
 };
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
-    cmp::Eq,
-    EnableIf<Require<Fields, cmp::Eq>...>> : cmp::Eq<Self> {};
+template <class S>
+CRUST_IMPL_FOR(cmp::Eq<S>, _impl_derive::ImplForEnum<S, cmp::Eq>){};
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
-    cmp::PartialOrd,
-    EnableIf<Require<Fields, cmp::Eq>...>> : cmp::PartialOrd<Self> {
-  CRUST_TRAIT_USE_SELF(Derive);
+template <class S>
+CRUST_IMPL_FOR(
+    cmp::PartialOrd<S>, _impl_derive::ImplForEnum<S, cmp::PartialOrd>) {
+  CRUST_IMPL_USE_SELF(S);
 
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;
 
@@ -848,17 +845,12 @@ struct Derive<
   }
 };
 
-template <class Self, class... Fields>
-struct Derive<
-    Self,
-    Enum<Fields...>,
-    cmp::Ord,
-    EnableIf<Require<Fields, cmp::Eq>...>> : cmp::Ord<Self> {
-  CRUST_TRAIT_USE_SELF(Derive);
+template <class S>
+CRUST_IMPL_FOR(cmp::Ord<S>, _impl_derive::ImplForEnum<S, cmp::Ord>) {
+  CRUST_IMPL_USE_SELF(S);
 
   constexpr cmp::Ordering cmp(const Self &other) const;
 };
-} // namespace _impl_derive
 } // namespace crust
 
 

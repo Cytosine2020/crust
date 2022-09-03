@@ -148,6 +148,20 @@ struct Any<Bool, Bools...> : BoolVal<Bool::result || Any<Bools...>::result> {};
 template <>
 struct Any<> : BoolVal<false> {};
 
+namespace _impl_utility {
+template <bool condition, class A, class B>
+struct IfElse;
+
+template <class A, class B>
+struct IfElse<true, A, B> : A {};
+
+template <class A, class B>
+struct IfElse<false, A, B> : B {};
+} // namespace _impl_utility
+
+template <class C, class A, class B>
+using IfElse = _impl_utility::IfElse<C::result, A, B>;
+
 template <class U, class A>
 struct AsVal : TmplVal<U, A::result> {};
 
@@ -220,30 +234,6 @@ struct IsBaseOfVal :
 template <class T>
 struct IsTriviallyCopyable : BoolVal<std::is_trivially_copyable<T>::value> {};
 
-namespace _impl_utility {
-template <bool enable>
-struct EnableIf {};
-
-template <>
-struct EnableIf<true> : TmplType<void> {};
-
-template <class T, bool Bool>
-struct InheritIf;
-
-template <class T>
-struct InheritIf<T, true> : T {};
-
-template <class T>
-struct InheritIf<T, false> {};
-} // namespace _impl_utility
-
-template <class... Enable>
-using EnableIf =
-    typename _impl_utility::EnableIf<All<Enable...>::result>::Result;
-
-template <class T, class... Bools>
-using InheritIf = _impl_utility::InheritIf<T, All<Bools...>::result>;
-
 template <class T>
 constexpr typename RemoveRefType<T>::Result &&move(T &&t) {
   return static_cast<typename RemoveRefType<T>::Result &&>(t);
@@ -271,33 +261,33 @@ constexpr T &&forward(typename RemoveRefType<T>::Result &&t) {
 
 #define CRUST_TRAIT_USE_SELF(TRAIT, ...)                                       \
 private:                                                                       \
-  constexpr const Self &self() const {                                         \
-    return *static_cast<const Self *>(this);                                   \
+  template <class Trait = TRAIT>                                               \
+  constexpr const ::crust::ImplFor<Trait> &self() const {                      \
+    return *static_cast<const ::crust::ImplFor<Trait> *>(                      \
+        static_cast<const Self *>(this));                                      \
   }                                                                            \
-  crust_cxx14_constexpr Self &self() { return *static_cast<Self *>(this); }    \
+  template <class Trait = TRAIT>                                               \
+  crust_cxx14_constexpr ::crust::ImplFor<Trait> &self() {                      \
+    return *static_cast<::crust::ImplFor<Trait> *>(static_cast<Self *>(this)); \
+  }                                                                            \
                                                                                \
 protected:                                                                     \
   constexpr TRAIT() {                                                          \
+    crust_static_assert(!::crust::IsConstOrRefVal<Self>::result);              \
     crust_static_assert(::crust::IsBaseOfVal<TRAIT, Self>::result);            \
     crust_static_assert(::crust::All<__VA_ARGS__>::result);                    \
   }                                                                            \
                                                                                \
 public:
 
-namespace _impl_utility {
-template <class Self, template <class, class...> class T, class... Args>
-using Trait = T<Self, Args...>;
-} // namespace _impl_utility
-
 template <template <class, class...> class T, class... Args>
 struct Trait {};
 
-template <class Trait, class Self, class Enable = void>
+template <class Trait, class Enable = void>
 struct ImplFor {};
 
-#define CRUST_IMPL_FOR(TRAIT, SELF, ...)                                       \
-  struct ImplFor<Trait<TRAIT>, SELF, EnableIf<__VA_ARGS__>> :                  \
-      _impl_utility::Trait<SELF, TRAIT>
+#define CRUST_IMPL_FOR(TRAIT, ...)                                             \
+  struct ImplFor<TRAIT, EnableIf<__VA_ARGS__>> : TRAIT
 
 #define CRUST_IMPL_USE_SELF(...)                                               \
 private:                                                                       \
@@ -324,7 +314,7 @@ template <
     class... Args,
     class... Traits>
 struct Impl<Self, Trait<T, Args...>, Traits...> :
-    ImplFor<Trait<T, Args...>, Self>,
+    ImplFor<T<Self, Args...>>,
     Impl<Self, Traits...> {};
 
 template <class Self>
@@ -336,50 +326,73 @@ struct TupleLikeSize;
 
 template <class Self, usize index>
 struct TupleLikeGetter;
-
-template <
-    class Self,
-    class BluePrint,
-    template <class, class...>
-    class Trait,
-    class Enable = void>
-struct crust_ebco Derive {};
 } // namespace _impl_derive
 
-template <class Self, class BluePrint, template <class...> class... Traits>
+template <class Self>
+struct BluePrint;
+
+template <class Self, class... Ts>
 struct crust_ebco Derive;
 
 template <
     class Self,
-    class BluePrint,
     template <class, class...>
-    class Trait,
-    template <class, class...>
+    class T,
+    class... Args,
     class... Traits>
-struct Derive<Self, BluePrint, Trait, Traits...> :
-    _impl_derive::Derive<Self, BluePrint, Trait>,
-    Derive<Self, BluePrint, Traits...> {};
+struct Derive<Self, Trait<T, Args...>, Traits...> :
+    ImplFor<T<Self, Args...>>,
+    Derive<Self, Traits...> {};
 
-template <class Self, class BluePrint>
-struct Derive<Self, BluePrint> {};
+template <class Self>
+struct Derive<Self> {};
 
 template <class Struct, template <class, class...> class Trait, class... Args>
 struct Require : IsBaseOfVal<Trait<Struct, Args...>, Struct> {};
 
+namespace _impl_utility {
+template <bool enable>
+struct EnableIf {};
+
+template <>
+struct EnableIf<true> : TmplType<void> {};
+
+template <class T, bool Bool, class>
+struct InheritIf;
+
+template <class T, class Marker>
+struct InheritIf<T, true, Marker> : T {
+  CRUST_USE_BASE_CONSTRUCTORS(InheritIf, T);
+};
+
+template <class T, class Marker>
+struct InheritIf<T, false, Marker> {
+  constexpr InheritIf() {}
+
+  constexpr InheritIf(T &&) {}
+};
+} // namespace _impl_utility
+
+template <class... Enable>
+using EnableIf =
+    typename _impl_utility::EnableIf<All<Enable...>::result>::Result;
+
+template <class T, class Bools, class Marker = void>
+using InheritIf = _impl_utility::InheritIf<T, Bools::result, Marker>;
+
 /// this is used by Tuple, Enum and Slice for zero sized type optimization
-/// forign type can implement ZeroSizedType to be treated as zero sized type.
+/// foreign type can implement ZeroSizedType to be treated as zero sized type.
 
 CRUST_TRAIT(ZeroSizedType) {
   CRUST_TRAIT_USE_SELF(
       ZeroSizedType, IsEmptyType<Self>, IsTriviallyCopyable<Self>);
 };
 
-struct MonoStateType {};
+template <class T, class U>
+struct ZeroSizedTypeConvertible : BoolVal<false> {};
 
-namespace _impl_derive {
-template <class Self>
-struct Derive<Self, MonoStateType, ZeroSizedType> : ZeroSizedType<Self> {};
-} // namespace _impl_derive
+template <class T, class U>
+struct ZeroSizedTypeConvert;
 
 template <class T>
 struct RefMut {

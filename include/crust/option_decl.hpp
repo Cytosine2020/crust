@@ -15,15 +15,32 @@ template <class T>
 struct Some;
 
 template <class T>
+struct Option;
+} // namespace option
+
+using option::None;
+using option::Option;
+using option::Some;
+
+template <>
+struct BluePrint<option::None> : TmplType<TupleStruct<>> {};
+
+template <class T>
+struct BluePrint<option::Some<T>> : TmplType<TupleStruct<T>> {};
+
+template <class T>
+struct BluePrint<Option<T>> : TmplType<Enum<None, Some<T>>> {};
+
+namespace option {
+template <class T>
 struct crust_ebco Option :
     Enum<None, Some<T>>,
     Derive<
         Option<T>,
-        Enum<None, Some<T>>,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {
   CRUST_ENUM_USE_BASE(Option, Enum<None, Some<T>>)
 
   constexpr bool is_some() const {
@@ -78,10 +95,6 @@ struct crust_ebco Option :
   crust_cxx14_constexpr Option<T> take();
 };
 } // namespace option
-
-using option::None;
-using option::Option;
-using option::Some;
 } // namespace crust
 
 

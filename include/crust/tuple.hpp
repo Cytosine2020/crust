@@ -11,27 +11,20 @@
 
 
 namespace crust {
-namespace _impl_derive {
-template <class Self, class... Fields>
-constexpr Option<cmp::Ordering> Derive<
-    Self,
-    TupleStruct<Fields...>,
-    cmp::PartialOrd,
-    EnableIf<Require<Fields, cmp::PartialOrd>...>>::partial_cmp(const Self
-                                                                    &other)
-    const {
+template <class S>
+constexpr Option<cmp::Ordering> ImplFor<
+    cmp::PartialOrd<S>,
+    EnableIf<_impl_derive::ImplForTupleStruct<S, cmp::PartialOrd>>>::
+    partial_cmp(const Self &other) const {
   return PartialOrdHelper::partial_cmp(self(), other);
 }
 
-template <class Self, class... Fields>
-constexpr cmp::Ordering Derive<
-    Self,
-    TupleStruct<Fields...>,
-    cmp::Ord,
-    EnableIf<Require<Fields, cmp::Ord>...>>::cmp(const Self &other) const {
-  return TupleLikeOrdHelper<Self, TupleStruct<Fields...>>::cmp(self(), other);
+template <class S>
+constexpr cmp::Ordering
+ImplFor<cmp::Ord<S>, EnableIf<_impl_derive::ImplForTupleStruct<S, cmp::Ord>>>::
+    cmp(const Self &other) const {
+  return OrdHelper::cmp(self(), other);
 }
-} // namespace _impl_derive
 
 template <class... Fields>
 constexpr Tuple<typename RemoveConstOrRefType<Fields>::Result...>
@@ -247,44 +240,6 @@ crust_cxx14_constexpr
   return _impl_tuple::TieTuple<
       typename RemoveConstOrRefType<Fields>::Result...>{
       forward<Fields>(fields)...};
-}
-
-namespace _impl_tuple {
-template <class... Fields>
-struct LetInfo {};
-
-template <class... Getter>
-struct LetGetter {};
-
-template <class T, class LetGetter>
-struct LetAssign;
-
-template <class T, class... Getter>
-struct LetAssign<T, LetGetter<Getter...>> {
-  template <class F>
-  void inner(T &self, F &&f) {
-    f(Getter::inner(self)...);
-  }
-};
-
-template <class T, class LetInfo>
-struct LetTuple {
-  T self;
-
-  constexpr LetTuple(T &&self) : self{move(self)} {}
-
-  template <class F>
-  crust_cxx14_constexpr void operator=(F &&f) {
-    LetAssign<T, typename LetInfo::Getter>::inner(self, forward<F>(f));
-  };
-};
-} // namespace _impl_tuple
-
-template <class T, class... Fields>
-crust_cxx14_constexpr _impl_tuple::LetTuple<T, _impl_tuple::LetInfo<Fields...>>
-let(T &&self, Fields &&...) {
-  return _impl_tuple::LetTuple<T, _impl_tuple::LetInfo<Fields...>>{
-      forward<T>(self)};
 }
 } // namespace crust
 

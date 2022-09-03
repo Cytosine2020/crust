@@ -11,19 +11,38 @@
 
 namespace crust {
 namespace cmp {
-CRUST_ENUM_DISCRIMANT_VARIANT(Less, -1);
-CRUST_ENUM_DISCRIMANT_VARIANT(Equal, 0);
-CRUST_ENUM_DISCRIMANT_VARIANT(Greater, 1);
+struct Less;
+struct Equal;
+struct Greater;
+struct Ordering;
+} // namespace cmp
+
+template <>
+struct BluePrint<cmp::Less> : TmplType<TupleStruct<>> {};
+
+template <>
+struct BluePrint<cmp::Equal> : TmplType<TupleStruct<>> {};
+
+template <>
+struct BluePrint<cmp::Greater> : TmplType<TupleStruct<>> {};
+
+template <>
+struct BluePrint<cmp::Ordering> :
+    TmplType<Enum<cmp::Less, cmp::Equal, cmp::Greater>> {};
+
+namespace cmp {
+CRUST_DISCRIMINANT_VARIANT(Less, -1);
+CRUST_DISCRIMINANT_VARIANT(Equal, 0);
+CRUST_DISCRIMINANT_VARIANT(Greater, 1);
 
 struct crust_ebco Ordering :
     Enum<EnumRepr<i8>, Less, Equal, Greater>,
     Derive<
         Ordering,
-        Enum<Less, Equal, Greater>,
-        cmp::PartialEq,
-        cmp::Eq,
-        cmp::PartialOrd,
-        cmp::Ord> {
+        Trait<cmp::PartialEq>,
+        Trait<cmp::Eq>,
+        Trait<cmp::PartialOrd>,
+        Trait<cmp::Ord>> {
   CRUST_ENUM_USE_BASE(Ordering, Enum<EnumRepr<i8>, Less, Equal, Greater>);
 
   crust_cxx17_constexpr Ordering reverse() const {
@@ -99,8 +118,7 @@ operator_cmp(const T &v1, const T &v2) {
   crust_always_inline constexpr cmp::Ordering operator_cmp(                    \
       const type &v1, const type &v2) {                                        \
     return v1 < v2 ? cmp::make_less() :                                        \
-        v1 > v2    ? cmp::make_greater() :                                     \
-                     cmp::make_equal();                                           \
+                     (v1 > v2 ? cmp::make_greater() : cmp::make_equal());      \
   }
 
 _IMPL_PRIMITIVE(_IMPL_OPERATOR_CMP);
@@ -118,7 +136,7 @@ _IMPL_PRIMITIVE(_IMPL_OPERATOR_PARTIAL_CMP);
 #undef _IMPL_OPERATOR_PARTIAL_CMP
 
 namespace cmp {
-// todo: refactor
+// TODO: refactor
 template <class Self, class Rhs>
 constexpr bool PartialOrd<Self, Rhs>::lt(const Rhs &other) const {
   return operator_partial_cmp(self(), other) == make_some(make_less());
@@ -188,7 +206,7 @@ constexpr T max_by_key(T &&v1, T &&v2, ops::Fn<F, K(const T &)> f) {
 template <class T>
 struct crust_ebco Reverse :
     TupleStruct<T>,
-    Derive<Reverse<T>, TupleStruct<T>, ZeroSizedType>,
+    Derive<Reverse<T>, Trait<ZeroSizedType>>,
     Impl<
         Reverse<T>,
         Trait<PartialEq>,
@@ -200,7 +218,7 @@ struct crust_ebco Reverse :
 } // namespace cmp
 
 template <class T>
-CRUST_IMPL_FOR(cmp::PartialEq, cmp::Reverse<T>, Require<T, cmp::PartialEq>) {
+CRUST_IMPL_FOR(cmp::PartialEq<cmp::Reverse<T>>, Require<T, cmp::PartialEq>) {
   CRUST_IMPL_USE_SELF(cmp::Reverse<T>);
 
   constexpr bool eq(const Self &other) const {
@@ -209,10 +227,10 @@ CRUST_IMPL_FOR(cmp::PartialEq, cmp::Reverse<T>, Require<T, cmp::PartialEq>) {
 };
 
 template <class T>
-CRUST_IMPL_FOR(cmp::Eq, cmp::Reverse<T>, Require<T, cmp::Eq>){};
+CRUST_IMPL_FOR(cmp::Eq<cmp::Reverse<T>>, Require<T, cmp::Eq>){};
 
 template <class T>
-CRUST_IMPL_FOR(cmp::PartialOrd, cmp::Reverse<T>, Require<T, cmp::PartialOrd>) {
+CRUST_IMPL_FOR(cmp::PartialOrd<cmp::Reverse<T>>, Require<T, cmp::PartialOrd>) {
   CRUST_IMPL_USE_SELF(cmp::Reverse<T>);
 
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const {
@@ -238,7 +256,7 @@ CRUST_IMPL_FOR(cmp::PartialOrd, cmp::Reverse<T>, Require<T, cmp::PartialOrd>) {
 };
 
 template <class T>
-CRUST_IMPL_FOR(cmp::Ord, cmp::Reverse<T>, Require<T, cmp::Ord>) {
+CRUST_IMPL_FOR(cmp::Ord<cmp::Reverse<T>>, Require<T, cmp::Ord>) {
   CRUST_IMPL_USE_SELF(cmp::Reverse<T>);
 
   constexpr cmp::Ordering cmp(const Self &other) const {
@@ -257,7 +275,7 @@ _IMPL_PRIMITIVE(_DERIVE_PRIMITIVE, cmp::Ord);
 #undef _DERIVE_PRIMITIVE
 #undef _IMPL_PRIMITIVE
 
-// todo: implement for float point numbers
+// TODO: implement for float point numbers
 
 namespace _impl_derive {
 template <class Self, class Base, usize rev_index>
@@ -283,18 +301,6 @@ TupleLikeOrdHelper<Self, Base, rev_index>::cmp(const Self &a, const Self &b) {
 template <class Self, class Base>
 constexpr cmp::Ordering
 TupleLikeOrdHelper<Self, Base, 0>::cmp(const Self &, const Self &) {
-  return cmp::make_equal();
-}
-
-template <class Self>
-constexpr Option<cmp::Ordering>
-Derive<Self, MonoStateType, cmp::PartialOrd>::partial_cmp(const Self &) const {
-  return make_some(cmp::make_equal());
-}
-
-template <class Self>
-constexpr cmp::Ordering
-Derive<Self, MonoStateType, cmp::Ord>::cmp(const Self &) const {
   return cmp::make_equal();
 }
 } // namespace _impl_derive

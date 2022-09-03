@@ -16,9 +16,11 @@ T clone(const T &self) {
 CRUST_TRAIT(Clone) {
   CRUST_TRAIT_USE_SELF(Clone);
 
-  Self clone() const { return self(); }
+  Self clone() const { return *static_cast<const Self *>(this); }
 
-  void clone_from(const Self &other) { self() = clone::clone(other); }
+  void clone_from(const Self &other) {
+    *static_cast<Self *>(this) = clone::clone(other);
+  }
 };
 } // namespace clone
 } // namespace crust

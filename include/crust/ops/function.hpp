@@ -213,7 +213,7 @@ template <class F>
 struct DynFnMut;
 
 template <class Ret, class... Args>
-struct DynFn<Ret(Args...)> { // todo: optimize for zero sized type
+struct DynFn<Ret(Args...)> { // TODO: optimize for zero sized type
 private:
   void *self;
   const _impl_fn::FnVTable<Ret, Args...> *vtable;

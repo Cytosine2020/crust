@@ -8,7 +8,7 @@
 
 namespace crust {
 template <class T>
-struct crust_ebco Slice : index::Index<Slice<T>, usize, T> {
+struct crust_ebco Slice : Impl<Slice<T>, Trait<index::Index, usize, T>> {
 private:
   T *inner;
   usize size;
@@ -31,19 +31,24 @@ public:
   const T *as_ptr() const { return inner; }
 
   T *as_ptr() { return inner; }
+};
+
+template <class T>
+CRUST_IMPL_FOR(CRUST_MACRO(index::Index<Slice<T>, usize, T>)) {
+  CRUST_IMPL_USE_SELF(Slice<T>);
 
   const T &index(usize index) const {
-    if (index >= len()) {
+    if (index >= self().len()) {
       crust_panic("index out of boundary!");
     }
-    return as_ptr()[index];
+    return self().as_ptr()[index];
   }
 
   T &index_mut(usize index) {
-    if (index >= len()) {
+    if (index >= self().len()) {
       crust_panic("index_mut out of boundary!");
     }
-    return as_ptr()[index];
+    return self().as_ptr()[index];
   }
 };
 } // namespace crust
