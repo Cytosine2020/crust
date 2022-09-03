@@ -81,18 +81,15 @@ crust_cxx14_constexpr _impl_enum::LetEnum<T> let(T &ref) {
 template <class S>
 constexpr Option<cmp::Ordering> ImplFor<
     cmp::PartialOrd<S>,
-    EnableIf<_impl_derive::
-                 ImplForEnum<typename BluePrint<S>::Result, cmp::PartialOrd>>>::
+    EnableIf<_impl_derive::ImplForEnum<S, cmp::PartialOrd>>>::
     partial_cmp(const Self &other) const {
   return operator_partial_cmp(self().inner, other.inner);
 }
 
 template <class S>
-constexpr cmp::Ordering ImplFor<
-    cmp::Ord<S>,
-    EnableIf<
-        _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::Ord>>>::
-    cmp(const Self &other) const {
+constexpr cmp::Ordering
+ImplFor<cmp::Ord<S>, EnableIf<_impl_derive::ImplForEnum<S, cmp::Ord>>>::cmp(
+    const Self &other) const {
   return operator_cmp(self().inner, other.inner);
 }
 } // namespace crust

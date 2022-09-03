@@ -118,8 +118,7 @@ operator_cmp(const T &v1, const T &v2) {
   crust_always_inline constexpr cmp::Ordering operator_cmp(                    \
       const type &v1, const type &v2) {                                        \
     return v1 < v2 ? cmp::make_less() :                                        \
-        v1 > v2    ? cmp::make_greater() :                                     \
-                     cmp::make_equal();                                           \
+                     (v1 > v2 ? cmp::make_greater() : cmp::make_equal());      \
   }
 
 _IMPL_PRIMITIVE(_IMPL_OPERATOR_CMP);

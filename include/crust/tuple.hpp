@@ -14,17 +14,14 @@ namespace crust {
 template <class S>
 constexpr Option<cmp::Ordering> ImplFor<
     cmp::PartialOrd<S>,
-    EnableIf<_impl_derive::ImplForTupleStruct<
-        typename BluePrint<S>::Result,
-        cmp::PartialOrd>>>::partial_cmp(const Self &other) const {
+    EnableIf<_impl_derive::ImplForTupleStruct<S, cmp::PartialOrd>>>::
+    partial_cmp(const Self &other) const {
   return PartialOrdHelper::partial_cmp(self(), other);
 }
 
 template <class S>
-constexpr cmp::Ordering ImplFor<
-    cmp::Ord<S>,
-    EnableIf<_impl_derive::
-                 ImplForTupleStruct<typename BluePrint<S>::Result, cmp::Ord>>>::
+constexpr cmp::Ordering
+ImplFor<cmp::Ord<S>, EnableIf<_impl_derive::ImplForTupleStruct<S, cmp::Ord>>>::
     cmp(const Self &other) const {
   return OrdHelper::cmp(self(), other);
 }

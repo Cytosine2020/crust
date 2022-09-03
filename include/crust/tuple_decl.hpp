@@ -192,28 +192,28 @@ struct TupleLikeCloneHelper<Self, IndexSequence<indexs...>> {
 };
 
 template <class T, template <class, class...> class Trait, class... Args>
-struct ImplForTupleStruct : TmplVal<bool, false> {};
+struct ImplForTupleStructHelper : TmplVal<bool, false> {};
 
 template <
     class... Fields,
     template <class, class...>
     class Trait,
     class... Args>
-struct ImplForTupleStruct<TupleStruct<Fields...>, Trait, Args...> :
+struct ImplForTupleStructHelper<TupleStruct<Fields...>, Trait, Args...> :
     All<Require<Fields, Trait, Args...>...> {};
+
+template <class T, template <class, class...> class Trait, class... Args>
+using ImplForTupleStruct =
+    ImplForTupleStructHelper<typename BluePrint<T>::Result, Trait, Args...>;
 } // namespace _impl_derive
 
 template <class S>
 CRUST_IMPL_FOR(
-    ZeroSizedType<S>,
-    _impl_derive::
-        ImplForTupleStruct<typename BluePrint<S>::Result, ZeroSizedType>){};
+    ZeroSizedType<S>, _impl_derive::ImplForTupleStruct<S, ZeroSizedType>){};
 
 template <class S>
 CRUST_IMPL_FOR(
-    clone::Clone<S>,
-    _impl_derive::
-        ImplForTupleStruct<typename BluePrint<S>::Result, clone::Clone>) {
+    clone::Clone<S>, _impl_derive::ImplForTupleStruct<S, clone::Clone>) {
   CRUST_IMPL_USE_SELF(S);
 
 private:
@@ -228,9 +228,7 @@ public:
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::PartialEq<S>,
-    _impl_derive::
-        ImplForTupleStruct<typename BluePrint<S>::Result, cmp::PartialEq>) {
+    cmp::PartialEq<S>, _impl_derive::ImplForTupleStruct<S, cmp::PartialEq>) {
   CRUST_IMPL_USE_SELF(S);
 
 private:
@@ -248,15 +246,11 @@ public:
 };
 
 template <class S>
-CRUST_IMPL_FOR(
-    cmp::Eq<S>,
-    _impl_derive::ImplForTupleStruct<typename BluePrint<S>::Result, cmp::Eq>){};
+CRUST_IMPL_FOR(cmp::Eq<S>, _impl_derive::ImplForTupleStruct<S, cmp::Eq>){};
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::PartialOrd<S>,
-    _impl_derive::
-        ImplForTupleStruct<typename BluePrint<S>::Result, cmp::PartialOrd>) {
+    cmp::PartialOrd<S>, _impl_derive::ImplForTupleStruct<S, cmp::PartialOrd>) {
   CRUST_IMPL_USE_SELF(S);
 
 private:
@@ -284,9 +278,7 @@ public:
 };
 
 template <class S>
-CRUST_IMPL_FOR(
-    cmp::Ord<S>,
-    _impl_derive::ImplForTupleStruct<typename BluePrint<S>::Result, cmp::Ord>) {
+CRUST_IMPL_FOR(cmp::Ord<S>, _impl_derive::ImplForTupleStruct<S, cmp::Ord>) {
   CRUST_IMPL_USE_SELF(S);
 
 private:
@@ -313,6 +305,56 @@ struct crust_ebco Tuple :
 
 template <class... Fields>
 struct BluePrint<Tuple<Fields...>> : TmplType<TupleStruct<Fields...>> {};
+
+template <class... Fields, class U>
+struct ZeroSizedTypeConvertible<Tuple<Fields...>, U> :
+    Any<_impl_types::TypesIncludeVal<U, _impl_types::Types<Fields...>>,
+        _impl_types::TypesContainVal<U, _impl_types::Types<Fields...>>> {};
+
+namespace _impl_tuple {
+template <class T, class U, bool is_contain>
+struct ZeroSizedTypeConvertHelper;
+
+template <class... Fields, class U>
+struct ZeroSizedTypeConvertHelper<Tuple<Fields...>, U, true> {
+  static constexpr usize index =
+      _impl_types::TypesFirstContain<U, _impl_types::Types<Fields...>>::result;
+  using Convert = ZeroSizedTypeConvert<
+      typename _impl_types::TypesIndex<index, _impl_types::Types<Fields...>>::
+          Result,
+      U>;
+
+  static constexpr const U &inner(const Tuple<Fields...> &self) {
+    return Convert::inner(self.template get<index>());
+  }
+
+  static constexpr U &inner(Tuple<Fields...> &self) {
+    return Convert::inner(self.template get<index>());
+  }
+};
+
+template <class... Fields, class U>
+struct ZeroSizedTypeConvertHelper<Tuple<Fields...>, U, false> {
+  static constexpr usize index =
+      _impl_types::TypesFirstIndex<U, _impl_types::Types<Fields...>>::result;
+
+  static constexpr const U &inner(const Tuple<Fields...> &self) {
+    return self.template get<index>();
+  }
+
+  static constexpr U &inner(Tuple<Fields...> &self) {
+    return self.template get<index>();
+  }
+};
+} // namespace _impl_tuple
+
+template <class... Fields, class U>
+struct ZeroSizedTypeConvert<Tuple<Fields...>, U> :
+    _impl_tuple::ZeroSizedTypeConvertHelper<
+        Tuple<Fields...>,
+        U,
+        _impl_types::TypesContainVal<U, _impl_types::Types<Fields...>>::
+            result> {};
 } // namespace crust
 
 

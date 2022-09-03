@@ -87,10 +87,11 @@ CRUST_TRAIT(Ord) {
 
   crust_cxx14_constexpr Self clamp(Self && min, Self && max) && {
     return crust_debug_assert(min <= max),
-           self<PartialOrd<Self>>().lt(min) ? move(min) :
-               self<PartialOrd<Self>>().gt(max) ?
-                                              move(max) :
-                                              move(*static_cast<Self *>(this));
+           self<PartialOrd<Self>>().lt(min) ?
+               move(min) :
+               (self<PartialOrd<Self>>().gt(max) ?
+                    move(max) :
+                    move(*static_cast<Self *>(this)));
   }
 };
 } // namespace cmp

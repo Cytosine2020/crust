@@ -148,6 +148,20 @@ struct Any<Bool, Bools...> : BoolVal<Bool::result || Any<Bools...>::result> {};
 template <>
 struct Any<> : BoolVal<false> {};
 
+namespace _impl_utility {
+template <bool condition, class A, class B>
+struct IfElse;
+
+template <class A, class B>
+struct IfElse<true, A, B> : A {};
+
+template <class A, class B>
+struct IfElse<false, A, B> : B {};
+} // namespace _impl_utility
+
+template <class C, class A, class B>
+using IfElse = _impl_utility::IfElse<C::result, A, B>;
+
 template <class U, class A>
 struct AsVal : TmplVal<U, A::result> {};
 
@@ -373,6 +387,12 @@ CRUST_TRAIT(ZeroSizedType) {
   CRUST_TRAIT_USE_SELF(
       ZeroSizedType, IsEmptyType<Self>, IsTriviallyCopyable<Self>);
 };
+
+template <class T, class U>
+struct ZeroSizedTypeConvertible : BoolVal<false> {};
+
+template <class T, class U>
+struct ZeroSizedTypeConvert;
 
 template <class T>
 struct RefMut {

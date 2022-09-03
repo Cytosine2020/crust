@@ -86,15 +86,12 @@ struct TypesPrevType :
         DecVal<TypesFirstIndex<T, Types<Fields...>>>::result,
         Types<Fields...>> {};
 
-template <class T, class U>
-struct TypesContainHelper : BoolVal<false> {};
-
 template <class T, class Ts>
 struct TypesContainVal;
 
 template <class T, class... Fields>
 struct TypesContainVal<T, Types<Fields...>> :
-    Any<TypesContainHelper<T, Fields>...> {};
+    Any<ZeroSizedTypeConvertible<Fields, T>...> {};
 
 template <usize index, class Ts>
 using ZeroSizedTypeHolderFieldEnable =
@@ -103,6 +100,16 @@ using ZeroSizedTypeHolderFieldEnable =
             typename TypesIndex<index, Ts>::Result,
             typename TypesBefore<index, Ts>::Result>>,
         Not<TypesContainVal<typename TypesIndex<index, Ts>::Result, Ts>>>;
+
+template <class T, class Ts, usize index = 0>
+struct TypesFirstContain :
+    IfElse<
+        All<ZeroSizedTypeHolderFieldEnable<index, Ts>,
+            ZeroSizedTypeConvertible<
+                typename TypesIndex<index, Ts>::Result,
+                T>>,
+        TmplVal<usize, index>,
+        TypesFirstContain<T, Ts, index + 1>> {};
 
 template <usize index, class Ts>
 using ZeroSizedTypeHolderField = InheritIf<
@@ -124,8 +131,19 @@ template <class... Fields>
 using ZeroSizedTypeHolder =
     ZeroSizedTypeHolderImpl<sizeof...(Fields), Types<Fields...>>;
 
+template <bool direct, usize index, class... Fields>
+struct ZeroSizedTypeGetterImpl;
+
 template <usize index, class... Fields>
-struct ZeroSizedTypeGetter {
+using ZeroSizedTypeGetter = ZeroSizedTypeGetterImpl<
+    TypesContainVal<
+        typename TypesIndex<index, Types<Fields...>>::Result,
+        Types<Fields...>>::result,
+    index,
+    Fields...>;
+
+template <usize index, class... Fields>
+struct ZeroSizedTypeGetterImpl<false, index, Fields...> {
   using Self = ZeroSizedTypeHolder<Fields...>;
   using Result = typename TypesIndex<index, Types<Fields...>>::Result;
   using Field = ZeroSizedTypeHolderField<
@@ -138,6 +156,26 @@ struct ZeroSizedTypeGetter {
 
   static constexpr Result &inner(Self &self) {
     return static_cast<Field &>(self);
+  }
+};
+
+template <usize index, class... Fields>
+struct ZeroSizedTypeGetterImpl<true, index, Fields...> {
+  using Self = ZeroSizedTypeHolder<Fields...>;
+  using Result = typename TypesIndex<index, Types<Fields...>>::Result;
+  static constexpr usize field_index =
+      TypesFirstContain<Result, Types<Fields...>>::result;
+  using Field = ZeroSizedTypeHolderField<field_index, Types<Fields...>>;
+  using Convert = ZeroSizedTypeConvert<
+      typename TypesIndex<field_index, Types<Fields...>>::Result,
+      Result>;
+
+  static constexpr const Result &inner(const Self &self) {
+    return Convert::inner(static_cast<const Field &>(self));
+  }
+
+  static constexpr Result &inner(Self &self) {
+    return Convert::inner(static_cast<Field &>(self));
   }
 };
 } // namespace _impl_types

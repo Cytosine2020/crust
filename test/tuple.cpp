@@ -54,24 +54,36 @@ GTEST_TEST(tuple, size_zero) {
   crust_static_assert(sizeof(Tuple<Tuple<>>) == 1);
   crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>>) == 1);
   crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, Tuple<>>) == 1);
-  // crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, Tuple<Tuple<>>>) == 1);
-  // crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<Tuple<>>, Tuple<>>) == 1);
-  // crust_static_assert(sizeof(Tuple<Tuple<Tuple<>>, Tuple<>, Tuple<>>) == 1);
-  // crust_static_assert(
-  //     sizeof(Tuple<Tuple<>, Tuple<Tuple<>>, Tuple<Tuple<Tuple<>>>>) == 1);
-  // crust_static_assert(
-  //     sizeof(Tuple<Tuple<>, Tuple<Tuple<Tuple<>>>, Tuple<Tuple<>>>) == 1);
-  // crust_static_assert(
-  //     sizeof(Tuple<Tuple<Tuple<>>, Tuple<>, Tuple<Tuple<Tuple<>>>>) == 1);
-  // crust_static_assert(
-  //     sizeof(Tuple<Tuple<Tuple<>>, Tuple<Tuple<Tuple<>>>, Tuple<>>) == 1);
-  // crust_static_assert(
-  //     sizeof(Tuple<Tuple<Tuple<Tuple<>>>, Tuple<>, Tuple<Tuple<>>>) == 1);
-  // crust_static_assert(
-  //     sizeof(Tuple<Tuple<Tuple<Tuple<>>>, Tuple<Tuple<>>, Tuple<>>) == 1);
+  crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, Tuple<Tuple<>>>) == 1);
+  crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<Tuple<>>, Tuple<>>) == 1);
+  crust_static_assert(sizeof(Tuple<Tuple<Tuple<>>, Tuple<>, Tuple<>>) == 1);
+  crust_static_assert(
+      sizeof(Tuple<Tuple<>, Tuple<Tuple<>>, Tuple<Tuple<Tuple<>>>>) == 1);
+  crust_static_assert(
+      sizeof(Tuple<Tuple<>, Tuple<Tuple<Tuple<>>>, Tuple<Tuple<>>>) == 1);
+  crust_static_assert(
+      sizeof(Tuple<Tuple<Tuple<>>, Tuple<>, Tuple<Tuple<Tuple<>>>>) == 1);
+  crust_static_assert(
+      sizeof(Tuple<Tuple<Tuple<>>, Tuple<Tuple<Tuple<>>>, Tuple<>>) == 1);
+  crust_static_assert(
+      sizeof(Tuple<Tuple<Tuple<Tuple<>>>, Tuple<>, Tuple<Tuple<>>>) == 1);
+  crust_static_assert(
+      sizeof(Tuple<Tuple<Tuple<Tuple<>>>, Tuple<Tuple<>>, Tuple<>>) == 1);
   crust_static_assert(sizeof(Tuple<i32, Tuple<>, Tuple<>>) == sizeof(i32));
   crust_static_assert(sizeof(Tuple<Tuple<>, i32, Tuple<>>) == sizeof(i32));
   crust_static_assert(sizeof(Tuple<Tuple<>, Tuple<>, i32>) == sizeof(i32));
+  crust_static_assert(
+      sizeof(Tuple<i32, Tuple<i32>, Tuple<>>) == 2 * sizeof(i32));
+  crust_static_assert(
+      sizeof(Tuple<Tuple<i32>, i32, Tuple<>>) == 2 * sizeof(i32));
+  crust_static_assert(
+      sizeof(Tuple<Tuple<i32>, Tuple<>, i32>) == 2 * sizeof(i32));
+  crust_static_assert(
+      sizeof(Tuple<i32, Tuple<>, Tuple<i32>>) == 2 * sizeof(i32));
+  crust_static_assert(
+      sizeof(Tuple<Tuple<>, i32, Tuple<i32>>) == 2 * sizeof(i32));
+  crust_static_assert(
+      sizeof(Tuple<Tuple<>, Tuple<i32>, i32>) == 2 * sizeof(i32));
 
   constexpr auto empty_1 = tuple(tuple(), tuple(), tuple());
   crust_static_assert(empty_1.get<0>() == tuple());
@@ -91,6 +103,15 @@ GTEST_TEST(tuple, size_zero) {
   crust_static_assert(empty_4.get<0>() == tuple(tuple()));
   crust_static_assert(empty_4.get<1>() == tuple());
   crust_static_assert(empty_4.get<0>().get<0>() == tuple());
+
+  constexpr auto empty_5 =
+      tuple(tuple(tuple()), tuple(tuple(tuple())), tuple());
+  crust_static_assert(empty_5.get<0>() == tuple(tuple()));
+  crust_static_assert(empty_5.get<0>().get<0>() == tuple());
+  crust_static_assert(empty_5.get<1>() == tuple(tuple(tuple())));
+  crust_static_assert(empty_5.get<1>().get<0>() == tuple(tuple()));
+  crust_static_assert(empty_5.get<1>().get<0>().get<0>() == tuple());
+  crust_static_assert(empty_5.get<2>() == tuple());
 
   crust_static_assert(Require<Tuple<>, PartialEq>::result);
   crust_static_assert(Require<Tuple<>, Eq>::result);

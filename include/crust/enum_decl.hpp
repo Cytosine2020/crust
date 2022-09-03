@@ -773,21 +773,23 @@ struct crust_ebco Enum<EnumRepr<Type>, Fields...> :
 
 namespace _impl_derive {
 template <class T, template <class, class...> class Trait, class... Args>
-struct ImplForEnum : TmplVal<bool, false> {};
+struct ImplForEnumHelper : TmplVal<bool, false> {};
 
 template <
     class... Fields,
     template <class, class...>
     class Trait,
     class... Args>
-struct ImplForEnum<Enum<Fields...>, Trait, Args...> :
+struct ImplForEnumHelper<Enum<Fields...>, Trait, Args...> :
     All<Require<Fields, Trait, Args...>...> {};
+
+template <class T, template <class, class...> class Trait, class... Args>
+using ImplForEnum =
+    ImplForEnumHelper<typename BluePrint<T>::Result, Trait, Args...>;
 } // namespace _impl_derive
 
 template <class S>
-CRUST_IMPL_FOR(
-    clone::Clone<S>,
-    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, clone::Clone>) {
+CRUST_IMPL_FOR(clone::Clone<S>, _impl_derive::ImplForEnum<S, clone::Clone>) {
   CRUST_IMPL_USE_SELF(S);
 
 private:
@@ -804,8 +806,7 @@ public:
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::PartialEq<S>,
-    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::PartialEq>) {
+    cmp::PartialEq<S>, _impl_derive::ImplForEnum<S, cmp::PartialEq>) {
   CRUST_IMPL_USE_SELF(S);
 
   constexpr bool eq(const Self &other) const {
@@ -818,14 +819,11 @@ CRUST_IMPL_FOR(
 };
 
 template <class S>
-CRUST_IMPL_FOR(
-    cmp::Eq<S>,
-    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::Eq>){};
+CRUST_IMPL_FOR(cmp::Eq<S>, _impl_derive::ImplForEnum<S, cmp::Eq>){};
 
 template <class S>
 CRUST_IMPL_FOR(
-    cmp::PartialOrd<S>,
-    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::PartialOrd>) {
+    cmp::PartialOrd<S>, _impl_derive::ImplForEnum<S, cmp::PartialOrd>) {
   CRUST_IMPL_USE_SELF(S);
 
   constexpr Option<cmp::Ordering> partial_cmp(const Self &other) const;
@@ -848,9 +846,7 @@ CRUST_IMPL_FOR(
 };
 
 template <class S>
-CRUST_IMPL_FOR(
-    cmp::Ord<S>,
-    _impl_derive::ImplForEnum<typename BluePrint<S>::Result, cmp::Ord>) {
+CRUST_IMPL_FOR(cmp::Ord<S>, _impl_derive::ImplForEnum<S, cmp::Ord>) {
   CRUST_IMPL_USE_SELF(S);
 
   constexpr cmp::Ordering cmp(const Self &other) const;
